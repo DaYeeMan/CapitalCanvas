@@ -1,0 +1,60 @@
+{
+  "url": "http://127.0.0.1:5173/",
+  "sizes": [
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "entries": 17
+    },
+    {
+      "width": 768,
+      "scrollWidth": 768,
+      "entries": 17
+    },
+    {
+      "width": 1280,
+      "scrollWidth": 1280,
+      "entries": 17
+    },
+    {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "entries": 17
+    }
+  ],
+  "navigation": [
+    {
+      "id": "home",
+      "focus": "home",
+      "open": null
+    },
+    {
+      "id": "resources",
+      "focus": "resources",
+      "open": null
+    },
+    {
+      "id": "about",
+      "focus": "about",
+      "open": null
+    },
+    {
+      "id": "crr",
+      "focus": "crr",
+      "open": true
+    },
+    {
+      "id": "troy-heston",
+      "focus": "troy-heston",
+      "open": true
+    }
+  ],
+  "history": "passed",
+  "repeatedAnchor": "passed",
+  "policyReturn": "passed",
+  "errors": [],
+  "prohibited": [],
+  "homeScope": "site-shell",
+  "policyScope": "site-shell",
+  "contentIdentical": false
+}

@@ -56,7 +56,7 @@ export default function HomePage() {
     };
   }, []);
 
-  return <SiteLayout active={active}>
+  return <SiteLayout active={active} home>
     <section id="home" className="home-section" tabIndex={-1} aria-labelledby="home-title">
       <h1 id="home-title">Explore pricing and market dynamics</h1>
       <p className="site-intro">Visual tools for understanding financial models</p>

@@ -1,0 +1,17 @@
+{
+  "frameCount": 240,
+  "fps": 24,
+  "codec": "H.264 / yuv420p / no audio",
+  "seamMeanRgbDelta": 0.4763425925925926,
+  "maxAdjacentMeanRgbDelta": 0.3482638888888889,
+  "meanAdjacentRgbDelta": 0.20087580388966375,
+  "halfCycleMeanRgbDelta": 4.648958333333334,
+  "posterFirstFrameMeanRgbDelta": 1.5927604166666667,
+  "minimumMutedTextContrastByNavyOverlay": {
+    "0.4": 2.5889975913641203,
+    "0.5": 3.2612823564077007,
+    "0.6": 4.13517306146175,
+    "0.68": 4.998935093134535,
+    "0.72": 5.484676170024484
+  }
+}

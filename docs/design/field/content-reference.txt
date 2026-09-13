@@ -1,0 +1,181 @@
+CAPITAL CANVAS — FIELD CONTENT REFERENCE
+Exact repository copy for the concept mockups. Source: apps/web/src/site; September 13, 2026.
+Resources and About remain sections of the same homepage. Implementation disclosures retain their complete text.
+
+HOME
+Capital Canvas | Home | Resources | About
+Explore pricing and market dynamics
+Visual tools for understanding financial models
+01 Ithaca
+Visualize option prices across contract types, models, and parameters.
+Options | Analytical Pricing | Numerical Pricing
+Launch Ithaca
+02 Troy
+Simulate market making across pricing models and market dynamics.
+Market Making | Dynamics | Model Risk
+Launch Troy
+03 Coming soon
+
+Research and methods
+
+Ithaca
+
+01 | Model foundation
+The Pricing of Options and Corporate Liabilities
+Fischer Black & Myron Scholes · 1973
+A foundation for valuing European options through a replicating hedge and a no-arbitrage model.
+Publisher · access may vary
+https://doi.org/10.1086/260062
+Implementation
+Ithaca uses constant volatility, interest rate, and continuous dividend yield under geometric Brownian motion. The European formula is a reference for numerical comparisons, not a market forecast.
+
+02 | Binomial trees
+Option pricing: A simplified approach
+John C. Cox, Stephen A. Ross & Mark Rubinstein · 1979
+A discrete tree makes option valuation and early-exercise decisions accessible through backward induction.
+Publisher · access may vary
+https://www.sciencedirect.com/science/article/pii/0304405X79900151
+Implementation
+American pricing compares immediate exercise with continuation at each date. More time steps reduce tree error; interactive surfaces use fewer steps than scalar prices. This tree also underlies the Asian state-grid method.
+
+03 | Finite differences
+A practical method for numerical evaluation of solutions of partial differential equations of the heat-conduction type
+John Crank & Phyllis Nicolson · 1947
+A time-stepping method for diffusion equations that provides the basis for many finite-difference pricing schemes.
+Publisher · access may vary
+https://doi.org/10.1017/S0305004100023197
+Implementation
+Ithaca applies Crank–Nicolson on a finite spot grid. Boundaries, grid resolution, and local upwind stabilization affect error. American exercise constraints require the additional PSOR procedure below.
+
+04 | Simulation
+Options: A Monte Carlo approach
+Phelim P. Boyle · 1977
+Estimate an option value by averaging discounted payoffs from simulated risk-neutral asset paths.
+Publisher · access may vary
+https://www.sciencedirect.com/science/article/abs/pii/0304405X77900058
+Implementation
+Seeded paths make runs reproducible. Antithetic pairs and shared random numbers support comparison. Confidence intervals measure sampling uncertainty; they do not include all model or numerical errors.
+
+05 | American exercise constraint
+Crank Nicolson American Option — PSOR
+Paul Johnson · University of Manchester · Undated teaching notes
+Projected successive over-relaxation solves the finite-difference system while enforcing the exercise payoff as a lower bound.
+Open teaching notes
+https://personalpages.manchester.ac.uk/staff/paul.johnson-2/resources/math60082/notebooks/math60082-Examples-Sheet-7-Crank-Nicolson-American-Option.html
+Implementation
+The American finite-difference solver uses a linear complementarity problem, PSOR iterations, and bounded work. This teaching reference explains the procedure; it is not the original Crank–Nicolson paper.
+
+06 | American Monte Carlo
+Valuing American Options by Simulation: A Simple Least-Squares Approach
+Francis A. Longstaff & Eduardo S. Schwartz · 2001
+Least-squares regression estimates continuation values to decide whether an American option should be exercised.
+University repository
+https://escholarship.org/uc/item/43n1k4jb
+Implementation
+Ithaca uses a quadratic regression basis and discrete exercise dates. Surface calculations use reduced path budgets. Regression and exercise-date bias are distinct from the reported sampling interval.
+
+07 | Barrier formulas
+Breaking Down the Barriers
+Eric Reiner & Mark Rubinstein · 1991
+Analytical pricing relationships for options whose activation depends on touching a barrier.
+Author bibliography · paper links
+https://haas.berkeley.edu/faculty/reiner-eric/
+Implementation
+Ithaca implements the Reiner–Rubinstein decomposition for continuously monitored single up/down, in/out barriers with no rebate. Knock-in values use vanilla-minus-knock-out parity. The source link is the author's bibliography, not a free full-text claim.
+
+08 | Continuous barrier monitoring
+Advanced Monte Carlo Methods for Barrier and Related Exotic Options
+Emmanuel Gobet · 2009
+Brownian-bridge methods account for barrier crossings that sampled path endpoints can miss.
+Author manuscript repository
+https://hal.science/hal-00319947
+Implementation
+For safe endpoints, Ithaca multiplies conditional interval survival probabilities using log-distance from the barrier. It uses exact geometric-Brownian endpoints. This is survival weighting, not a shifted-barrier approximation or a sequential Monte Carlo solver.
+
+09 | Asian Monte Carlo
+A pricing method for options based on average asset values
+Angelien G. Z. Kemna & A. C. F. Vorst · 1990
+Geometric-average option values provide a useful control variate for simulating arithmetic-average payoffs.
+Publisher · access may vary
+https://www.sciencedirect.com/science/article/pii/0378426690900395
+Implementation
+Ithaca uses equally spaced future observations, excluding the initial spot. Its geometric benchmark is the exact discrete lognormal formula. The arithmetic payoff has no closed form here; the monitoring convention is specific to this implementation.
+
+10 | Implementation note
+Asian options: a running-average state
+Ithaca extends a CRR tree with a grid of running averages. At observation dates, it updates the average and interpolates continuation values between grid points. This is a project implementation choice, not a separate published solver.
+The grid introduces interpolation error. When tree probabilities are invalid, the implementation falls back to a moment-matched approximation. This method is not an Asian Crank–Nicolson PDE solver.
+Read the underlying CRR reference
+https://www.sciencedirect.com/science/article/pii/0304405X79900151
+
+Troy
+
+01 | Model foundation
+The Pricing of Options and Corporate Liabilities
+Fischer Black & Myron Scholes · 1973
+A foundation for valuing European options through a replicating hedge and a no-arbitrage model.
+Publisher · access may vary
+https://doi.org/10.1086/260062
+Implementation
+Troy prices European vanilla options with independently assumed constant volatility, interest rate, and continuous dividend yield. The true market may instead follow Heston or Merton dynamics; choosing Black–Scholes does not imply the assumptions are correct.
+
+02 | Binomial trees
+Option pricing: A simplified approach
+John C. Cox, Stephen A. Ross & Mark Rubinstein · 1979
+A discrete tree makes option valuation and early-exercise decisions accessible through backward induction.
+Publisher · access may vary
+https://www.sciencedirect.com/science/article/pii/0304405X79900151
+Implementation
+Troy uses a European terminal-payoff CRR tree with independently assumed volatility. It does not apply early exercise. Time-step limits bound computation; invalid risk-neutral probabilities produce an error.
+
+03 | Simulation
+Options: A Monte Carlo approach
+Phelim P. Boyle · 1977
+Estimate an option value by averaging discounted payoffs from simulated risk-neutral asset paths.
+Publisher · access may vary
+https://www.sciencedirect.com/science/article/abs/pii/0304405X77900058
+Implementation
+Troy averages discounted risk-neutral GBM payoffs for Monte Carlo pricing. Seeded common random numbers stabilize successive values and spot-bump delta estimates. Pricing paths are separate from true market paths; finite sampling error remains.
+
+04 | Stochastic volatility
+A Closed-Form Solution for Options with Stochastic Volatility with Applications to Bond and Currency Options
+Steven L. Heston · 1993
+A stochastic variance process allows volatility to change over time and to correlate with underlying price shocks.
+University-hosted paper
+https://wwwf.imperial.ac.uk/~ajacquie/IC_Num_Methods/IC_Num_Methods_Docs/Literature/Heston.pdf
+Implementation
+Troy uses the Heston dynamics as a model foundation. Its Heston pricing implementation uses bounded risk-neutral Monte Carlo, not this paper’s closed-form formula. True-market and pricing variance parameters are independently configurable.
+
+05 | Jump diffusion
+Option pricing when underlying stock returns are discontinuous
+Robert C. Merton · 1976
+Combines continuous price fluctuations with sudden jumps, extending the possible behavior of underlying returns.
+University-hosted paper
+https://www.cmat.edu.uy/~mordecki/hk2010/merton76.pdf
+Implementation
+Troy’s true Merton market combines lognormal diffusion with Poisson lognormal jumps and an expected-jump drift compensator. Merton is a market dynamics choice, not an available maker pricing model.
+
+06 | Numerical simulation
+Positive stochastic volatility simulation
+William Halley, Simon J. A. Malham & Anke Wiese · 2008
+Discusses numerical schemes that address the nonnegative variance constraint in stochastic volatility models.
+Author-hosted manuscript
+https://www.macs.hw.ac.uk/~simonm/psdesarxiv.pdf
+Implementation
+Troy uses log-spot steps and projected/truncated Euler variance steps. This reference provides context for positivity and discretization error; Troy does not implement the paper’s proposed splitting scheme.
+
+07 | Implementation note
+Quoting, order flow, and inventory
+Troy separates the simulated market from the maker’s pricing assumptions. The selected pricing model computes fair value and delta; its name does not indicate whether it matches the true dynamics.
+Inventory shifts quotes, and Poisson arrival intensity decreases with unfavorable quote distance from the maker’s posted fair value. The engine clips fills at inventory limits and optionally hedges model delta. P&L includes option and hedge positions minus transaction costs; cash financing is excluded. This is a project simulation policy, not a calibrated order-flow model or a published optimal quoting strategy.
+
+About CapitalCanvas
+I built Capital Canvas to use visualization and experimentation to make quantitative finance easier to understand. Through interactive tools, building the intuition for pricing models, simulations, and market dynamics becomes easier.
+Emmanuel Zhang
+dymteam23@gmail.com
+
+FOOTER
+Capital Canvas
+For education and research.
+Privacy | Terms | Disclaimer | Attributions
+© 2026 CapitalCanvas. Third-party works remain with their respective owners.

@@ -39,6 +39,8 @@ npm run build:web
 
 ## Reference material
 
+[Homepage revamp plan](docs/plans/home-revamp/README.md) tracks the phased Field redesign and separate animated surface.
+
 Numerical reference cases and tolerances live in `services/solver-api/tests/` and `apps/web/src/troy/engine.test.ts`. `scripts/smoke_test.py` checks frontend/API routing and a reference price.
 
 [License sources](docs/licenses/README.md) describe third-party attribution maintenance.

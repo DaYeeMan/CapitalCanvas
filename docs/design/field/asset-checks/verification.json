@@ -1,0 +1,20 @@
+{
+  "metadata": {
+    "duration": 10,
+    "width": 1920,
+    "height": 1080
+  },
+  "seam": {
+    "identicalEndpoints": true,
+    "deformation": true
+  },
+  "decodedFrameVerification": "See encoding-verification.json; browser canvas sampling returned zero samples",
+  "playback": {
+    "wraps": 2,
+    "paused": false,
+    "error": null
+  },
+  "errors": [],
+  "bytes": 416138,
+  "posterBytes": 26162
+}

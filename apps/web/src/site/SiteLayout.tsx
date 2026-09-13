@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { SiteNavigation, type HomeSection } from "./SiteNavigation";
 
-export function SiteLayout({ children, active }: { children: ReactNode; active?: HomeSection }) {
-  return <div className="site-shell">
+export function SiteLayout({ children, active, home = false }: { children: ReactNode; active?: HomeSection; home?: boolean }) {
+  return <div className={home ? "site-shell field-home" : "site-shell"}>
     <a className="skip-link" href="#main-content">Skip to content</a>
     <header className="site-header">
       <a className="site-wordmark" href="/#home">Capital Canvas</a>

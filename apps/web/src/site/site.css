@@ -7,6 +7,22 @@ html { scroll-behavior: smooth; }
   color: #f3e9d9;
   background: radial-gradient(ellipse at 45% 10%, #08203230, transparent 55%), var(--site-bg);
 }
+/* Field foundation is opt-in: policy pages retain their existing site tokens. */
+.site-shell.field-home {
+  --site-serif: var(--serif);
+  --site-bg: var(--bg);
+  --site-muted: var(--muted);
+  --field-text: #f3eadb;
+  --field-accent: var(--cyan-soft);
+  --field-border: #334452;
+  --field-card-bg: rgb(6 23 37 / 72%);
+  --field-content-max: 1440px;
+  --field-reading-max: 760px;
+  --field-section-space: clamp(56px, 7vw, 112px);
+  --field-card-gap: clamp(16px, 2vw, 24px);
+  --field-radius: 6px;
+  color: var(--field-text);
+}
 .site-header {
   position: sticky; top: 0; z-index: 10; display: grid;
   grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px;
