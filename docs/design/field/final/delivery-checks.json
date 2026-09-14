@@ -1,0 +1,35 @@
+{
+  "playback": {
+    "loops": 2,
+    "error": null,
+    "dropped": 0,
+    "total": 480,
+    "shifts": [],
+    "resources": [
+      {
+        "url": "http://127.0.0.1:5175/media/field/field-poster.webp",
+        "transfer": 26462,
+        "encoded": 26162
+      },
+      {
+        "url": "http://127.0.0.1:5175/media/field/field-loop.mp4",
+        "transfer": 416438,
+        "encoded": 416138
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "Ithaca",
+      "solve": "Unavailable: Windows Application Control blocks scipy DLL in existing solver environment"
+    },
+    {
+      "name": "Troy"
+    }
+  ],
+  "engines": {
+    "edge": "tested 153.0.4234.32",
+    "firefox": "not installed; untested",
+    "webkit": "not installed; untested"
+  }
+}

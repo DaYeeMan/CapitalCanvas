@@ -5,11 +5,15 @@ import { ResearchContent, AsianLatticeContent } from "./ResearchContent";
 import { research } from "./research";
 import { troyResearch } from "./troyResearch";
 import { contactEmail, contactHref } from "./siteInfo";
+import { FieldBackground } from "./FieldBackground";
+import { useFieldMotionRestricted } from "./useFieldMotionRestricted";
 
 const sections: HomeSection[] = ["home", "resources", "about"];
 
 export default function HomePage() {
   const [active, setActive] = useState<HomeSection>("home");
+  const [motionPaused, setMotionPaused] = useState(false);
+  const motionRestricted = useFieldMotionRestricted();
 
   useEffect(() => {
     let frame = 0;
@@ -56,32 +60,39 @@ export default function HomePage() {
     };
   }, []);
 
-  return <SiteLayout active={active} home>
+  return <SiteLayout active={active} home motionControl={
+    <button className="field-motion-toggle" type="button"
+      disabled={motionRestricted}
+      aria-label={motionRestricted ? "Motion off: device preference" : motionPaused ? "Play background motion" : "Pause background motion"}
+      title={motionRestricted ? "Animation is off for your reduced-motion or data-saving preference." : undefined}
+      onClick={() => setMotionPaused(paused => !paused)}>
+      <span className={motionPaused || motionRestricted ? "motion-play" : "motion-pause"} aria-hidden="true" />
+      {motionRestricted ? "Motion off" : motionPaused ? "Play motion" : "Pause motion"}
+    </button>
+  }>
     <section id="home" className="home-section" tabIndex={-1} aria-labelledby="home-title">
+      <FieldBackground enabled={!motionPaused && !motionRestricted} />
+      <div className="field-hero-copy">
       <h1 id="home-title">Explore pricing and market dynamics</h1>
       <p className="site-intro">Visual tools for understanding financial models</p>
+      </div>
       <div className="tool-list">
         <article className="tool-entry">
           <span className="section-index" aria-hidden="true">01</span>
-          <span className="ghost-number" aria-hidden="true">01</span>
           <h2>Ithaca</h2>
-          <img className="surface-preview" src="/ithaca-surface.svg" width="450" height="280" alt="" fetchPriority="high" />
           <p>Visualize option prices across contract types, models, and parameters.</p>
           <ul className="tool-tags" aria-label="Ithaca features"><li>Options</li><li>Analytical Pricing</li><li>Numerical Pricing</li></ul>
           <a className="launch-link" href="/tools/ithaca">Launch Ithaca <span aria-hidden="true">⟶</span></a>
         </article>
         <article className="tool-entry">
           <span className="section-index" aria-hidden="true">02</span>
-          <span className="ghost-number" aria-hidden="true">02</span>
           <h2>Troy</h2>
-          <img className="surface-preview" src="/troy-preview.svg" width="450" height="280" alt="" />
           <p>Simulate market making across pricing models and market dynamics.</p>
           <ul className="tool-tags" aria-label="Troy features"><li>Market Making</li><li>Dynamics</li><li>Model Risk</li></ul>
           <a className="launch-link" href="/tools/troy">Launch Troy <span aria-hidden="true">⟶</span></a>
         </article>
         {["03"].map((number) => <article className="tool-entry upcoming-tool" key={number} aria-label={`Tool ${number}: coming soon`}>
-          <span className="ghost-number" aria-hidden="true">{number}</span><h2>Coming soon</h2>
-          <span className="coming-soon-action" aria-hidden="true">Coming soon</span>
+          <span className="section-index" aria-hidden="true">{number}</span><h2>Coming soon</h2>
         </article>)}
       </div>
     </section>
@@ -125,6 +136,7 @@ export default function HomePage() {
       </details>
     </section>
     <section id="about" className="home-section reading-section" tabIndex={-1} aria-labelledby="about-title">
+      <FieldBackground enabled={!motionPaused && !motionRestricted} />
       <h2 id="about-title">About CapitalCanvas</h2>
       <p>I built Capital Canvas to use visualization and experimentation to make quantitative finance easier to understand. Through interactive tools, building the intuition for pricing models, simulations, and market dynamics becomes easier.</p>
       <p className="about-contact"><span className="about-name">Emmanuel Zhang</span><br /><a href={contactHref}>{contactEmail}</a></p>

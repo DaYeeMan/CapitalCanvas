@@ -1,0 +1,15 @@
+{
+  "content": "All 17 entries, complete disclosure copy, URLs, About and footer match baseline",
+  "keyboard": "2 project and 16 implementation disclosures; contact and legal links",
+  "anchors": "All 17 direct links expand group, focus target, clear header",
+  "motion": "No early About video; visible playback, shared pause/resume, offscreen pause, reduced motion",
+  "widths": [
+    390,
+    768,
+    1280,
+    1440
+  ],
+  "zoom": "CSS zoom 2 at 1440px; no horizontal overflow",
+  "policies": "4 routes readable without media",
+  "errors": []
+}

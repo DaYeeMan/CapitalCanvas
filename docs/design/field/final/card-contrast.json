@@ -1,0 +1,13 @@
+{
+  "resolution": [
+    1920,
+    1080
+  ],
+  "frames": 240,
+  "minimumContrastMutedText": {
+    "0.72": {
+      "ratio": 5.074866852449043,
+      "brightestFrame": 215
+    }
+  }
+}

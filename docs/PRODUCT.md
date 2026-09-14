@@ -18,9 +18,13 @@ The current product has no accounts, database, saved results, live market data, 
 - `/privacy`, `/terms`, `/disclaimer`, and `/notices` contain policy and attribution content.
 - Unknown paths show a not-found view with a home link.
 
-Home currently says “Explore pricing and market dynamics” and “Visual tools for understanding financial models.” Ithaca and Troy each have a preview and launch link; the third card is non-interactive.
+Home says “Explore pricing and market dynamics” and “Visual tools for understanding financial models.” Three translucent navy cards follow the hero directly, without an “Explore the tools” line. Ithaca and Troy retain descriptions, feature tags, and launch links; the third card is non-interactive and says “Coming soon.”
 
 Research entries are grouped by tool in collapsible sections. They include source metadata, original summaries, and implementation notes that distinguish published models from project approximations. Stable paper anchors open the containing group. Ithaca also exposes method references within its sidebar.
+
+The Field homepage uses a separate decorative surface behind Home and About. It is a locally hosted 10-second H.264 loop with a WebP poster, not real-time 3D or a baked page image. One header control pauses or resumes both backgrounds. Reduced-motion and data-saving preferences disable video; hidden/offscreen media pauses, and video is deferred until its section approaches the viewport. Failed or blocked playback leaves the poster visible. Text and controls remain ordinary HTML above the media.
+
+Resources and the footer use solid navy. All 10 Ithaca and 7 Troy entries remain in native disclosures, collapsed initially, with two-column research rows that stack on mobile. About retains the full project explanation and contact details. Policy and tool routes have no decorative media. Media source and reproduction details live in [Field asset documentation](design/field/ASSET.md).
 
 ## Ithaca: option pricing
 

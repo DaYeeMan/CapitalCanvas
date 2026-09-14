@@ -1,0 +1,310 @@
+{
+  "inventory": {
+    "hero": [
+      "Explore pricing and market dynamics",
+      "Visual tools for understanding financial models"
+    ],
+    "research": [
+      {
+        "id": "black-scholes",
+        "text": "01Model foundationThe Pricing of Options and Corporate Liabilities ↗Fischer Black & Myron Scholes · 1973A foundation for valuing European options through a replicating hedge and a no-arbitrage model.Publisher · access may varyImplementationIthaca uses constant volatility, interest rate, and continuous dividend yield under geometric Brownian motion. The European formula is a reference for numerical comparisons, not a market forecast.",
+        "links": [
+          {
+            "text": "The Pricing of Options and Corporate Liabilities ↗",
+            "href": "https://doi.org/10.1086/260062"
+          }
+        ]
+      },
+      {
+        "id": "crr",
+        "text": "02Binomial treesOption pricing: A simplified approach ↗John C. Cox, Stephen A. Ross & Mark Rubinstein · 1979A discrete tree makes option valuation and early-exercise decisions accessible through backward induction.Publisher · access may varyImplementationAmerican pricing compares immediate exercise with continuation at each date. More time steps reduce tree error; interactive surfaces use fewer steps than scalar prices. This tree also underlies the Asian state-grid method.",
+        "links": [
+          {
+            "text": "Option pricing: A simplified approach ↗",
+            "href": "https://www.sciencedirect.com/science/article/pii/0304405X79900151"
+          }
+        ]
+      },
+      {
+        "id": "crank-nicolson",
+        "text": "03Finite differencesA practical method for numerical evaluation of solutions of partial differential equations of the heat-conduction type ↗John Crank & Phyllis Nicolson · 1947A time-stepping method for diffusion equations that provides the basis for many finite-difference pricing schemes.Publisher · access may varyImplementationIthaca applies Crank–Nicolson on a finite spot grid. Boundaries, grid resolution, and local upwind stabilization affect error. American exercise constraints require the additional PSOR procedure below.",
+        "links": [
+          {
+            "text": "A practical method for numerical evaluation of solutions of partial differential equations of the heat-conduction type ↗",
+            "href": "https://doi.org/10.1017/S0305004100023197"
+          }
+        ]
+      },
+      {
+        "id": "monte-carlo",
+        "text": "04SimulationOptions: A Monte Carlo approach ↗Phelim P. Boyle · 1977Estimate an option value by averaging discounted payoffs from simulated risk-neutral asset paths.Publisher · access may varyImplementationSeeded paths make runs reproducible. Antithetic pairs and shared random numbers support comparison. Confidence intervals measure sampling uncertainty; they do not include all model or numerical errors.",
+        "links": [
+          {
+            "text": "Options: A Monte Carlo approach ↗",
+            "href": "https://www.sciencedirect.com/science/article/abs/pii/0304405X77900058"
+          }
+        ]
+      },
+      {
+        "id": "psor",
+        "text": "05American exercise constraintCrank Nicolson American Option — PSOR ↗Paul Johnson · University of Manchester · Undated teaching notesProjected successive over-relaxation solves the finite-difference system while enforcing the exercise payoff as a lower bound.Open teaching notesImplementationThe American finite-difference solver uses a linear complementarity problem, PSOR iterations, and bounded work. This teaching reference explains the procedure; it is not the original Crank–Nicolson paper.",
+        "links": [
+          {
+            "text": "Crank Nicolson American Option — PSOR ↗",
+            "href": "https://personalpages.manchester.ac.uk/staff/paul.johnson-2/resources/math60082/notebooks/math60082-Examples-Sheet-7-Crank-Nicolson-American-Option.html"
+          }
+        ]
+      },
+      {
+        "id": "longstaff-schwartz",
+        "text": "06American Monte CarloValuing American Options by Simulation: A Simple Least-Squares Approach ↗Francis A. Longstaff & Eduardo S. Schwartz · 2001Least-squares regression estimates continuation values to decide whether an American option should be exercised.University repositoryImplementationIthaca uses a quadratic regression basis and discrete exercise dates. Surface calculations use reduced path budgets. Regression and exercise-date bias are distinct from the reported sampling interval.",
+        "links": [
+          {
+            "text": "Valuing American Options by Simulation: A Simple Least-Squares Approach ↗",
+            "href": "https://escholarship.org/uc/item/43n1k4jb"
+          }
+        ]
+      },
+      {
+        "id": "reiner-rubinstein",
+        "text": "07Barrier formulasBreaking Down the Barriers ↗Eric Reiner & Mark Rubinstein · 1991Analytical pricing relationships for options whose activation depends on touching a barrier.Author bibliography · paper linksImplementationIthaca implements the Reiner–Rubinstein decomposition for continuously monitored single up/down, in/out barriers with no rebate. Knock-in values use vanilla-minus-knock-out parity. The source link is the author's bibliography, not a free full-text claim.",
+        "links": [
+          {
+            "text": "Breaking Down the Barriers ↗",
+            "href": "https://haas.berkeley.edu/faculty/reiner-eric/"
+          }
+        ]
+      },
+      {
+        "id": "brownian-bridge",
+        "text": "08Continuous barrier monitoringAdvanced Monte Carlo Methods for Barrier and Related Exotic Options ↗Emmanuel Gobet · 2009Brownian-bridge methods account for barrier crossings that sampled path endpoints can miss.Author manuscript repositoryImplementationFor safe endpoints, Ithaca multiplies conditional interval survival probabilities using log-distance from the barrier. It uses exact geometric-Brownian endpoints. This is survival weighting, not a shifted-barrier approximation or a sequential Monte Carlo solver.",
+        "links": [
+          {
+            "text": "Advanced Monte Carlo Methods for Barrier and Related Exotic Options ↗",
+            "href": "https://hal.science/hal-00319947"
+          }
+        ]
+      },
+      {
+        "id": "asian-control-variate",
+        "text": "09Asian Monte CarloA pricing method for options based on average asset values ↗Angelien G. Z. Kemna & A. C. F. Vorst · 1990Geometric-average option values provide a useful control variate for simulating arithmetic-average payoffs.Publisher · access may varyImplementationIthaca uses equally spaced future observations, excluding the initial spot. Its geometric benchmark is the exact discrete lognormal formula. The arithmetic payoff has no closed form here; the monitoring convention is specific to this implementation.",
+        "links": [
+          {
+            "text": "A pricing method for options based on average asset values ↗",
+            "href": "https://www.sciencedirect.com/science/article/pii/0378426690900395"
+          }
+        ]
+      },
+      {
+        "id": "asian-lattice",
+        "text": "10Implementation noteAsian options: a running-average stateIthaca extends a CRR tree with a grid of running averages. At observation dates, it updates the average and interpolates continuation values between grid points. This is a project implementation choice, not a separate published solver.The grid introduces interpolation error. When tree probabilities are invalid, the implementation falls back to a moment-matched approximation. This method is not an Asian Crank–Nicolson PDE solver.Read the underlying CRR reference ↑",
+        "links": [
+          {
+            "text": "Read the underlying CRR reference ↑",
+            "href": "https://www.sciencedirect.com/science/article/pii/0304405X79900151"
+          }
+        ]
+      },
+      {
+        "id": "troy-black-scholes",
+        "text": "01Model foundationThe Pricing of Options and Corporate Liabilities ↗Fischer Black & Myron Scholes · 1973A foundation for valuing European options through a replicating hedge and a no-arbitrage model.Publisher · access may varyImplementationTroy prices European vanilla options with independently assumed constant volatility, interest rate, and continuous dividend yield. The true market may instead follow Heston or Merton dynamics; choosing Black–Scholes does not imply the assumptions are correct.",
+        "links": [
+          {
+            "text": "The Pricing of Options and Corporate Liabilities ↗",
+            "href": "https://doi.org/10.1086/260062"
+          }
+        ]
+      },
+      {
+        "id": "troy-crr",
+        "text": "02Binomial treesOption pricing: A simplified approach ↗John C. Cox, Stephen A. Ross & Mark Rubinstein · 1979A discrete tree makes option valuation and early-exercise decisions accessible through backward induction.Publisher · access may varyImplementationTroy uses a European terminal-payoff CRR tree with independently assumed volatility. It does not apply early exercise. Time-step limits bound computation; invalid risk-neutral probabilities produce an error.",
+        "links": [
+          {
+            "text": "Option pricing: A simplified approach ↗",
+            "href": "https://www.sciencedirect.com/science/article/pii/0304405X79900151"
+          }
+        ]
+      },
+      {
+        "id": "troy-monte-carlo",
+        "text": "03SimulationOptions: A Monte Carlo approach ↗Phelim P. Boyle · 1977Estimate an option value by averaging discounted payoffs from simulated risk-neutral asset paths.Publisher · access may varyImplementationTroy averages discounted risk-neutral GBM payoffs for Monte Carlo pricing. Seeded common random numbers stabilize successive values and spot-bump delta estimates. Pricing paths are separate from true market paths; finite sampling error remains.",
+        "links": [
+          {
+            "text": "Options: A Monte Carlo approach ↗",
+            "href": "https://www.sciencedirect.com/science/article/abs/pii/0304405X77900058"
+          }
+        ]
+      },
+      {
+        "id": "troy-heston",
+        "text": "04Stochastic volatilityA Closed-Form Solution for Options with Stochastic Volatility with Applications to Bond and Currency Options ↗Steven L. Heston · 1993A stochastic variance process allows volatility to change over time and to correlate with underlying price shocks.University-hosted paperImplementationTroy uses the Heston dynamics as a model foundation. Its Heston pricing implementation uses bounded risk-neutral Monte Carlo, not this paper’s closed-form formula. True-market and pricing variance parameters are independently configurable.",
+        "links": [
+          {
+            "text": "A Closed-Form Solution for Options with Stochastic Volatility with Applications to Bond and Currency Options ↗",
+            "href": "https://wwwf.imperial.ac.uk/~ajacquie/IC_Num_Methods/IC_Num_Methods_Docs/Literature/Heston.pdf"
+          }
+        ]
+      },
+      {
+        "id": "troy-merton",
+        "text": "05Jump diffusionOption pricing when underlying stock returns are discontinuous ↗Robert C. Merton · 1976Combines continuous price fluctuations with sudden jumps, extending the possible behavior of underlying returns.University-hosted paperImplementationTroy’s true Merton market combines lognormal diffusion with Poisson lognormal jumps and an expected-jump drift compensator. Merton is a market dynamics choice, not an available maker pricing model.",
+        "links": [
+          {
+            "text": "Option pricing when underlying stock returns are discontinuous ↗",
+            "href": "https://www.cmat.edu.uy/~mordecki/hk2010/merton76.pdf"
+          }
+        ]
+      },
+      {
+        "id": "troy-variance-simulation",
+        "text": "06Numerical simulationPositive stochastic volatility simulation ↗William Halley, Simon J. A. Malham & Anke Wiese · 2008Discusses numerical schemes that address the nonnegative variance constraint in stochastic volatility models.Author-hosted manuscriptImplementationTroy uses log-spot steps and projected/truncated Euler variance steps. This reference provides context for positivity and discretization error; Troy does not implement the paper’s proposed splitting scheme.",
+        "links": [
+          {
+            "text": "Positive stochastic volatility simulation ↗",
+            "href": "https://www.macs.hw.ac.uk/~simonm/psdesarxiv.pdf"
+          }
+        ]
+      },
+      {
+        "id": "troy-market-making",
+        "text": "07Implementation noteQuoting, order flow, and inventoryTroy separates the simulated market from the maker’s pricing assumptions. The selected pricing model computes fair value and delta; its name does not indicate whether it matches the true dynamics.ImplementationInventory shifts quotes, and Poisson arrival intensity decreases with unfavorable quote distance from the maker’s posted fair value. The engine clips fills at inventory limits and optionally hedges model delta. P&L includes option and hedge positions minus transaction costs; cash financing is excluded. This is a project simulation policy, not a calibrated order-flow model or a published optimal quoting strategy.",
+        "links": []
+      }
+    ],
+    "about": "About CapitalCanvasI built Capital Canvas to use visualization and experimentation to make quantitative finance easier to understand. Through interactive tools, building the intuition for pricing models, simulations, and market dynamics becomes easier.Emmanuel Zhangdymteam23@gmail.com",
+    "footer": "Capital CanvasFor education and research.PrivacyTermsDisclaimerAttributions© 2026 CapitalCanvas. Third-party works remain with their respective owners.",
+    "tools": [
+      {
+        "heading": "Ithaca",
+        "description": "Visualize option prices across contract types, models, and parameters.",
+        "tags": [
+          "Options",
+          "Analytical Pricing",
+          "Numerical Pricing"
+        ],
+        "href": "/tools/ithaca",
+        "bg": "rgba(6, 23, 37, 0.72)",
+        "opacity": "1"
+      },
+      {
+        "heading": "Troy",
+        "description": "Simulate market making across pricing models and market dynamics.",
+        "tags": [
+          "Market Making",
+          "Dynamics",
+          "Model Risk"
+        ],
+        "href": "/tools/troy",
+        "bg": "rgba(6, 23, 37, 0.72)",
+        "opacity": "1"
+      },
+      {
+        "heading": "Coming soon",
+        "tags": [],
+        "bg": "rgba(6, 23, 37, 0.72)",
+        "opacity": "1"
+      }
+    ],
+    "unexpectedCta": false,
+    "media": "http://127.0.0.1:5173/media/field/field-loop.mp4",
+    "typography": {
+      "heading": "Georgia, \"Times New Roman\", ui-serif, serif",
+      "body": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+    }
+  },
+  "sizes": [
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "headerHeight": 112,
+      "cards": [
+        {
+          "width": 342,
+          "height": 293.859375
+        },
+        {
+          "width": 342,
+          "height": 293.859375
+        },
+        {
+          "width": 342,
+          "height": 160
+        }
+      ]
+    },
+    {
+      "width": 768,
+      "scrollWidth": 768,
+      "headerHeight": 112,
+      "cards": [
+        {
+          "width": 695.0625,
+          "height": 267.46875
+        },
+        {
+          "width": 695.0625,
+          "height": 267.46875
+        },
+        {
+          "width": 695.0625,
+          "height": 160
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "scrollWidth": 1280,
+      "headerHeight": 88,
+      "cards": [
+        {
+          "width": 370.125,
+          "height": 310
+        },
+        {
+          "width": 370.140625,
+          "height": 310
+        },
+        {
+          "width": 370.125,
+          "height": 310
+        }
+      ]
+    },
+    {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "headerHeight": 88,
+      "cards": [
+        {
+          "width": 418.40625,
+          "height": 310
+        },
+        {
+          "width": 418.40625,
+          "height": 310
+        },
+        {
+          "width": 418.40625,
+          "height": 310
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "checks": [
+    "content and 17 research entries unchanged",
+    "translucency and full opacity",
+    "real playback",
+    "pause and resume",
+    "offscreen pause",
+    "visibility event pause",
+    "live reduced motion",
+    "initial reduced motion no MP4",
+    "data saving no MP4",
+    "autoplay rejection poster",
+    "failed media poster",
+    "slow media usable",
+    "direct anchors and history",
+    "policy isolation"
+  ]
+}

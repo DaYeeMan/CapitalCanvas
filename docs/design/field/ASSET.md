@@ -39,7 +39,7 @@ Use a Python environment with Pillow and NumPy for the verification script. This
 
 ## Verification and crop preview
 
-[preview.html](preview.html) is a standalone asset crop demonstration, not the homepage implementation. Serve the repository locally with `python -m http.server 5180 --bind 127.0.0.1`, then open `/docs/design/field/preview.html`. Select **Play preview** to view motion behind sample HTML. The preview intentionally omits navigation and complete tool details because its purpose is crop/contrast inspection; Phase 3 still preserves the actual site's full content.
+[preview.html](preview.html) is a standalone asset crop demonstration, not the homepage implementation. Serve the repository locally with `python -m http.server 5180 --bind 127.0.0.1`, then open `/docs/design/field/preview.html`. Select **Play preview** to view motion behind sample HTML. The preview intentionally omits navigation and complete tool details because its purpose is crop/contrast inspection; The homepage preserves the actual site's full content.
 
 Run `node docs/design/field/verify-surface.cjs` against that server and `python docs/design/field/verify-encoding.py` with the tool environment configured.
 
@@ -49,10 +49,10 @@ Run `node docs/design/field/verify-surface.cjs` against that server and `python 
 - Browser canvas sampling returned zero-value samples in this environment; it was not accepted as motion evidence. Independent decoded-frame comparison, rendered crops, and real playback provided the checks instead.
 - Desktop 1440 px and phone 390 px hero/About crops were visually inspected alongside the concept. [Hero desktop](asset-checks/hero-1440.png), [hero mobile](asset-checks/hero-390.png), [About desktop](asset-checks/about-1440.png), [About mobile](asset-checks/about-390.png).
 
-## Integration requirements for Phases 3–4
+## Homepage integration
 
 Use `object-fit: cover`; the preview uses centered desktop hero framing and approximately `65% center` for phone/About crops. Keep text above the media and retain the existing full content. Extend the surface behind all three translucent navy cards, without adding an “Explore the tools” line.
 
 Bright highlights need a contrast overlay behind body copy. The crop preview uses 68% navy behind text, fading down toward the card region; cards use their 72% navy fill. Sampling all decoded frames at 320 × 180 found minimum contrast near 5:1 for muted `#a8b4bd` text with the 68% overlay. A 40% overlay failed this conservative test. These samples inform integration; they do not replace full-resolution text-region contrast checks on the final layout.
 
-The surface is smoother and more restrained than the granular AI reference, keeping compression small and avoiding distracting texture motion. The concept's color and material direction is retained; lighting and geometry remain editable. Production motion toggle, visibility pausing, deferred downloads, and reduced-motion handling are Phase 3 responsibilities. No homepage media integration or deployment occurred in Phase 2.
+The surface is smoother and more restrained than the granular AI reference, keeping compression small and avoiding distracting texture motion. The concept's color and material direction is retained; lighting and geometry remain editable. The homepage implements a shared motion toggle, visibility pausing, deferred video downloads, and reduced-motion handling. See [final validation](VALIDATION.md) for full-resolution contrast, browser integration, and coverage limitations. No deployment is implied by these local checks.

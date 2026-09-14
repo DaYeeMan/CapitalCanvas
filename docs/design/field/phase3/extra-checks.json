@@ -1,0 +1,22 @@
+{
+  "results": [
+    "Ithaca launch and return passed",
+    "Troy launch and return passed",
+    "skip link and no Coming soon keyboard stop passed",
+    "320 px narrow-width check passed"
+  ],
+  "focus": [
+    "Skip to content",
+    "BODY: \n    \n    \n  \n\n",
+    "BODY: \n    Skip to contentCapital CanvasHomeResourcesAboutMotion offExplore pricing and market dynamicsVis",
+    "A: Skip to content",
+    "A: Capital Canvas",
+    "A: Home",
+    "A: Resources",
+    "A: About",
+    "A: Launch Ithaca ⟶",
+    "A: Launch Troy ⟶",
+    "SUMMARY: Ithaca"
+  ],
+  "limitation": "Tool launch smoke only; no solver pricing verification. Reduced-motion mode for deterministic screenshots."
+}
