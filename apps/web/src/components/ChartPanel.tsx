@@ -32,6 +32,8 @@ export function ScientificPlot({ data, layout, label }: { data: Data[]; layout: 
     const node = container.current;
     if (!node) return;
     const plotLayout = JSON.parse(JSON.stringify(layout)) as Partial<Layout>;
+    // Resolve the shared CSS font stack for Plotly SVG and WebGL labels.
+    plotLayout.font = { ...plotLayout.font, family: getComputedStyle(node).fontFamily };
     void Plotly.react(node, data, plotLayout, plotConfig);
   }, [data, layout]);
 
@@ -65,7 +67,7 @@ function legendLabel(result: MethodResult): string {
   return methodLabels[result.method];
 }
 
-const baseFont = { family: "Inter, ui-sans-serif, system-ui, sans-serif", color: "#dfe8ef", size: 12 };
+const baseFont = { color: "#dfe8ef", size: 12 };
 
 function resultFor(response: SolveResponse | null, method: SolverMethod): MethodResult | null {
   return response?.results.find((result) => result.method === method) ?? response?.results[0] ?? null;

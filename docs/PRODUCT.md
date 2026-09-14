@@ -22,7 +22,7 @@ Home says “Explore pricing and market dynamics” and “Visual tools for unde
 
 Research entries are grouped by tool in collapsible sections. They include source metadata, original summaries, and implementation notes that distinguish published models from project approximations. Stable paper anchors open the containing group. Ithaca also exposes method references within its sidebar.
 
-The Field homepage uses a separate decorative surface behind Home and About. It is a locally hosted 10-second H.264 loop with a WebP poster, not real-time 3D or a baked page image. One header control pauses or resumes both backgrounds. Reduced-motion and data-saving preferences disable video; hidden/offscreen media pauses, and video is deferred until its section approaches the viewport. Failed or blocked playback leaves the poster visible. Text and controls remain ordinary HTML above the media.
+The Field homepage uses a separate decorative surface behind Home and About. It is a locally hosted 10-second H.264 loop with a WebP poster, not real-time 3D or a baked page image. The About surface is horizontally mirrored to distinguish it from Home. There is no on-page motion button. Reduced-motion and data-saving preferences disable video; hidden/offscreen media pauses, and video is deferred until its section approaches the viewport. Failed or blocked playback leaves the poster visible. Text and controls remain ordinary HTML above the media.
 
 Resources and the footer use solid navy. All 10 Ithaca and 7 Troy entries remain in native disclosures, collapsed initially, with two-column research rows that stack on mobile. About retains the full project explanation and contact details. Policy and tool routes have no decorative media. Media source and reproduction details live in [Field asset documentation](design/field/ASSET.md).
 
@@ -62,7 +62,7 @@ Useful simulation conventions:
 
 ## Shared design and behavior
 
-Use the existing dark navy surfaces, cream serif display text, muted sans-serif body text, thin borders, and cyan accents. Spectral colors support charts and preview art. Reuse existing controls and charts where their behavior fits.
+Use the existing dark navy surfaces, cream serif display text, muted sans-serif body text, thin borders, and cyan accents. Typography uses shared `--serif` (Georgia with serif fallbacks) and `--sans` (system sans-serif) tokens across the site and both tools. Plotly inherits the same computed sans-serif family as its container. Mathematical notation retains its specialized math fonts; license/code text retains monospace. Spectral colors support charts and preview art. Reuse existing controls and charts where their behavior fits.
 
 Home and policy pages use natural document scrolling. Tool viewport layouts remain scoped to their workbenches. Tool code and heavy chart dependencies are lazy-loaded; home should remain usable without the solver API or a background solve.
 

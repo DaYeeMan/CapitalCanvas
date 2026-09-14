@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-/** Decorative media only. The homepage owns the shared motion preference/control. */
+/** Decorative media only. The homepage owns the device motion preferences. */
 export function FieldBackground({ enabled }: { enabled: boolean }) {
   const region = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);

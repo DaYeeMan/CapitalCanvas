@@ -1,5 +1,7 @@
 # Field homepage validation
 
+Subsequent owner-requested refinements remove the header motion control, connect launch labels and arrows with one underline, expose more of the Home surface below its text, and horizontally mirror About. The 62 tests, lint, build, and four-width browser checks pass after these refinements. Device reduced-motion handling still works. The results below record the original delivery snapshot; explicit pause-control checks and its screenshots describe that earlier version.
+
 The Field homepage revamp is complete locally. No commit, push, or deployment was performed. This note records validation evidence, not a future implementation plan.
 
 ## Result and changed code

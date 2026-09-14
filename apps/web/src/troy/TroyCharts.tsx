@@ -7,7 +7,7 @@ const colors = { cyan: '#24d5e7', green: '#86d849', amber: '#ffb000', red: '#ff7
 const axis = { gridcolor: '#203545', zerolinecolor: '#a8b4bd', tickfont: { size: 11 }, automargin: true };
 const base: Partial<Layout> = {
   paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-  font: { family: 'Inter, ui-sans-serif, system-ui, sans-serif', color: '#dfe8ef', size: 12 },
+  font: { color: '#dfe8ef', size: 12 },
   margin: { l: 62, r: 22, t: 18, b: 48 }, hovermode: 'x unified',
   legend: { orientation: 'h', x: 0, y: 1.12 },
   xaxis: { ...axis, title: { text: 'Time (years)' } }, yaxis: axis,

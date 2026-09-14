@@ -12,7 +12,6 @@ const sections: HomeSection[] = ["home", "resources", "about"];
 
 export default function HomePage() {
   const [active, setActive] = useState<HomeSection>("home");
-  const [motionPaused, setMotionPaused] = useState(false);
   const motionRestricted = useFieldMotionRestricted();
 
   useEffect(() => {
@@ -60,18 +59,9 @@ export default function HomePage() {
     };
   }, []);
 
-  return <SiteLayout active={active} home motionControl={
-    <button className="field-motion-toggle" type="button"
-      disabled={motionRestricted}
-      aria-label={motionRestricted ? "Motion off: device preference" : motionPaused ? "Play background motion" : "Pause background motion"}
-      title={motionRestricted ? "Animation is off for your reduced-motion or data-saving preference." : undefined}
-      onClick={() => setMotionPaused(paused => !paused)}>
-      <span className={motionPaused || motionRestricted ? "motion-play" : "motion-pause"} aria-hidden="true" />
-      {motionRestricted ? "Motion off" : motionPaused ? "Play motion" : "Pause motion"}
-    </button>
-  }>
+  return <SiteLayout active={active} home>
     <section id="home" className="home-section" tabIndex={-1} aria-labelledby="home-title">
-      <FieldBackground enabled={!motionPaused && !motionRestricted} />
+      <FieldBackground enabled={!motionRestricted} />
       <div className="field-hero-copy">
       <h1 id="home-title">Explore pricing and market dynamics</h1>
       <p className="site-intro">Visual tools for understanding financial models</p>
@@ -136,7 +126,7 @@ export default function HomePage() {
       </details>
     </section>
     <section id="about" className="home-section reading-section" tabIndex={-1} aria-labelledby="about-title">
-      <FieldBackground enabled={!motionPaused && !motionRestricted} />
+      <FieldBackground enabled={!motionRestricted} />
       <h2 id="about-title">About CapitalCanvas</h2>
       <p>I built Capital Canvas to use visualization and experimentation to make quantitative finance easier to understand. Through interactive tools, building the intuition for pricing models, simulations, and market dynamics becomes easier.</p>
       <p className="about-contact"><span className="about-name">Emmanuel Zhang</span><br /><a href={contactHref}>{contactEmail}</a></p>
