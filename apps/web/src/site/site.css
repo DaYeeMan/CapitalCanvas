@@ -174,6 +174,11 @@ html { scroll-behavior: smooth; }
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(rgb(3 16 29 / 68%) 0%, rgb(3 16 29 / 68%) 40%, transparent 56%, transparent 92%, rgb(3 16 29 / 30%) 100%);
 }
+.field-home #home .field-background::after {
+  background:
+    linear-gradient(to bottom, transparent calc(100% - clamp(120px, 12vw, 180px)), var(--site-bg) 100%),
+    linear-gradient(rgb(3 16 29 / 68%) 0%, rgb(3 16 29 / 68%) 40%, transparent 56%);
+}
 .field-background .field-video { opacity: 0; }
 .field-background .field-video.is-ready { opacity: 1; }
 .field-hero-copy { padding-block: clamp(80px, 8vw, 120px) clamp(120px, 11vw, 160px); text-align: center; }
@@ -231,7 +236,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Field reading sections retain native disclosures and shared research content. */
-.field-home #resources { background: var(--site-bg); padding-block: var(--field-section-space); }
+.field-home #resources { background: var(--site-bg); border-top: 0; padding-block: var(--field-section-space); }
 .field-home .section-heading { display: block; margin-bottom: 48px; }
 .field-home .reading-section h2 {
   font-size: clamp(40px, 4.7vw, 72px); line-height: 1.12; letter-spacing: -.035em;
@@ -268,13 +273,14 @@ html { scroll-behavior: smooth; }
 .field-home .research-body details p { border-color: var(--field-border); }
 .field-home #about {
   position: relative; isolation: isolate; width: 100%; min-height: 0;
+  border-top: 0;
   padding: clamp(80px, 9vw, 140px) max(var(--site-gutter), calc((100% - var(--field-content-max)) / 2)) clamp(100px, 12vw, 180px);
 }
 .field-home #about .field-background img,
 .field-home #about .field-background video { object-position: right bottom; transform: scaleX(-1); }
 .field-home #about .field-background::after {
   background: linear-gradient(90deg, rgb(3 16 29 / 85%), rgb(3 16 29 / 68%) 65%, rgb(3 16 29 / 25%)),
-    linear-gradient(var(--bg), transparent 35%, transparent 75%, var(--bg));
+    linear-gradient(var(--site-bg), transparent clamp(120px, 12vw, 180px), transparent 75%, var(--site-bg));
 }
 .field-home #about > p { max-width: 760px; font-size: clamp(19px, 1.7vw, 24px); line-height: 1.75; }
 .field-home #about .about-contact { margin-top: 36px; font-size: 18px; }
@@ -290,7 +296,9 @@ html { scroll-behavior: smooth; }
   .field-home .research-category { padding-right: 0; border-right: 0; }
   .field-home .resource-project > summary { font-size: 28px; }
   .field-home #about { padding-block: 64px 96px; }
-  .field-home #about .field-background::after { background: rgb(3 16 29 / 68%); }
+  .field-home #about .field-background::after {
+    background: linear-gradient(var(--site-bg), transparent clamp(120px, 12vw, 180px)), rgb(3 16 29 / 68%);
+  }
   .field-home .site-footer { gap: 24px; }
   .field-home .footer-brand { grid-row: auto; }
   .field-home .site-footer .copyright { grid-column: 1; text-align: left; }
