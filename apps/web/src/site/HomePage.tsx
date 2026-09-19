@@ -88,6 +88,10 @@ export default function HomePage() {
           <ul className="tool-tags" aria-label="Delphi features"><li>Surrogates</li><li>Monte Carlo</li><li>Model error</li></ul>
           <a className="launch-link" href="/tools/delphi">Launch Delphi <span aria-hidden="true">⟶</span></a>
         </article>
+        <article className="tool-entry upcoming-tool" aria-label="Tool 04: coming soon">
+          <span className="section-index" aria-hidden="true">04</span>
+          <h2>Coming soon</h2>
+        </article>
       </div>
     </section>
     <section id="resources" className="home-section reading-section" tabIndex={-1} aria-labelledby="resources-title">

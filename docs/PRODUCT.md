@@ -18,7 +18,7 @@ The current product has no accounts, database, saved results, live market data, 
 - `/privacy`, `/terms`, `/disclaimer`, and `/notices` contain policy and attribution content.
 - Unknown paths show a not-found view with a home link.
 
-Home says “Explore pricing and market dynamics” and “Visual tools for understanding financial models.” Three translucent navy cards follow the hero directly, without an “Explore the tools” line. Each tool has a description, feature tags, and launch link.
+Home says “Explore pricing and market dynamics” and “Visual tools for understanding financial models.” Four translucent navy cards follow the hero directly, without an “Explore the tools” line. Each available tool has a description, feature tags, and launch link. The fourth card says “Coming soon” and sits beneath Ithaca in the desktop grid; it has no launch link.
 
 Research entries are grouped by tool in collapsible sections. They include source metadata, original summaries, and implementation notes that distinguish published models from project approximations. Stable paper anchors open the containing group. Ithaca also exposes method references within its sidebar.
 
