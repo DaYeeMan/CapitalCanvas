@@ -11,7 +11,7 @@ vi.mock("./IthacaWorkbench", () => {
   return { default: () => <main><h1>Ithaca test workbench</h1></main> };
 });
 vi.mock("./troy/TroyWorkbench", () => ({ default: () => <main><h1>Troy test workbench</h1></main> }));
-vi.mock("./oracle/OracleWorkbench", () => ({ default: () => <main><h1>Oracle test workbench</h1></main> }));
+vi.mock("./delphi/DelphiWorkbench", () => ({ default: () => <main><h1>Delphi test workbench</h1></main> }));
 
 beforeEach(() => {
   window.history.replaceState(null, "", "/");
@@ -41,7 +41,7 @@ describe("CapitalCanvas route boundaries", () => {
     expect(fetch).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: /Launch Ithaca/ })).toHaveAttribute("href", "/tools/ithaca");
     expect(screen.getByRole("link", { name: /Launch Troy/ })).toHaveAttribute("href", "/tools/troy");
-    expect(screen.getByRole("link", { name: /Launch Oracle/ })).toHaveAttribute("href", "/tools/oracle");
+    expect(screen.getByRole("link", { name: /Launch Delphi/ })).toHaveAttribute("href", "/tools/delphi");
   });
 
   it.each(["/privacy", "/terms", "/disclaimer", "/notices"])("renders %s with a publication date and shared home anchors", (path) => {
@@ -101,11 +101,11 @@ describe("CapitalCanvas route boundaries", () => {
     expect(document.title).toBe("Troy — CapitalCanvas");
     expect(fetch).not.toHaveBeenCalled();
   });
-  it("loads Oracle directly on its own route", async () => {
-    window.history.replaceState(null, "", "/tools/oracle");
+  it("loads Delphi directly on its own route", async () => {
+    window.history.replaceState(null, "", "/tools/delphi");
     render(<App />);
-    expect(await screen.findByRole("heading", { name: "Oracle test workbench" })).toBeInTheDocument();
-    expect(document.title).toBe("Oracle — CapitalCanvas");
+    expect(await screen.findByRole("heading", { name: "Delphi test workbench" })).toBeInTheDocument();
+    expect(document.title).toBe("Delphi — CapitalCanvas");
     expect(fetch).not.toHaveBeenCalled();
   });
 });

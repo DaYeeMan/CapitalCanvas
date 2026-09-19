@@ -2,7 +2,7 @@
 
 CapitalCanvas is a personal, noncommercial project for learning quantitative finance through interactive models, transparent assumptions, and visual results.
 
-The tools are **Ithaca**, an option-pricing workbench; **Troy**, an options market-making simulator; and **Oracle**, a surrogate-model comparison laboratory for price and implied-volatility surfaces.
+The tools are **Ithaca**, an option-pricing workbench; **Troy**, an options market-making simulator; and **Delphi**, a surrogate-model comparison laboratory for price and implied-volatility surfaces.
 
 See [Product context](docs/PRODUCT.md) for current capabilities, design conventions, and code locations useful when planning another tool. These notes describe the repository, not current deployment status. Troy runs in the browser without the solver API.
 
@@ -44,4 +44,4 @@ Numerical reference cases and tolerances live in `services/solver-api/tests/` an
 
 [License sources](docs/licenses/README.md) describe third-party attribution maintenance.
 
-Oracle runs at `/tools/oracle` using `/v1/oracle/capabilities`, `/reference`, and `/experiment`. It compares cubic splines, exact Gaussian processes, MLPs, and residual MLPs on a shared seeded Monte Carlo reference. Comparison, data-budget, and extrapolation modes support European calls and puts under constant-volatility GBM. Results remain in memory. See the [Oracle verification record](docs/plans/oracle/implementation-verification.md) for bounds, tests, and the flat-IV/residual-noise limitations.
+Delphi runs at `/tools/delphi` using `/v1/delphi/capabilities`, `/reference`, and `/experiment`. It compares cubic splines, exact Gaussian processes, MLPs, and residual MLPs on a shared seeded Monte Carlo reference. Comparison, data-budget, and extrapolation modes support European calls and puts under constant-volatility GBM. Results remain in memory. See the [Delphi maintenance notes](docs/DELPHI.md) for bounds, tests, and the flat-IV/residual-noise limitations.

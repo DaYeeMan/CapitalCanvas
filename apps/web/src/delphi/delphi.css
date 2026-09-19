@@ -1,0 +1,128 @@
+.delphi-workbench { display: grid; grid-template-columns: 310px minmax(0, 1fr); grid-template-rows: 68px minmax(0, 1fr); height: 100svh; overflow: hidden; background: var(--bg); color: var(--text); font: 13px/1.5 var(--sans); }
+.delphi-workbench button, .delphi-workbench select, .delphi-workbench input { font-family: var(--sans); font-size: 12px; }
+.delphi-workbench button { border: 1px solid var(--line); background: transparent; border-radius: 4px; padding: 8px 12px; cursor: pointer; }
+.delphi-workbench button:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan-soft); }
+.delphi-workbench button:disabled { opacity: .5; cursor: not-allowed; }
+.delphi-workbench input, .delphi-workbench select { color: var(--text); background: #071522; border: 1px solid var(--line); border-radius: 4px; padding: 7px 9px; min-width: 0; }
+.delphi-workbench input[type=checkbox] { accent-color: var(--cyan); width: 16px; height: 16px; margin: 0; flex-shrink: 0; }
+.delphi-workbench h1, .delphi-workbench h2, .delphi-workbench h3 { font-family: var(--serif); color: var(--text); font-weight: 400; }
+.delphi-workbench h2 { font-size: 24px; margin: 0; }
+.delphi-workbench h3 { font-size: 19px; margin: 0 0 16px; }
+.delphi-workbench h4 { font-size: 11px; color: var(--cyan-soft); font-weight: 500; margin: 20px 0 12px; }
+.delphi-topbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--line); background: rgba(3, 16, 29, .96); z-index: 5; }
+.delphi-topbar h1 { font: 38px/1 var(--serif); letter-spacing: -.03em; margin: 0 8px 0 0; }
+.delphi-back { display: grid; place-items: center; height: 44px; width: 44px; flex-shrink: 0; color: var(--text); border-radius: 4px; text-decoration: none; }
+.delphi-back:hover { color: var(--cyan); background: var(--surface); }
+.delphi-actions { margin-left: auto; display: flex; gap: 12px; }
+.delphi-actions button { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; min-width: 112px; padding-inline: 18px; font-size: 14px; font-weight: 650; }
+.delphi-workbench .delphi-primary { background: var(--cyan); border-color: var(--cyan); color: #03101d; font-weight: 650; }
+.delphi-workbench .delphi-primary:hover:not(:disabled) { color: #03101d; background: var(--cyan-soft); }
+.delphi-actions .delphi-mobile-controls { display: none; }
+.delphi-rail { margin: 0; padding: 18px 20px 24px; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; border-right: 1px solid var(--line); }
+.delphi-workbench .delphi-rail-heading { font: 23px/1.2 var(--serif); margin: 0; }
+.delphi-control-section { margin-top: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft); }
+.delphi-control-section > summary { display: flex; align-items: center; justify-content: space-between; list-style: none; cursor: pointer; color: var(--cyan-soft); font: 650 13px/1.2 var(--sans); letter-spacing: .01em; margin-bottom: 12px; }
+.delphi-control-section > summary::-webkit-details-marker { display: none; }
+.delphi-control-section:not([open]) > summary { margin-bottom: 0; }
+.delphi-control-section:not([open]) > summary svg { transform: rotate(-90deg); }
+.delphi-number, .delphi-select { display: grid; grid-template-columns: minmax(0,1fr) 136px; min-height: 38px; gap: 8px; align-items: center; margin: 0; font-size: 13px; color: #dce4e9; }
+.delphi-number-input { display: flex; min-width: 0; }
+.delphi-number-input input { width: 100%; font-variant-numeric: tabular-nums; }
+.delphi-number-input:has(> span) input { border-radius: 4px 0 0 4px; }
+.delphi-number-input > span { display: grid; place-items: center; min-width: 28px; border: 1px solid var(--line); border-left: 0; border-radius: 0 4px 4px 0; font-size: 10px; }
+.delphi-select select { width: 100%; padding-right: 3px; }
+.delphi-target { display: flex; align-items: center; margin-bottom: 10px; gap: 0; font-size: 12px; color: var(--muted); }
+.delphi-target > span { margin-right: auto; }
+.delphi-target button { padding: 7px 9px; font-size: 11px; }
+.delphi-target button + button { border-radius: 0 4px 4px 0; }
+.delphi-target button:first-of-type { border-radius: 4px 0 0 4px; }
+.delphi-target button[aria-pressed=true] { background: var(--cyan); border-color: var(--cyan); color: var(--bg); }
+.delphi-caption { color: var(--muted); font-size: 11px; line-height: 1.65; margin: 10px 0 0; }
+.delphi-disclosure { margin: 10px 0; }
+.delphi-disclosure summary, .delphi-diagnostics summary, .delphi-provenance-details summary { color: var(--muted); cursor: pointer; font-size: 12px; }
+.delphi-disclosure[open] summary { margin-bottom: 12px; color: var(--cyan-soft); }
+.delphi-workbench .delphi-text-button { color: var(--cyan-soft); padding: 0; border: 0; font-size: 11px; background: none; text-decoration: none; }
+.delphi-reference-status { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; font-size: 12px; }
+.delphi-reference-status > span { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.delphi-reference-status > span.ready { background: var(--green); }
+.delphi-checks { display: grid; gap: 10px; padding: 0; margin: 14px 0 0; border: 0; }
+.delphi-checks legend { font-size: 11px; color: var(--muted); padding: 0 0 10px; }
+.delphi-checks label, .delphi-check { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.delphi-main { min-width: 0; overflow: auto; margin: 0; padding: 26px 28px 40px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.delphi-tabs { display: flex; gap: 28px; border-bottom: 1px solid var(--line); }
+.delphi-tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 12px 6px 11px; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.delphi-tabs button[aria-selected=true] { color: var(--cyan-soft); border-bottom-color: var(--cyan); }
+.delphi-status-line { display: flex; justify-content: space-between; gap: 14px; min-height: 26px; padding-top: 7px; color: var(--muted); font-size: 10px; }
+.delphi-status-line strong { font-weight: 400; color: var(--amber); }
+.delphi-title-line { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin: 6px 0 18px; }
+.delphi-title-line h2 { font-size: 31px; letter-spacing: -.02em; }
+.delphi-provenance { font-size: 11px; color: var(--muted); padding: 5px 12px; border: 1px solid var(--line-soft); border-radius: 4px; }
+.delphi-viewbar { display: flex; align-items: center; gap: 16px; justify-content: space-between; margin-bottom: 12px; }
+.delphi-segments { display: flex; }
+.delphi-segments button { border-radius: 0; font-size: 11px; padding: 7px 12px; color: var(--muted); }
+.delphi-segments button + button { border-left: 0; }
+.delphi-segments button:first-child { border-radius: 4px 0 0 4px; }
+.delphi-segments button:last-child { border-radius: 0 4px 4px 0; }
+.delphi-segments button[aria-selected=true] { background: #0b303d; color: var(--cyan-soft); box-shadow: inset 0 0 0 1px var(--cyan); }
+.delphi-model-select { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; }
+.delphi-model-select select { min-width: 160px; }
+.delphi-surface-panel { display: grid; grid-template-columns: minmax(0, 1fr) 220px; border: 1px solid var(--line-soft); border-radius: 4px; background: var(--surface); }
+.delphi-visualization { min-width: 0; }
+.delphi-plot { height: clamp(330px, 40vh, 470px); min-width: 0; overflow: hidden; }
+.delphi-plot-controls { display: flex; justify-content: flex-end; gap: 20px; align-items: center; padding: 8px 20px 14px; }
+.delphi-plot-controls button { font-size: 11px; }
+.delphi-method-details { padding: 18px; border-left: 1px solid var(--line-soft); min-width: 0; }
+.delphi-method-details h3 { font-size: 18px; border-bottom: 1px solid var(--line-soft); padding-bottom: 12px; }
+.delphi-method-details > p:not(.delphi-caption):not(.delphi-notice) { font: 15px/1.55 var(--serif); color: var(--muted); }
+.delphi-equation { overflow-x: auto; font-size: 11px; margin-block: 18px; scrollbar-width: thin; }
+.delphi-equation .katex-display { margin: 0; }
+.delphi-equation .katex { font-size: 1.05em; }
+.delphi-notice { color: var(--amber); font-size: 11px; line-height: 1.7; }
+.delphi-comparison { margin-top: 18px; }
+.delphi-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.delphi-section-heading h2 { font-size: 20px; }
+.delphi-section-heading h2 span { font-size: 15px; }
+.delphi-section-heading > label { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 11px; }
+.delphi-section-heading select { font-size: 11px; padding: 5px; }
+.delphi-table-scroll { overflow-x: auto; border: 1px solid var(--line-soft); border-radius: 4px; }
+.delphi-workbench table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.delphi-workbench th, .delphi-workbench td { text-align: right; padding: 10px 13px; border-bottom: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft); }
+.delphi-workbench th:first-child, .delphi-workbench td:first-child { text-align: left; }
+.delphi-workbench thead th { color: var(--muted); font-weight: 400; background: var(--surface); font-size: 11px; }
+.delphi-workbench tbody th { font-weight: 400; }
+.delphi-workbench tr:last-child > * { border-bottom: 0; }
+.delphi-workbench tr > :last-child { border-right: 0; }
+.delphi-workbench tr.selected { background: #073340; color: var(--cyan-soft); }
+.delphi-workbench th button { border: 0; padding: 0; color: inherit; text-align: left; }
+.delphi-failure { display: block; color: var(--danger); white-space: normal; min-width: 120px; max-width: 220px; font-size: 10px; }
+.delphi-alert { border-left: 2px solid var(--danger); padding: 12px; background: #251b22; margin: 12px 0; font-size: 12px; color: #ffb5a8; }
+.delphi-alert ul { margin: 7px 0 0; padding-left: 18px; }
+.delphi-alert button { margin-left: 8px; }
+.delphi-empty { display: grid; place-items: center; padding: 35px; text-align: center; color: var(--muted); min-height: 250px; }
+.delphi-empty-surface { min-height: 440px; border: 1px solid var(--line-soft); border-radius: 4px; background: var(--surface); }
+.delphi-empty h3 { font-size: 25px; }
+.delphi-empty p { max-width: 430px; }
+.delphi-diagnostics, .delphi-provenance-details { margin-top: 15px; border-top: 1px solid var(--line-soft); padding-top: 12px; color: var(--muted); font-size: 11px; }
+.delphi-provenance-details dd { margin-left: 0; overflow-wrap: anywhere; font-family: monospace; }
+.delphi-provenance-details dt { margin-top: 8px; color: var(--cyan-soft); }
+.delphi-footer { text-align: right; color: var(--muted); font-size: 10px; margin-top: 18px; line-height: 1.7; }
+.delphi-budget { padding-top: 12px; }
+.delphi-budget > h2 { font-size: 30px; }
+.delphi-budget > .delphi-tabs { margin-top: 18px; }
+.delphi-budget-plot { height: 440px; margin-top: 16px; overflow: hidden; }
+.delphi-budget-picks { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.delphi-slice-controls { padding: 0 20px 16px; }
+.delphi-slice-controls > label:first-child { display: grid; gap: 8px; color: var(--muted); font-size: 12px; }
+.delphi-slice-controls input[type=range] { width: 100%; accent-color: var(--cyan); padding: 0; margin: 10px 0; }
+.delphi-slice-controls .delphi-table-scroll { max-height: 260px; }
+.delphi-domain-summary { display: flex; align-items: center; gap: 18px; margin-top: 10px; color: var(--muted); font-size: 12px; }
+.delphi-domain-summary svg { width: 190px; flex-shrink: 0; }
+.delphi-sheet { background: var(--bg); color: var(--text); padding: 0; border: 1px solid var(--line); max-height: 90svh; width: min(440px, 94vw); border-radius: 5px; }
+.delphi-sheet::backdrop { background: #000b; }
+.delphi-sheet > .delphi-rail-heading, .delphi-sheet > .delphi-control-section { margin-inline: 20px; }
+.delphi-sheet-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; position: sticky; top: 0; background: var(--surface); z-index: 2; }
+.delphi-sheet .delphi-sheet-done { margin: 14px; width: calc(100% - 28px); }
+@media (max-width: 1250px) { .delphi-workbench { grid-template-columns: 310px minmax(0, 1fr); } .delphi-surface-panel { grid-template-columns: minmax(0, 1fr); } .delphi-method-details { border-left: 0; border-top: 1px solid var(--line-soft); padding: 16px 20px; } .delphi-method-details > p:not(.delphi-caption) { font: 13px/1.7 var(--sans); } .delphi-equation { margin-block: 16px; } .delphi-viewbar { flex-wrap: wrap; } .delphi-title-line { gap: 8px; } .delphi-section-heading { flex-wrap: wrap; } }
+@media (max-width: 900px) { .delphi-main { padding-inline: 12px; } .delphi-tabs { gap: 10px; } .delphi-section-heading h2 span { display: none; } .delphi-provenance { padding: 3px 7px; } .delphi-title-line h2 { font-size: 26px; } }
+@media (max-width: 700px) { .delphi-workbench { display: block; height: auto; min-height: 100svh; overflow: visible; } .delphi-topbar { min-height: 68px; padding: 10px; gap: 10px; flex-wrap: wrap; } .delphi-topbar h1 { font-size: 32px; } .delphi-back { width: 30px; height: 36px; border: 0; } .delphi-actions { gap: 7px; } .delphi-actions button { min-width: 0; min-height: 36px; padding-inline: 10px; font-size: 11px; } .delphi-actions .delphi-mobile-controls { display: flex; } .delphi-actions .delphi-primary { min-width: 122px; } .delphi-rail { display: none; } .delphi-main { margin: 8px; padding: 0 10px 18px; overflow: visible; } .delphi-tabs { gap: 4px; justify-content: space-between; } .delphi-tabs button { font-size: 11px; padding-inline: 5px; } .delphi-status-line { flex-wrap: wrap; margin-bottom: 12px; } .delphi-provenance { font-size: 10px; } .delphi-segments { width: 100%; } .delphi-segments button { flex: 1; padding-inline: 6px; font-size: 10px; min-height: 36px; } .delphi-model-select { width: 100%; justify-content: space-between; } .delphi-plot { height: 340px; } .delphi-plot-controls { justify-content: space-between; padding-inline: 12px; } .delphi-empty-surface { min-height: 360px; padding: 20px; } .delphi-budget-plot { height: 360px; } .delphi-budget > h2 { font-size: 25px; } .delphi-domain-summary { flex-direction: column; align-items: flex-start; gap: 0; } .delphi-footer { text-align: left; } }
+@media (prefers-reduced-motion: reduce) { .delphi-workbench * { scroll-behavior: auto !important; } }

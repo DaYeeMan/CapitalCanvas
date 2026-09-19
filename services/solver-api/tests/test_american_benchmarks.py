@@ -9,7 +9,7 @@ AM_PUT_CRR_EXTRAPOLATED = 2.3195743586
 
 
 def crr_american_put(steps: int) -> float:
-    """Independent test oracle; production solvers must not import this helper."""
+    """Independent test benchmark; production solvers must not import this helper."""
     spot = 40.0
     strike = 40.0
     maturity = 1.0

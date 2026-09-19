@@ -6,7 +6,7 @@ CapitalCanvas helps people understand quantitative finance through visualization
 
 The site name is CapitalCanvas; the displayed wordmark is Capital Canvas. The public About attribution is Emmanuel Zhang, with contact `dymteam23@gmail.com`.
 
-Three tools exist: Ithaca, Troy, and Oracle. Oracle occupies the third home card with a launch link and surrogate-model features.
+Three tools exist: Ithaca, Troy, and Delphi. Delphi occupies the third home card with a launch link and surrogate-model features.
 
 The current product has no accounts, database, saved results, live market data, or trading execution. These describe the existing product rather than restrictions on future planning.
 
@@ -14,7 +14,7 @@ The current product has no accounts, database, saved results, live market data, 
 
 - `/` contains Home, Research and methods, About, and the footer in one scrolling document.
 - `/#home`, `/#resources`, and `/#about` target sections of that document. Resources and About are not separate pages.
-- `/tools/ithaca`, `/tools/troy`, and `/tools/oracle` open independent workbenches with a return link to home.
+- `/tools/ithaca`, `/tools/troy`, and `/tools/delphi` open independent workbenches with a return link to home.
 - `/privacy`, `/terms`, `/disclaimer`, and `/notices` contain policy and attribution content.
 - Unknown paths show a not-found view with a home link.
 
@@ -24,7 +24,7 @@ Research entries are grouped by tool in collapsible sections. They include sourc
 
 The Field homepage uses a separate decorative surface behind Home and About. It is a locally hosted 10-second H.264 loop with a WebP poster, not real-time 3D or a baked page image. The About surface is horizontally mirrored to distinguish it from Home. There is no on-page motion button. Reduced-motion and data-saving preferences disable video; hidden/offscreen media pauses, and video is deferred until its section approaches the viewport. Failed or blocked playback leaves the poster visible. Text and controls remain ordinary HTML above the media.
 
-Resources and the footer use solid navy. All 10 Ithaca, 7 Troy, and 3 Oracle entries remain in native disclosures, collapsed initially, with two-column research rows that stack on mobile. About retains the full project explanation and contact details. Policy and tool routes have no decorative media. Media source and reproduction details live in [Field asset documentation](design/field/ASSET.md).
+Resources and the footer use solid navy. All 10 Ithaca, 7 Troy, and 6 Delphi entries remain in native disclosures, collapsed initially, with two-column research rows that stack on mobile. About retains the full project explanation and contact details. Policy and tool routes have no decorative media. Media source and reproduction details live in [Field asset documentation](design/field/ASSET.md).
 
 ## Ithaca: option pricing
 
@@ -60,15 +60,15 @@ Useful simulation conventions:
 - Heston uses approximate variance discretization; Monte Carlo pricing has sampling error. Neither implies calibration to observed markets.
 - Computation is bounded. Invalid configurations produce errors, and previous completed results retain their model labels during recalculation.
 
-## Oracle: surrogate modeling
+## Delphi: surrogate modeling
 
-Oracle compares cubic splines, exact RBF Gaussian processes, two-hidden-layer tanh MLPs, and residual MLPs against one seeded Monte Carlo reference. It supports European calls and puts under risk-neutral constant-volatility GBM, with price and implied-volatility outputs.
+Delphi compares cubic splines, exact RBF Gaussian processes, two-hidden-layer tanh MLPs, and residual MLPs against one seeded Monte Carlo reference. It supports European calls and puts under risk-neutral constant-volatility GBM, with price and implied-volatility outputs.
 
 Model comparison, sequential data-budget sweeps, and extrapolation use the same surface/table shell. Every selected model sees the same training knots at each budget. Full, unseen, inside, and outside errors are distinct; fit and inference timings remain separate. Invalid IV nodes are masked, and invalid training knots reject the shared experiment. The UI distinguishes MC standard error from GP latent uncertainty, provides numeric slice tables, and retains completed results during edits or cancellation.
 
 Black–Scholes is the analytical expectation of this GBM reference, so residual learning primarily fits Monte Carlo noise. Theoretical IV is flat. Neither neural convergence nor improving accuracy with larger budgets is guaranteed. These limitations appear in the workbench and research explanations.
 
-Oracle uses bounded stateless `/v1/oracle` endpoints and the same execution capacity as Ithaca. References and result summaries are cached only in browser memory; financial/domain/seed changes require a matching new reference. Run is explicit. Mobile setup uses a native modal dialog.
+Delphi uses bounded stateless `/v1/delphi` endpoints and the same execution capacity as Ithaca. References and result summaries are cached only in browser memory; financial/domain/seed changes require a matching new reference. Run is explicit. Mobile setup uses a native modal dialog.
 
 ## Shared design and behavior
 
@@ -88,14 +88,14 @@ Preserve keyboard access, visible focus, labelled controls, chart text alternati
 | `apps/web/src/components/` | Existing numerical controls, chart and explanation components |
 | `apps/web/src/lib/` | Ithaca API client and input validation |
 | `apps/web/src/troy/` | Troy interface, pure simulation engine, Worker, and tests |
-| `apps/web/src/oracle/` | Oracle workbench, typed API client, guarded experiment state, and tests |
-| `services/solver-api/app/oracle/` | Oracle reference, sampling, surrogate fitting, evaluation, and endpoints |
+| `apps/web/src/delphi/` | Delphi workbench, typed API client, guarded experiment state, and tests |
+| `services/solver-api/app/delphi/` | Delphi reference, sampling, surrogate fitting, evaluation, and endpoints |
 | `services/solver-api/` | FastAPI solver and numerical regression tests |
 | `scripts/` | Smoke checks and license notice generation |
 | `vercel.json` | Combined web/API service routing |
 
 The frontend uses React, TypeScript, and Vite, with Plotly charts and KaTeX equations. The existing deployment configuration combines the frontend and solver API in one Vercel project. `/health` and `/v1/*` take precedence over the frontend SPA fallback. Browser API requests are same-origin by default.
 
-Ithaca and Oracle transmit calculation inputs; Oracle also sends its reusable numerical reference to the solver. Troy computes locally. Application request logs contain request metadata rather than calculation bodies. Hosting-provider practices are separate from application behavior, so privacy copy must not claim that the entire site collects no data or that nothing leaves the browser.
+Ithaca and Delphi transmit calculation inputs; Delphi also sends its reusable numerical reference to the solver. Troy computes locally. Application request logs contain request metadata rather than calculation bodies. Hosting-provider practices are separate from application behavior, so privacy copy must not claim that the entire site collects no data or that nothing leaves the browser.
 
 Current source, configuration, and tests are the authority for implementation details. These notes intentionally omit historical release status, audit snapshots, and completed task lists.

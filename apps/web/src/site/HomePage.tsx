@@ -4,7 +4,7 @@ import type { HomeSection } from "./SiteNavigation";
 import { ResearchContent, AsianLatticeContent } from "./ResearchContent";
 import { research } from "./research";
 import { troyResearch } from "./troyResearch";
-import { oracleResearch } from "./oracleResearch";
+import { delphiResearch } from "./delphiResearch";
 import { contactEmail, contactHref } from "./siteInfo";
 import { FieldBackground } from "./FieldBackground";
 import { useFieldMotionRestricted } from "./useFieldMotionRestricted";
@@ -83,10 +83,10 @@ export default function HomePage() {
           <a className="launch-link" href="/tools/troy">Launch Troy <span aria-hidden="true">⟶</span></a>
         </article>
         <article className="tool-entry">
-          <span className="section-index" aria-hidden="true">03</span><h2>Oracle</h2>
+          <span className="section-index" aria-hidden="true">03</span><h2>Delphi</h2>
           <p>Compare surrogate models across price and implied-volatility surfaces.</p>
-          <ul className="tool-tags" aria-label="Oracle features"><li>Surrogates</li><li>Monte Carlo</li><li>Model error</li></ul>
-          <a className="launch-link" href="/tools/oracle">Launch Oracle <span aria-hidden="true">⟶</span></a>
+          <ul className="tool-tags" aria-label="Delphi features"><li>Surrogates</li><li>Monte Carlo</li><li>Model error</li></ul>
+          <a className="launch-link" href="/tools/delphi">Launch Delphi <span aria-hidden="true">⟶</span></a>
         </article>
       </div>
     </section>
@@ -129,9 +129,9 @@ export default function HomePage() {
         </div>
       </details>
       <details className="resource-project">
-        <summary>Oracle</summary>
-        <div id="oracle-methods" className="research-list" tabIndex={-1}>
-          {oracleResearch.map((entry, index) => <article id={entry.id} className="research-entry" key={entry.id} tabIndex={-1} aria-labelledby={`${entry.id}-title`}>
+        <summary>Delphi</summary>
+        <div id="delphi-methods" className="research-list" tabIndex={-1}>
+          {delphiResearch.map((entry, index) => <article id={entry.id} className="research-entry" key={entry.id} tabIndex={-1} aria-labelledby={`${entry.id}-title`}>
             <div className="research-category"><span className="section-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><span>{entry.method}</span></div>
             <div className="research-body"><ResearchContent entry={entry} headingId={`${entry.id}-title`} /></div>
           </article>)}

@@ -15,7 +15,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.execution import ExecutionControl, ExecutionStopped, bind_execution, reset_execution
 from app.runner import run_bounded
-from app.oracle.router import router as oracle_router
+from app.delphi.router import router as delphi_router
 from app.models import MethodResult, SolveRequest, SolveResponse
 from app.solvers.black_scholes import MarketInputs, solve_surface
 from app.solvers.american import (
@@ -66,7 +66,7 @@ if not logging.getLogger().handlers:
 app = FastAPI(title="Ithaca Solver API", version="0.6.0")
 app.state.solve_slots = asyncio.Semaphore(MAX_CONCURRENT_SOLVES)
 app.state.request_timeout_seconds = REQUEST_TIMEOUT_SECONDS
-app.include_router(oracle_router)
+app.include_router(delphi_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins(),
