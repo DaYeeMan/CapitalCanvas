@@ -1,0 +1,14 @@
+import { labels, numberText, type ExperimentResult, type Method, type Region } from "./types";
+
+export function OracleComparison({ result, active, onSelect, region, onRegion }: { result: ExperimentResult; active: Method; onSelect: (method: Method) => void; region: Region; onRegion: (region: Region) => void }) {
+  const iv = result.target.kind === "implied_volatility", factor = iv ? 100 : 1;
+  const partial = result.methods.some(model => model.status === "failed");
+  return <section className="oracle-comparison" aria-labelledby="oracle-comparison-title">
+    <div className="oracle-section-heading"><h2 id="oracle-comparison-title">Model comparison <span>on shared reference grid</span></h2><label>Evaluate <select aria-label="Evaluation region" value={region} onChange={event => onRegion(event.target.value as Region)}><option value="full">Full valid grid</option><option value="unseen">Unseen grid points</option><option value="inside">Inside training region</option><option value="outside">Outside training region</option><option value="unseen_inside">Unseen · inside</option><option value="unseen_outside">Unseen · outside</option></select></label></div>
+    <div className="oracle-table-scroll" tabIndex={0} role="region" aria-label="Model accuracy and runtime table"><table><thead><tr><th scope="col">Method</th><th scope="col">Samples</th><th scope="col">MAE {iv ? '(vol pts)' : '($)'}</th><th scope="col">RMSE {iv ? '(vol pts)' : '($)'}</th><th scope="col">Max error {iv ? '(vol pts)' : '($)'}</th><th scope="col">Fit (ms)</th><th scope="col">Inference (ms)</th></tr></thead><tbody>{result.methods.map(model => {
+      const metrics = model.evaluation?.[region];
+      return <tr key={model.method} className={active === model.method ? "selected" : ""}><th scope="row"><button aria-pressed={active === model.method} onClick={() => onSelect(model.method)}>{labels[model.method]}</button>{model.status === "failed" ? <small className="oracle-failure">Failed: {model.error?.message}</small> : null}</th><td>{model.training_count}</td><td>{numberText(metrics?.mae == null ? null : metrics.mae * factor)}</td><td>{numberText(metrics?.rmse == null ? null : metrics.rmse * factor)}</td><td>{numberText(metrics?.max_abs_error == null ? null : metrics.max_abs_error * factor)}</td><td>{numberText(model.timing?.fit_ms, 2)}</td><td>{numberText(model.timing?.inference_ms, 2)}</td></tr>;
+    })}</tbody></table></div>
+    <p className="oracle-caption">{result.methods.find(model => model.evaluation)?.evaluation?.[region].count ?? 0} evaluation nodes. {region === "full" ? "Full-grid metrics include training nodes." : region.startsWith("unseen") ? "Training nodes excluded." : "Boundary nodes belong to the inside region."} {partial ? "Partial comparison: failed methods have no metrics." : "Single-run timings; GP inference includes uncertainty."} Accuracy and runtime are separate.</p>
+  </section>;
+}

@@ -12,17 +12,24 @@ const plotConfig = {
   modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "lasso2d", "select2d"] as never[],
 };
 
-export function ScientificPlot({ data, layout, label }: { data: Data[]; layout: Partial<Layout>; label: string }) {
+export function ScientificPlot({ data, layout, label, preserveCamera = false }: { data: Data[]; layout: Partial<Layout>; label: string; preserveCamera?: boolean }) {
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const node = container.current;
     if (!node) return;
+    let disposed = false;
     const observer = new ResizeObserver(() => {
-      if (node.classList.contains("js-plotly-plot")) void Plotly.Plots.resize(node);
+      if (node.classList.contains("js-plotly-plot") && node.getClientRects().length) {
+        // Plotly defers resizing; the route may unmount before that promise settles.
+        void Plotly.Plots.resize(node).catch((error: unknown) => {
+          if (!disposed && node.isConnected && node.getClientRects().length) console.error("Plot resize failed", error);
+        });
+      }
     });
     observer.observe(node);
     return () => {
+      disposed = true;
       observer.disconnect();
       Plotly.purge(node);
     };
@@ -32,10 +39,14 @@ export function ScientificPlot({ data, layout, label }: { data: Data[]; layout: 
     const node = container.current;
     if (!node) return;
     const plotLayout = JSON.parse(JSON.stringify(layout)) as Partial<Layout>;
+    const previous = (node as HTMLDivElement & { layout?: Partial<Layout> }).layout;
+    if (preserveCamera && plotLayout.scene && previous?.scene?.camera && previous.uirevision === plotLayout.uirevision) {
+      plotLayout.scene.camera = JSON.parse(JSON.stringify(previous.scene.camera));
+    }
     // Resolve the shared CSS font stack for Plotly SVG and WebGL labels.
     plotLayout.font = { ...plotLayout.font, family: getComputedStyle(node).fontFamily };
     void Plotly.react(node, data, plotLayout, plotConfig);
-  }, [data, layout]);
+  }, [data, layout, preserveCamera]);
 
   return <div ref={container} role="img" aria-label={label} style={{ width: "100%", height: "100%" }} />;
 }

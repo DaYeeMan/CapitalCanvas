@@ -2,7 +2,7 @@
 
 ## Working rules
 
-The user authorized phase 1 on 2026-09-18. Milestone 1 is complete, with the necessary milestone 0 feasibility measurements recorded in [implementation-verification.md](implementation-verification.md). The following milestones remain the implementation sequence; this status does not describe the complete product as released.
+The user authorized phase 1 on 2026-09-18. Milestone 1 is complete, with the necessary milestone 0 feasibility measurements recorded in [implementation-verification.md](implementation-verification.md). The user subsequently authorized continuing until finished. Milestones 2–6 are now complete in the local checkout; release evidence is recorded in the same verification file. Deployment remains separate.
 
 At implementation start, read applicable repository instructions and recheck changed integration points. Keep each milestone runnable, with a narrow diff and tests for its actual behavior. Do not introduce placeholder numerical results in release UI. Do not begin with a broad component or service rewrite.
 

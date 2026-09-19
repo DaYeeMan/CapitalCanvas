@@ -61,7 +61,7 @@ If the intended product instead requires a meaningful stochastic-volatility smil
 - Body-size limits for the largest legitimate reference/result envelope.
 - Actual worst-case native-call duration and cancellation target.
 
-Phase 1 resolved the foundation defaults, IV thresholds, numerical normalization, and bounded-reference feasibility. Its benchmark-only GP/MLP probes support the planned dependency choice; final production adapter validation and HTTP body enforcement remain later gates. See [implementation-verification.md](implementation-verification.md). These gates do not authorize silently expanding scope.
+Phase 1 resolved the foundation defaults, IV thresholds, numerical normalization, and bounded-reference feasibility. Its benchmark-only GP/MLP probes support the planned dependency choice; final production adapter validation and HTTP body enforcement were subsequently completed in milestones 2–6. See [implementation-verification.md](implementation-verification.md). These gates do not authorize silently expanding scope.
 
 ## Primary numerical references
 

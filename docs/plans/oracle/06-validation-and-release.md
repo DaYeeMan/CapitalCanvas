@@ -135,17 +135,17 @@ Set-Location services/solver-api
 
 If the project virtual environment does not exist, create/use the documented project Python environment during implementation. Record the actual interpreter and commands. Do not report skipped checks as passing. Phase 1 found that invoking Python from the repository root could import an older installed `app` instead of the checkout; the service-directory command avoids that ambiguity. Extend the existing smoke-test script only where Oracle's route/API flow requires it.
 
-## Release checklist
+## Release checklist — completed locally, 2026-09-18
 
-- [ ] All AC1–AC13 evidence is recorded.
-- [ ] All four methods and both targets work with actual computed results.
-- [ ] Model comparison, budget sweeps, and extrapolation are complete.
-- [ ] Reference, sample, and configuration identities remain consistent.
-- [ ] MC sampling error, GP uncertainty, and IV conditioning are distinguished.
-- [ ] Limits, cancellation, stale results, partial failure, and unavailable-service behavior pass.
-- [ ] Desktop, mobile, keyboard, zoom, and chart alternatives pass.
-- [ ] Selected design is reflected in the rendered workbench.
-- [ ] Frontend/Python regression checks pass and failures, if any, are reported accurately.
-- [ ] README, product context, research copy, and any changed notices match delivered behavior.
-- [ ] Known GBM flat-IV and residual-noise limitations are visible in the product.
-- [ ] Deployment, if requested later, uses the normal explicit deployment workflow.
+- [x] All AC1–AC13 evidence is recorded.
+- [x] All four methods and both targets work with actual computed results.
+- [x] Model comparison, budget sweeps, and extrapolation are complete.
+- [x] Reference, sample, and configuration identities remain consistent.
+- [x] MC sampling error, GP uncertainty, and IV conditioning are distinguished.
+- [x] Limits, cancellation, stale results, partial failure, and unavailable-service behavior pass.
+- [x] Desktop, mobile, keyboard, 200%-equivalent viewport reflow, and chart alternatives pass. Native browser zoom and assistive-technology certification are not claimed.
+- [x] Selected design is reflected in the rendered workbench.
+- [x] Frontend/Python regression checks pass and failures, if any, are reported accurately.
+- [x] README, product context, research copy, and any changed notices match delivered behavior.
+- [x] Known GBM flat-IV and residual-noise limitations are visible in the product.
+- [x] Deployment, if requested later, uses the normal explicit deployment workflow.

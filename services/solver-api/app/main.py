@@ -5,16 +5,17 @@ import json
 import logging
 import os
 import re
-from time import monotonic, perf_counter
+from time import perf_counter
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.concurrency import run_in_threadpool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.execution import ExecutionControl, ExecutionStopped, bind_execution, reset_execution
+from app.runner import run_bounded
+from app.oracle.router import router as oracle_router
 from app.models import MethodResult, SolveRequest, SolveResponse
 from app.solvers.black_scholes import MarketInputs, solve_surface
 from app.solvers.american import (
@@ -64,6 +65,8 @@ if not logging.getLogger().handlers:
 
 app = FastAPI(title="Ithaca Solver API", version="0.6.0")
 app.state.solve_slots = asyncio.Semaphore(MAX_CONCURRENT_SOLVES)
+app.state.request_timeout_seconds = REQUEST_TIMEOUT_SECONDS
+app.include_router(oracle_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins(),
@@ -170,31 +173,7 @@ def solve_sync(request: SolveRequest, control: ExecutionControl) -> SolveRespons
 
 @app.post("/v1/solve", response_model=SolveResponse)
 async def solve(http_request: Request, request: SolveRequest) -> SolveResponse:
-    try:
-        await asyncio.wait_for(app.state.solve_slots.acquire(), timeout=0.05)
-    except TimeoutError as error:
-        raise HTTPException(status_code=503, detail={"code": "solver_busy", "message": "All solver slots are busy. Retry shortly."}) from error
-
-    control = ExecutionControl(deadline=monotonic() + REQUEST_TIMEOUT_SECONDS)
-    task = asyncio.create_task(run_in_threadpool(solve_sync, request, control))
-    try:
-        while not task.done():
-            if await http_request.is_disconnected():
-                control.stop("client disconnected")
-                raise HTTPException(status_code=499, detail={"code": "client_disconnected", "message": "Client disconnected; calculation cancelled."})
-            if monotonic() >= control.deadline:
-                control.stop("deadline exceeded")
-                try:
-                    await asyncio.wait_for(asyncio.shield(task), timeout=0.25)
-                except (TimeoutError, ExecutionStopped):
-                    pass
-                raise ExecutionStopped("calculation exceeded the server deadline")
-            await asyncio.sleep(0.025)
-        return await task
-    finally:
-        if not task.done():
-            task.add_done_callback(lambda completed: completed.exception() if not completed.cancelled() else None)
-        app.state.solve_slots.release()
+    return await run_bounded(http_request, lambda control: solve_sync(request, control), REQUEST_TIMEOUT_SECONDS)
 
 
 def _solve(request: SolveRequest) -> SolveResponse:

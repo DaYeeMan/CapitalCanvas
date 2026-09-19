@@ -226,7 +226,7 @@ Check execution at MC chunks, IV batches, each method boundary, GP prediction ba
 
 Report only stages the client actually knows: Generating reference, Fitting models, Completed budget 2 of 4. Synchronous HTTP does not provide live per-epoch progress. No WebSocket, SSE, queue, or artificial percentage is required.
 
-## Proposed operational limits
+## Operational limits
 
 | Resource | Initial proposed cap / target |
 | --- | --- |
@@ -237,14 +237,14 @@ Report only stages the client actually knows: Generating reference, Fitting mode
 | MLP | At most 2 hidden layers, width 64, 1,000 epochs; finite bounded learning rate and regularization |
 | GP | At most 256 rows, bounded kernel scales/noise, bounded jitter retries |
 | Budget sweep | At most 4 budgets, one request at a time |
-| Request body | Proposed 2MiB limit, enforced before materializing unbounded body/arrays |
+| Request body | 2MiB limit, enforced before materializing unbounded body/arrays |
 | Temporary numerical arrays | Target below 64MiB per operation; benchmark peak total request memory separately |
 | Deadline | Existing server setting, 30 seconds by default; every request obeys it |
 | Client timeout | Longer than server deadline with transport margin; existing default is 40 seconds |
 | Typical full comparison | Target under 10 seconds after reference reuse on documented test hardware |
 | Cancellation | Target under 1 second cooperative stop in ordinary work; measure worst bounded native call |
 
-These are planning targets, not measured claims. Cap combined GP/MLP work as well as individual dimensions. Estimate GP work from `n³ + grid_nodes × n²` and MLP work from epochs, rows, and layer widths. Calibrate thresholds using milestone 0 and publish the final values through capabilities. Reject infeasible work before allocation; never silently lower accuracy settings.
+Implementation verification fixed the request-body limit at 2MiB, reference work at 120 million operations, and combined fit work at 9 billion estimated scalar operations. The memory entry is a target; measured tracked allocations and local timings are recorded in implementation-verification.md. Cap combined GP/MLP work as well as individual dimensions. Estimate GP work from `n³ + grid_nodes × n²` and MLP work from epochs, rows, and layer widths. Calibrate thresholds using milestone 0 and publish the final values through capabilities. Reject infeasible work before allocation; never silently lower accuracy settings.
 
 Use Oracle-specific financial-domain validation tighter than Ithaca's broad generic maxima if necessary to guarantee finite discounted factors and bounded IV conditioning. Explicitly validate derived exponent ranges as well as individual rates and maturities. Exact allowed ranges and thresholds are fixed in milestone 0 fixtures, documented, and exposed through capabilities.
 

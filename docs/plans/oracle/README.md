@@ -1,6 +1,6 @@
 # Oracle implementation plan
 
-Status: phase 1 (milestone 1, numerical foundations) is implemented and verified. The prerequisite feasibility probes are recorded. HTTP integration, production surrogate adapters, and UI remain later milestones.
+Status: milestones 0–6 are implemented and locally verified. All four production surrogates, both targets, three experiment modes, API integration, and responsive UI are complete. No production deployment has been performed.
 
 Prepared: 2026-09-18.
 
@@ -8,7 +8,7 @@ Prepared: 2026-09-18.
 
 The user selected the first generated design: [model comparison workbench](../../design/oracle/model-comparison.png). It is the visual authority for Oracle: one experiment rail, one large scientific surface, a contextual method explanation, and a compact comparison table. The separate data-budget image is exploratory material, not a second approved layout. Budget and extrapolation experiments will use the selected workbench shell.
 
-The source brief is `C:\Users\enson\Downloads\ORACLE_PLAN.txt`. Its requirements are incorporated below as product requirements. The user subsequently authorized phase 1 implementation on 2026-09-18; that phase is now complete. The source document itself is not authority to expand implementation scope.
+The source brief is `C:\Users\enson\Downloads\ORACLE_PLAN.txt`. Its requirements are incorporated below as product requirements. The user subsequently authorized phase 1 implementation on 2026-09-18; that phase is now complete. The user then authorized continuing implementation until finished; milestones 2–6 followed that request. The source document itself is not authority to expand implementation scope.
 
 ## Reading order
 
@@ -21,7 +21,7 @@ The source brief is `C:\Users\enson\Downloads\ORACLE_PLAN.txt`. Its requirements
 | [05-delivery-plan.md](05-delivery-plan.md) | Ordered implementation milestones and completion gates |
 | [06-validation-and-release.md](06-validation-and-release.md) | Numerical, API, UI, integration, performance, and regression verification |
 | [07-decisions-and-risks.md](07-decisions-and-risks.md) | Decisions, assumptions, risks, and evidence needed before implementation choices are finalized |
-| [implementation-verification.md](implementation-verification.md) | Phase 1 delivery, actual verification, measured feasibility, and remaining milestones |
+| [implementation-verification.md](implementation-verification.md) | Completed release scope, regression/browser evidence, measured limits, and historical phase 1 evidence |
 | [phase-1-measurements.json](phase-1-measurements.json) | Machine-readable local benchmark observations |
 
 ## Implementation sequence

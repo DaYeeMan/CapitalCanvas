@@ -4,6 +4,7 @@ import type { HomeSection } from "./SiteNavigation";
 import { ResearchContent, AsianLatticeContent } from "./ResearchContent";
 import { research } from "./research";
 import { troyResearch } from "./troyResearch";
+import { oracleResearch } from "./oracleResearch";
 import { contactEmail, contactHref } from "./siteInfo";
 import { FieldBackground } from "./FieldBackground";
 import { useFieldMotionRestricted } from "./useFieldMotionRestricted";
@@ -81,9 +82,12 @@ export default function HomePage() {
           <ul className="tool-tags" aria-label="Troy features"><li>Market Making</li><li>Dynamics</li><li>Model Risk</li></ul>
           <a className="launch-link" href="/tools/troy">Launch Troy <span aria-hidden="true">⟶</span></a>
         </article>
-        {["03"].map((number) => <article className="tool-entry upcoming-tool" key={number} aria-label={`Tool ${number}: coming soon`}>
-          <span className="section-index" aria-hidden="true">{number}</span><h2>Coming soon</h2>
-        </article>)}
+        <article className="tool-entry">
+          <span className="section-index" aria-hidden="true">03</span><h2>Oracle</h2>
+          <p>Compare surrogate models across price and implied-volatility surfaces.</p>
+          <ul className="tool-tags" aria-label="Oracle features"><li>Surrogates</li><li>Monte Carlo</li><li>Model error</li></ul>
+          <a className="launch-link" href="/tools/oracle">Launch Oracle <span aria-hidden="true">⟶</span></a>
+        </article>
       </div>
     </section>
     <section id="resources" className="home-section reading-section" tabIndex={-1} aria-labelledby="resources-title">
@@ -122,6 +126,15 @@ export default function HomePage() {
               <details><summary>Implementation</summary><p>Inventory shifts quotes, and Poisson arrival intensity decreases with unfavorable quote distance from the maker’s posted fair value. The engine clips fills at inventory limits and optionally hedges model delta. P&L includes option and hedge positions minus transaction costs; cash financing is excluded. This is a project simulation policy, not a calibrated order-flow model or a published optimal quoting strategy.</p></details>
             </div>
           </article>
+        </div>
+      </details>
+      <details className="resource-project">
+        <summary>Oracle</summary>
+        <div id="oracle-methods" className="research-list" tabIndex={-1}>
+          {oracleResearch.map((entry, index) => <article id={entry.id} className="research-entry" key={entry.id} tabIndex={-1} aria-labelledby={`${entry.id}-title`}>
+            <div className="research-category"><span className="section-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><span>{entry.method}</span></div>
+            <div className="research-body"><ResearchContent entry={entry} headingId={`${entry.id}-title`} /></div>
+          </article>)}
         </div>
       </details>
     </section>

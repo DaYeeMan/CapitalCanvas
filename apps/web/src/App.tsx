@@ -5,10 +5,12 @@ import "./site/site.css";
 
 const IthacaWorkbench = lazy(() => import("./IthacaWorkbench"));
 const TroyWorkbench = lazy(() => import("./troy/TroyWorkbench"));
+const OracleWorkbench = lazy(() => import("./oracle/OracleWorkbench"));
 const titles: Record<string, string> = {
   "/": "CapitalCanvas — Quantitative tools",
   "/tools/ithaca": "Ithaca — CapitalCanvas",
   "/tools/troy": "Troy — CapitalCanvas",
+  "/tools/oracle": "Oracle — CapitalCanvas",
   "/notices": "Attributions — CapitalCanvas",
   "/privacy": "Privacy — CapitalCanvas",
   "/terms": "Terms of use — CapitalCanvas",
@@ -34,12 +36,14 @@ export default function App() {
     description?.setAttribute("content", path === "/tools/ithaca"
       ? "Explore theoretical option prices with Ithaca, CapitalCanvas's interactive quantitative workbench."
       : path === "/tools/troy" ? "Explore option market making, model misspecification, quoting, and inventory risk with Troy."
+      : path === "/tools/oracle" ? "Compare surrogate models on Monte Carlo price and implied-volatility surfaces with Oracle."
       : "CapitalCanvas: educational quantitative tools, transparent assumptions, and research behind the methods.");
     let robots = document.querySelector('meta[name="robots"]');
     if (!robots) { robots = document.createElement("meta"); robots.setAttribute("name", "robots"); document.head.appendChild(robots); }
-    robots.setAttribute("content", path === "/" || path === "/tools/ithaca" || path === "/tools/troy" ? "index,follow" : "noindex,follow");
+    robots.setAttribute("content", path === "/" || path === "/tools/ithaca" || path === "/tools/troy" || path === "/tools/oracle" ? "index,follow" : "noindex,follow");
   }, [path]);
 
+  if (path === "/tools/oracle") return <WorkbenchBoundary><Suspense fallback={<main className="route-message" aria-busy="true"><p role="status">Loading Oracle…</p><a href="/#home">Return to CapitalCanvas</a></main>}><OracleWorkbench /></Suspense></WorkbenchBoundary>;
   if (path === "/tools/troy") return <WorkbenchBoundary>
     <Suspense fallback={<main className="route-message" aria-busy="true"><p role="status">Loading Troy…</p><a href="/#home">Return to CapitalCanvas</a></main>}>
       <TroyWorkbench />

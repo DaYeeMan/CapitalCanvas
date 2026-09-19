@@ -2,7 +2,84 @@
 
 Date: 2026-09-18.
 
-## Status and scope
+## Completed release scope — milestones 2–6
+
+The user subsequently requested continued implementation until finished. All planned local implementation milestones are complete. Oracle is available at `/tools/oracle`, linked from the third home card. No commit, push, or production deployment was performed during this implementation turn.
+
+Delivered: stateless capabilities/reference/experiment endpoints; shared bounded execution with Ithaca; production cubic spline, exact RBF GP, NumPy MLP, and residual MLP; price and IV targets; sequential budget sweeps; extrapolation and regional metrics; real surfaces, GP uncertainty, training overlays, numeric slices, method explanations, reference reuse, cancellation, stale-result protection, mobile controls, and research integration. No new runtime dependency was needed.
+
+### Final checks
+
+| Check | Result |
+| --- | --- |
+| `npm run test:web` | 76 tests passed in 9 files |
+| `npm run lint:web` | Passed |
+| `npm run build:web` | Passed; Oracle remains a separate lazy chunk, approximately 43 kB before gzip |
+| Service-directory `.\.venv\Scripts\python.exe -m unittest discover -s tests` | 113 tests passed |
+| `git diff --check` | Passed |
+| Real Edge/Playwright browser-to-API flow | Passed; 12 experiment responses captured in the comprehensive run; zero uncaught page errors |
+| Additional camera/keyboard/Ithaca/Troy browser smoke | Passed; zero console errors |
+
+Vite still warns about the existing shared Plotly bundle size. Python emits the existing Starlette/httpx deprecation warning. Neither prevents the checks from passing. Browser verification used bundled Playwright with installed Edge because the frontend skill's browser plugin was unavailable and bundled Chromium was not installed. No browser dependency was added to the repository.
+
+### Acceptance evidence
+
+| Criteria | Evidence |
+| --- | --- |
+| AC1 | Home launch/route/title tests; real direct URL and refresh; research hash opens Oracle group; screenshot comparison |
+| AC2 | Deterministic numerical fixtures; browser counters show one reference after a surrogate-only edit, new reference after seed/domain changes; hook cache tests |
+| AC3 | Shared immutable sample object, method-order independence, unique tensor indices tested in Python |
+| AC4 | Independent GP dense solve and bounded jitter; spline knots/extrapolation; MLP finite differences, Adam update, learning, cancellation; all four methods completed in real API/browser flows; failed rows show no invented metrics |
+| AC5 | Numerical IV masks/roundtrips; browser IV preset, volatility-point table labels, forced invalid sampled knot error; no silent imputation |
+| AC6 | Hand-calculated metric/mask tests, unseen exclusion and empty-region nulls; browser regional selector |
+| AC7 | Visible WebGL traces, shared scales, overlays, slider and accessible slice table; camera survives compatible view changes, resets with domain revision; changing surface view exits the slice |
+| AC8 | Four real sequential budgets with no additional reference request; distinct accuracy/fit/inference curves; inspect completed budget; real cancellation retains completed budget; delayed-transport hook test proves no late append |
+| AC9 | Real extrapolation flow, inward-snapped training rectangle, outside-region metrics, explicit extrapolation warnings |
+| AC10 | Hook tests for late success/error despite ignored abort, edit, reset, unmount, cancel, result identity mismatch, all-model failure; browser cancel/service retry/stale labels |
+| AC11 | Body/work/dimension limits; chunked oversized body test; 503 capacity, 504 deadline; slot retained until disconnected or timed-out worker actually finishes; maximum legitimate request measured below byte cap |
+| AC12 | Keyboard tab arrows and disabled-tab skipping; mobile modal Escape/focus restoration; labelled controls/live status; numeric chart alternatives; 390px, 768px effective viewport (200%-equivalent reflow), 1440px and 1536px desktop checks |
+| AC13 | Full frontend/Python regressions; actual Ithaca Solve and Troy Worker simulation with rendered results |
+
+Browser failures injected through transport interception are explicitly test cases, not production numerical outcomes. A real invalid-IV case failed at shared sampling as intended. A real cancellation returned control in **57 ms** in the first complete browser run; this measures UI responsiveness, not native worker termination. Python runner tests separately prove capacity is retained until worker completion.
+
+### Production performance measurements
+
+Run `services/solver-api/.venv/Scripts/python.exe scripts/oracle_release_probe.py` from the repository root. Results are saved in [release-measurements.json](release-measurements.json). Environment: Windows 11, AMD64 Family 26 Model 36, Python 3.14.7, NumPy 2.5.3, SciPy 1.18.1; same local BLAS installation as the foundation measurements. Browser tests used the Vite development build and local Uvicorn service.
+
+| Production measurement | Observed wall time | Tracked allocation peak |
+| --- | --- | --- |
+| Default 61×51 / 20,000-path reference | 1,293.77 ms | 6.46 MiB |
+| Default all-model 128-sample fit/evaluation | 1,299.15 ms | 2.37 MiB |
+| All-model 256-sample fit/evaluation | 1,287.73 ms | 4.24 MiB |
+| All models, width 64 / 1,000 epochs / 128 samples | 2,925.74 ms | 2.34 MiB |
+| Near-cap reference: 81×81 / 18,518 paths | 2,752.28 ms | 6.04 MiB |
+| 81×81 evaluation / 256 samples / all models | 1,868.37 ms | 4.96 MiB |
+
+These are single local observations with tracing overhead and concurrent browser activity, not hosted performance guarantees or total process RSS. In the untraced browser run, default all-model compute was approximately **439 ms**, excluding reference generation/network/rendering. The largest serialized experiment request tested was **251,904 bytes**, below the **2 MiB** streaming body limit. Reference work is capped at 120 million operations; combined fit work at 9 billion estimated scalar operations. Both endpoints share the existing 30-second deadline and two-worker default capacity.
+
+### Visual review and intentional differences
+
+Compared the accepted 1536×1024 image with actual computed output at the same viewport:
+
+1. Preserved the 68px header, approximately 300px left experiment rail, large central plot, right method explanation, and comparison table below.
+2. Preserved navy surfaces, thin borders, cream serif headings, sans-serif controls, and cyan active/run states.
+3. Preserved experiment tabs and separate reference/prediction/error/GP uncertainty views.
+4. Used a real Plotly surface with training markers and numeric axes; corrected camera orientation to show the full surface face.
+5. Preserved the highlighted selected-method row and separate accuracy/runtime columns.
+
+Intentional differences: real numerical values replace mockup values; paths default to the measured 20,000; spot is a surface domain rather than an unused scalar field; dividend is exposed; truthful MC/GBM explanations and diagnostics add content; rails/results scroll independently when needed; mobile moves controls to a modal and explanations below the chart. The camera pulls back at narrow widths to keep axes visible. No generated image substitutes for interactive UI.
+
+Browser scripts, raw browser observations, and screenshots are local review artifacts outside the repository at:
+
+`C:/Users/enson/.codex/visualizations/2026/09/18/01a0b654-9abd-7863-a30b-b72ed3649e31/`
+
+Representative files: `oracle-desktop.png`, `oracle-mobile.png`, `oracle-mobile-controls.png`, `oracle-iv.png`, `oracle-budget.png`, `oracle-extrapolation.png`, `ithaca-smoke.png`, `troy-smoke.png`, `oracle-browser-results.json`. They contain actual local results. The screenshots are local evidence, not deployment artifacts.
+
+### Limits and release boundary
+
+The release scope is complete in this checkout. Constant-volatility GBM has flat theoretical IV; the Black–Scholes residual mainly represents MC noise. GP uncertainty uses a diagonal approximation to correlated reference noise. Fixed-epoch MLP training does not establish convergence; budget curves need not improve monotonically. These limitations are visible in the product. Hosting performance, production routing, and full assistive-technology certification are not claimed by local browser tests. Production deployment remains a separate user action.
+
+## Historical phase 1 status and scope
 
 Phase 1 means **milestone 1: reference, IV, sampling, and metrics foundations** in the approved delivery plan. That phase is complete. The user authorized continuing this phase until it was finished or required input. No unresolved user decision blocked completion.
 
