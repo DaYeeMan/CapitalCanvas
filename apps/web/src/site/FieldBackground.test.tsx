@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FieldBackground } from "./FieldBackground";
 import { useFieldMotionRestricted } from "./useFieldMotionRestricted";
+import { ToolBackground } from "../ToolBackground";
 
 const observers: Observer[] = [];
 class Observer {
@@ -49,6 +50,16 @@ function PreferencesExample() {
 }
 
 describe("Field background lifecycle", () => {
+  it.each(["ithaca", "troy", "delphi"] as const)("uses the %s poster without fetching motion-restricted video, then plays its own loop", async tool => {
+    reduced = true;
+    const { container } = render(<ToolBackground tool={tool} />); enter();
+    expect(container.querySelector("img")).toHaveAttribute("src", `/media/field/${tool}-poster.webp`);
+    expect(container.querySelector("video")).toBeNull();
+    act(() => { reduced = false; preferences.dispatchEvent(new Event("change")); });
+    await waitFor(() => expect(container.querySelector("video")).toHaveClass("is-ready"));
+    expect(container.querySelector("video")).toHaveAttribute("src", `/media/field/${tool}-loop.mp4`);
+  });
+
   it("paints the poster before attaching a source and waits for actual visibility to play", async () => {
     const { container } = render(<FieldBackground enabled />);
     expect(container.querySelector("img")).toHaveAttribute("alt", "");

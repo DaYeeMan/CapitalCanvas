@@ -8,6 +8,7 @@ import { dynamicsLabels, pricingLabels } from './labels';
 import { DynamicsCharts, TradingCharts } from './TroyCharts';
 import '../workbench.css';
 import './troy.css';
+import { ToolBackground } from '../ToolBackground';
 
 const money = (value: number) => `${value < 0 ? '−' : ''}$${Math.abs(value).toFixed(2)}`;
 export default function TroyWorkbench() {
@@ -39,7 +40,8 @@ export default function TroyWorkbench() {
   }, [config]);
   const last = result?.observations.at(-1);
   const shown = result?.config ?? config;
-  return <div className="ithaca-workbench troy-workbench">
+  return <div className="ithaca-workbench troy-workbench tool-workbench">
+    <ToolBackground tool="troy" />
     <a className="skip-link" href="#troy-main">Skip to simulation</a>
     <header className="topbar troy-topbar">
       <a className="back-home" href="/#home" aria-label="Back to CapitalCanvas"><ArrowLeft size={20} /></a>

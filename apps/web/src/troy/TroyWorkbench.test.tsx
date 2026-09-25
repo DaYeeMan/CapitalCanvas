@@ -6,6 +6,7 @@ import TroyWorkbench from './TroyWorkbench';
 import { defaultConfig, simulate } from './engine';
 import type { Config, SimulationResult } from './types';
 vi.mock('./TroyCharts', () => ({ TradingCharts: () => <div>Trading charts</div>, DynamicsCharts: () => <div>Dynamics charts</div> }));
+vi.mock('../ToolBackground', () => ({ ToolBackground: () => null }));
 class TestWorker {
   static instances: TestWorker[] = [];
   onmessage?: (event: { data: { result?: SimulationResult; error?: string } }) => void;

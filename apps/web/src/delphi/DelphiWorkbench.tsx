@@ -9,6 +9,7 @@ import { DelphiTabs } from "./DelphiControls";
 import { useDelphiExperiment } from "./useDelphiExperiment";
 import { labels, numberText, referenceKey, type Method, type Mode, type Region, type View } from "./types";
 import "./delphi.css";
+import { ToolBackground } from "../ToolBackground";
 
 export default function DelphiWorkbench() {
   const experiment = useDelphiExperiment();
@@ -30,7 +31,8 @@ export default function DelphiWorkbench() {
   const parameters = <DelphiParameters config={config} capabilities={experiment.capabilities} edit={experiment.edit} referenceStatus={referenceStatus} />;
   const showingBudget = config.mode === "budget" && !inspectBudget;
   const warnings = [...(result?.warnings ?? []), ...(result?.methods.find(item => item.method === activeMethod)?.warnings ?? [])];
-  return <div className="delphi-workbench">
+  return <div className="delphi-workbench tool-workbench">
+    <ToolBackground tool="delphi" />
     <a className="skip-link" href="#delphi-main">Skip to experiment</a>
     <header className="delphi-topbar"><a className="delphi-back" href="/#home" aria-label="Back to CapitalCanvas" title="Back to CapitalCanvas"><ArrowLeft size={22} aria-hidden="true" /></a><h1>Delphi</h1><div className="delphi-actions"><button className="delphi-mobile-controls" ref={controlsButton} onClick={() => sheet.current?.showModal()}><SlidersHorizontal size={16} />Setup</button><button onClick={() => { experiment.reset(); setSlice(false); setInspectBudget(false); setView("prediction"); setMethod("cubic_spline"); setRegion("full"); }}><RotateCcw size={15} />Reset</button>{busy ? <button className="delphi-primary" onClick={experiment.cancel}><Square size={13} />Cancel</button> : <button className="delphi-primary" disabled={!experiment.capabilities} onClick={() => { setInspectBudget(false); void experiment.run(); }}><Play size={14} fill="currentColor" />Run experiment</button>}</div></header>
     <aside className="delphi-rail" aria-label="Experiment configuration">{parameters}</aside>

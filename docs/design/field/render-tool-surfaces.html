@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Field — tool surface renderer</title>
+<style>
+  html, body { margin: 0; background: #03101d; overflow: hidden; }
+  canvas { display: block; }
+</style>
+<canvas width="1920" height="1080"></canvas>
+<script>
+// Offline WebGL scenes for the Ithaca, Troy, and Delphi tools.
+// The same navy materials and soft lights as render-surface.html keep them
+// visually related to the home loop; each tool has its own quiet geometry.
+const canvas = document.querySelector('canvas');
+const gl = canvas.getContext('webgl', { antialias: true, preserveDrawingBuffer: true });
+if (!gl) throw new Error('WebGL unavailable');
+const tool = new URLSearchParams(location.search).get('tool') || 'ithaca';
+const modes = { ithaca: 0, troy: 1, delphi: 2 };
+if (!(tool in modes)) throw new Error(`Unknown tool: ${tool}`);
+
+const vertex = `
+precision highp float;
+attribute vec2 grid;
+uniform float phase;
+uniform float mode;
+varying vec3 pos;
+varying vec3 normal;
+float sea(vec2 p, float shift) {
+  float a = 0.50 * p.x + 0.47 * p.y;
+  float b = 0.23 * p.x - 0.38 * p.y;
+  return 0.52 * sin(a + 0.26 * sin(shift))
+       + 0.27 * sin(b + 0.20 * cos(shift))
+       + 0.10 * sin(1.15 * p.x + 0.72 * p.y + 0.14 * sin(shift + 1.2))
+       + 0.025 * p.x;
+}
+float height(vec2 p) {
+  float shift = phase;
+  float h = sea(p, shift);
+  if (mode < 0.5) {
+    // A calm field with orbital ripples gathered around an off-centre focus.
+    vec2 d = vec2((p.x - 3.0) * 0.84, (p.y + 8.0) * 1.06);
+    float r = length(d);
+    h += 0.19 * sin(r * 2.15 - shift) * exp(-r * 0.23);
+    h += 0.07 * sin(r * 3.15 + 0.55 * sin(shift)) * exp(-r * 0.32);
+  } else if (mode < 1.5) {
+    // Broad, parallel currents sweep diagonally through the same fluid field.
+    float sweep = 0.52 * p.x - 0.36 * p.y + 0.22 * sin(0.20 * p.y + shift);
+    h = 0.42 * sin(0.88 * sweep - shift)
+      + 0.24 * sin(0.52 * sweep + 0.45 * sin(shift))
+      + 0.10 * sin(0.20 * p.x + 0.32 * p.y + shift)
+      + 0.025 * p.x;
+  } else {
+    // Radial water rings gently pulse out from a dark reflective basin.
+    vec2 d = vec2((p.x - 2.3) * 0.82, (p.y + 8.6) * 1.04);
+    float r = length(d);
+    h += 0.26 * sin(r * 2.25 - shift) * exp(-r * 0.23);
+    h += 0.075 * cos(r * 3.70 - 0.72 * sin(shift)) * exp(-r * 0.35);
+  }
+  return h;
+}
+void main() {
+  float h = height(grid);
+  float e = 0.015;
+  normal = normalize(vec3(
+    height(grid - vec2(e, 0.0)) - height(grid + vec2(e, 0.0)),
+    2.0 * e,
+    height(grid - vec2(0.0, e)) - height(grid + vec2(0.0, e))
+  ));
+  pos = vec3(grid.x, h, grid.y);
+  vec3 eye = vec3(0.0, 2.8, 7.2);
+  vec3 forward = normalize(vec3(0.0, -0.45, -2.0) - eye);
+  vec3 right = normalize(cross(forward, vec3(0.0, 1.0, 0.0)));
+  vec3 up = cross(right, forward);
+  vec3 delta = pos - eye;
+  vec3 view = vec3(dot(delta, right), dot(delta, up), -dot(delta, forward));
+  float f = 2.30;
+  gl_Position = vec4(f / 1.77777778 * view.x, f * view.y,
+                     -1.002002 * view.z - 0.2002002, -view.z);
+}`;
+
+const fragment = `
+precision highp float;
+varying vec3 pos;
+varying vec3 normal;
+uniform vec2 resolution;
+uniform float phase;
+uniform float mode;
+void main() {
+  vec3 n = normalize(normal + 0.002 * vec3(
+    sin(pos.x * 160.0 + sin(pos.z * 110.0)), 0.0,
+    cos(pos.z * 140.0 + sin(pos.x * 120.0))
+  ));
+  vec3 v = normalize(vec3(0.0, 2.8, 7.2) - pos);
+  vec3 key = normalize(vec3(-3.0, 5.0, -5.0) - pos);
+  vec3 warm = normalize(vec3(8.0, 3.3, -5.0) - pos);
+  float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+  float blueSpec = pow(max(dot(n, normalize(key + v)), 0.0), 55.0);
+  float warmSpec = pow(max(dot(n, normalize(warm + v)), 0.0), 85.0);
+  float broad = pow(max(dot(n, normalize(key + v)), 0.0), 8.0);
+  float diffuse = max(dot(n, key), 0.0);
+  vec3 col = vec3(0.013, 0.038, 0.064) * (0.45 + diffuse * 0.8);
+  col += vec3(0.025, 0.095, 0.145) * broad;
+  col += vec3(0.27, 0.55, 0.67) * blueSpec * 0.72;
+  col += vec3(0.75, 0.58, 0.32) * warmSpec * 0.60;
+  col += vec3(0.025, 0.075, 0.12) * fres;
+  vec3 reflected = reflect(-v, n);
+  float band = exp(-pow((reflected.y - 0.26) / 0.065, 2.0));
+  float softBand = exp(-pow((reflected.y - 0.26) / 0.20, 2.0));
+  float gold = smoothstep(1.0, 6.0, pos.x);
+  col += mix(vec3(0.14, 0.40, 0.55), vec3(0.60, 0.43, 0.23), gold) * band * 0.90;
+  col += vec3(0.012, 0.045, 0.075) * softBand;
+
+  if (mode < 0.5) {
+    vec2 d = vec2((pos.x - 3.0) * 0.84, (pos.z + 8.0) * 1.06);
+    float r = length(d);
+    float inner = exp(-pow((r - (2.30 + 0.09 * sin(phase))) / 0.055, 2.0));
+    float outer = exp(-pow((r - (4.05 - 0.12 * sin(phase))) / 0.075, 2.0));
+    float theta = atan(d.y, d.x);
+    float glint = exp(-pow((1.0 - cos(theta - phase)) / 0.075, 2.0));
+    col += vec3(0.025, 0.12, 0.18) * inner * 0.56;
+    col += vec3(0.055, 0.12, 0.16) * outer * 0.40;
+    col += vec3(0.13, 0.27, 0.31) * glint * exp(-pow(r - 2.30, 2.0) / 0.38) * 0.31;
+  } else if (mode < 1.5) {
+    float sweep = 0.52 * pos.x - 0.36 * pos.z + 0.22 * sin(0.20 * pos.z + phase);
+    float crest = exp(-pow((sin(0.88 * sweep - phase) - 0.72) / 0.36, 2.0));
+    col += vec3(0.018, 0.058, 0.082) * crest * 0.42;
+  } else {
+    vec2 d = vec2((pos.x - 2.3) * 0.82, (pos.z + 8.6) * 1.04);
+    float r = length(d);
+    float rings = exp(-pow((r - 1.28) / 0.055, 2.0))
+                + exp(-pow((r - 2.52) / 0.070, 2.0))
+                + exp(-pow((r - 3.85) / 0.085, 2.0));
+    float theta = atan(d.y, d.x);
+    float glint = exp(-pow((1.0 - cos(theta - phase)) / 0.09, 2.0))
+                * exp(-pow((r - 3.85) / 0.44, 2.0));
+    float core = exp(-r * r / 0.22);
+    col += vec3(0.025, 0.105, 0.16) * rings * 0.48;
+    col += vec3(0.085, 0.21, 0.27) * glint * 0.31;
+    col += vec3(0.055, 0.12, 0.15) * core * 0.28;
+  }
+
+  vec2 uv = gl_FragCoord.xy / resolution;
+  vec3 bg = vec3(3.0, 16.0, 29.0) / 255.0;
+  float distanceFade = 1.0 - smoothstep(7.0, 24.0, length(pos.xz));
+  float upperFade = 1.0 - smoothstep(0.50, 0.91, uv.y);
+  float leftFade = mix(0.24, 1.0, smoothstep(0.0, 0.75, uv.x));
+  float edge = smoothstep(0.0, 0.07, uv.x) * (1.0 - smoothstep(0.93, 1.0, uv.x));
+  col = pow(max(col, vec3(0.0)), vec3(0.70));
+  gl_FragColor = vec4(mix(bg, col, distanceFade * upperFade * leftFade * edge), 1.0);
+}`;
+
+function compile(type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader));
+  return shader;
+}
+const program = gl.createProgram();
+gl.attachShader(program, compile(gl.VERTEX_SHADER, vertex));
+gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragment));
+gl.linkProgram(program);
+if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+gl.useProgram(program);
+
+const points = [], indices = [], N = 240;
+for (let z = 0; z <= N; z++) for (let x = 0; x <= N; x++) points.push(-18 + 36 * x / N, -24 + 33 * z / N);
+for (let z = 0; z < N; z++) for (let x = 0; x < N; x++) {
+  const a = z * (N + 1) + x;
+  indices.push(a, a + 1, a + N + 1, a + 1, a + N + 2, a + N + 1);
+}
+gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
+const attr = gl.getAttribLocation(program, 'grid');
+gl.enableVertexAttribArray(attr);
+gl.vertexAttribPointer(attr, 2, gl.FLOAT, false, 0, 0);
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+gl.enable(gl.DEPTH_TEST);
+gl.clearColor(3 / 255, 16 / 255, 29 / 255, 1);
+const phaseLoc = gl.getUniformLocation(program, 'phase');
+const modeLoc = gl.getUniformLocation(program, 'mode');
+const resolutionLoc = gl.getUniformLocation(program, 'resolution');
+window.renderFrame = (t) => {
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  const loopTime = ((t % 10) + 10) % 10;
+  gl.uniform1f(phaseLoc, loopTime * 2 * Math.PI / 10);
+  gl.uniform1f(modeLoc, modes[tool]);
+  gl.uniform2f(resolutionLoc, canvas.width, canvas.height);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+  gl.finish();
+};
+window.renderFrame(0);
+</script>
+</html>

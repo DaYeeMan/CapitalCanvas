@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import "katex/dist/katex.min.css";
 import "./workbench.css";
+import { ToolBackground } from "./ToolBackground";
 import { EquationPanel } from "./components/EquationPanel";
 import { ProblemPanel } from "./components/ProblemPanel";
 import { ResultsStrip } from "./components/ResultsStrip";
@@ -197,7 +198,8 @@ export default function IthacaWorkbench() {
   }, [closeMobilePanel, mobilePanel]);
 
   return (
-    <main className="app-shell">
+    <main className="app-shell tool-workbench">
+      <ToolBackground tool="ithaca" />
       <a className="skip-link" href="#visualization">Skip to visualization</a>
       <header className="topbar">
         <a className="back-home" href="/#home" aria-label="Back to CapitalCanvas" title="Back to CapitalCanvas"><ArrowLeft size={22} aria-hidden="true" /></a>

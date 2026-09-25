@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-/** Decorative media only. The homepage owns the device motion preferences. */
-export function FieldBackground({ enabled }: { enabled: boolean }) {
+type FieldVariant = "field" | "ithaca" | "troy" | "delphi";
+
+/** Decorative media only. The caller owns the device motion preferences. */
+export function FieldBackground({ enabled, variant = "field" }: { enabled: boolean; variant?: FieldVariant }) {
   const region = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false);
@@ -57,11 +59,11 @@ export function FieldBackground({ enabled }: { enabled: boolean }) {
   }, [loadVideo, visible]);
 
   return <div className="field-background" ref={region} aria-hidden="true">
-    <img src="/media/field/field-poster.webp" alt="" width="1920" height="1080" decoding="async" />
+    <img src={`/media/field/${variant}-poster.webp`} alt="" width="1920" height="1080" decoding="async" />
     {loadVideo && <video
       ref={video}
       className={hasFrame ? "field-video is-ready" : "field-video"}
-      src="/media/field/field-loop.mp4"
+      src={`/media/field/${variant}-loop.mp4`}
       muted loop playsInline preload="none" tabIndex={-1}
       onLoadStart={() => setHasFrame(false)}
       onError={() => setFailed(true)}
