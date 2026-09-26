@@ -129,7 +129,6 @@ export default function HomePage() {
             <div className="research-body">
               <h3 id="troy-market-making-title">Quoting, order flow, and inventory</h3>
               <p>Troy separates the simulated market from the maker’s pricing assumptions. The selected pricing model computes fair value and delta; its name does not indicate whether it matches the true dynamics.</p>
-              <details><summary>Implementation</summary><p>Inventory shifts quotes, and Poisson arrival intensity decreases with unfavorable quote distance from the maker’s posted fair value. The engine clips fills at inventory limits and optionally hedges model delta. P&L includes option and hedge positions minus transaction costs; cash financing is excluded. This is a project simulation policy, not a calibrated order-flow model or a published optimal quoting strategy.</p></details>
             </div>
           </article>
         </div>

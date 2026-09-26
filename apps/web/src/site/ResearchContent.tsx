@@ -6,7 +6,6 @@ export function ResearchContent({ entry, headingId }: { entry: ResearchEntry; he
             <p className="citation-meta">{entry.authors} · {entry.year}</p>
             <p>{entry.summary}</p>
             <div className="resource-meta"><span>{entry.access}</span></div>
-            <details><summary>Implementation</summary><p>{entry.implementation}</p></details>
   </>;
 }
 
