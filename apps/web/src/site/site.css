@@ -19,9 +19,11 @@ html { scroll-behavior: smooth; }
   --field-content-max: 1440px;
   --field-reading-max: 760px;
   --field-section-space: clamp(56px, 7vw, 112px);
+  --field-transition-space: clamp(80px, 9vw, 140px);
   --field-card-gap: clamp(16px, 2vw, 24px);
   --field-radius: 6px;
   color: var(--field-text);
+  background: var(--site-bg);
 }
 .site-header {
   position: sticky; top: 0; z-index: 10; display: grid;
@@ -160,9 +162,21 @@ html { scroll-behavior: smooth; }
   width: min(1520px, calc(100% - var(--site-gutter) * 2)); margin-inline: auto;
 }
 .field-home #home {
-  position: relative; isolation: isolate;
-  padding: 0 max(var(--site-gutter), calc((100% - var(--field-content-max)) / 2)) 64px;
+  position: relative; z-index: 1; isolation: isolate;
+  padding: 0 max(var(--site-gutter), calc((100% - var(--field-content-max)) / 2)) var(--field-transition-space);
+  background:
+    /* Give the fade its own space below the cards, matching the About lead-in. */
+    linear-gradient(to bottom,
+      transparent calc(100% - var(--field-transition-space)),
+      rgb(3 16 29 / 16%) calc(100% - var(--field-transition-space) * .75),
+      rgb(3 16 29 / 50%) calc(100% - var(--field-transition-space) * .5),
+      rgb(3 16 29 / 84%) calc(100% - var(--field-transition-space) * .25),
+      var(--site-bg) 100%),
+    rgb(3 16 29 / 68%);
 }
+.field-home .home-background { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.field-home .home-background > .field-background { position: absolute; inset: 0; z-index: 0; }
+.field-home .home-background > .field-background::after { content: none; }
 .field-background {
   position: absolute; inset: 0; z-index: -1;
   overflow: hidden; pointer-events: none; background: var(--bg);
@@ -173,11 +187,6 @@ html { scroll-behavior: smooth; }
 .field-background::after {
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(rgb(3 16 29 / 68%) 0%, rgb(3 16 29 / 68%) 40%, transparent 56%, transparent 92%, rgb(3 16 29 / 30%) 100%);
-}
-.field-home #home .field-background::after {
-  background:
-    linear-gradient(to bottom, transparent calc(100% - clamp(120px, 12vw, 180px)), var(--site-bg) 100%),
-    linear-gradient(rgb(3 16 29 / 68%) 0%, rgb(3 16 29 / 68%) 40%, transparent 56%);
 }
 .field-background .field-video { opacity: 0; }
 .field-background .field-video.is-ready { opacity: 1; }
@@ -224,11 +233,11 @@ html { scroll-behavior: smooth; }
   .field-background img, .field-background video { object-position: 65% center; }
 }
 @media (max-width: 820px) {
+  .site-shell.field-home { --field-transition-space: 64px; }
   .field-home .site-header { display: grid; grid-template-columns: 1fr; gap: 8px 16px; padding-top: 18px; min-height: 112px; }
   .field-home .site-header .site-wordmark { font-size: 26px; }
   .field-home .site-navigation { grid-row: 2; grid-column: 1/-1; justify-content: center; gap: 30px; margin: 0; }
   .field-home .site-navigation a { padding: 10px 0 12px; }
-  .field-home #home { padding-bottom: 48px; }
   .field-home .field-hero-copy h1 { font-size: clamp(42px, 7vw, 60px); }
   .field-home .field-hero-copy .site-intro { margin-top: 22px; }
   .field-home .tool-entry h2 { font-size: 32px; }
@@ -236,7 +245,16 @@ html { scroll-behavior: smooth; }
 }
 
 /* Field reading sections retain native disclosures and shared research content. */
-.field-home #resources { background: var(--site-bg); border-top: 0; padding-block: var(--field-section-space); }
+.field-home #resources {
+  position: relative; z-index: 1; isolation: isolate;
+  background: var(--site-bg); border-top: 0; padding-block: var(--field-section-space);
+}
+.field-home #resources::before,
+.field-home .site-footer::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: var(--site-bg); box-shadow: 0 0 0 100vmax var(--site-bg);
+  clip-path: inset(0 -100vmax);
+}
 .field-home .section-heading { display: block; margin-bottom: 48px; }
 .field-home .reading-section h2 {
   font-size: clamp(40px, 4.7vw, 72px); line-height: 1.12; letter-spacing: -.035em;
@@ -272,13 +290,12 @@ html { scroll-behavior: smooth; }
 .field-home .research-body summary { min-height: 40px; }
 .field-home .research-body details p { border-color: var(--field-border); }
 .field-home #about {
-  position: relative; isolation: isolate; width: 100%; min-height: 0;
+  position: relative; z-index: 1; isolation: isolate; width: 100%; min-height: 0;
   border-top: 0;
-  padding: clamp(80px, 9vw, 140px) max(var(--site-gutter), calc((100% - var(--field-content-max)) / 2)) clamp(100px, 12vw, 180px);
+  padding: var(--field-transition-space) max(var(--site-gutter), calc((100% - var(--field-content-max)) / 2)) clamp(100px, 12vw, 180px);
 }
-.field-home #about .field-background img,
-.field-home #about .field-background video { object-position: right bottom; transform: scaleX(-1); }
-.field-home #about .field-background::after {
+.field-home #about::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background: linear-gradient(90deg, rgb(3 16 29 / 85%), rgb(3 16 29 / 68%) 65%, rgb(3 16 29 / 25%)),
     linear-gradient(var(--site-bg), transparent clamp(120px, 12vw, 180px), transparent 75%, var(--site-bg));
 }
@@ -286,7 +303,7 @@ html { scroll-behavior: smooth; }
 .field-home #about .about-contact { margin-top: 36px; font-size: 18px; }
 .field-home .about-name { margin-top: 0; font: 28px/1.4 var(--site-serif); }
 .field-home .about-contact a { overflow-wrap: anywhere; }
-.field-home .site-footer { background: var(--site-bg); border-color: var(--field-border); gap: 16px 48px; padding-block: 40px; }
+.field-home .site-footer { position: relative; z-index: 1; isolation: isolate; background: var(--site-bg); border-color: var(--field-border); gap: 16px 48px; padding-block: 40px; }
 .field-home .footer-brand { grid-row: 1 / 3; }
 .field-home .site-footer .site-wordmark { font-size: 30px; }
 .field-home .site-footer .copyright { grid-column: 2; margin: 0; max-width: 620px; text-align: right; }
@@ -295,8 +312,8 @@ html { scroll-behavior: smooth; }
   .field-home .research-entry { grid-template-columns: 1fr; gap: 16px; padding-block: 28px; }
   .field-home .research-category { padding-right: 0; border-right: 0; }
   .field-home .resource-project > summary { font-size: 28px; }
-  .field-home #about { padding-block: 64px 96px; }
-  .field-home #about .field-background::after {
+  .field-home #about { padding-block: var(--field-transition-space) 96px; }
+  .field-home #about::before {
     background: linear-gradient(var(--site-bg), transparent clamp(120px, 12vw, 180px)), rgb(3 16 29 / 68%);
   }
   .field-home .site-footer { gap: 24px; }

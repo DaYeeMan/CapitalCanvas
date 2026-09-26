@@ -45,8 +45,8 @@ Run `node docs/design/field/verify-surface.cjs` against that server and `python 
 
 ## Homepage integration
 
-The homepage uses `object-fit: cover`, with separate HTML content above the video. Home extends the surface behind all three translucent navy cards; About mirrors the media horizontally. Resources and the footer use solid navy.
+The homepage uses one viewport-fixed video with `object-fit: cover`. The hero, tool cards, and About content scroll above the same surface; About no longer has a separate mirrored video. The poster remains fixed when motion is restricted or playback fails. Resources and the footer use solid navy across the full viewport width, including their gutters.
 
-Dark overlays preserve text contrast while exposing the surface below the hero copy. Current colors, opacity, and framing are owned by `apps/web/src/site/site.css`; recheck contrast across the entire animation when changing them.
+Dark overlays scroll with the hero and About sections, preserving text contrast and the transitions into the reading area. Current colors, opacity, and framing are owned by `apps/web/src/site/site.css`; recheck contrast across the entire animation when changing them.
 
 `FieldBackground.tsx` handles deferred video loading, offscreen and document-visibility pausing, and poster fallback. `useFieldMotionRestricted.ts` honors reduced-motion and data-saving preferences. There is no on-page motion toggle. The surface source remains editable independently of page content.

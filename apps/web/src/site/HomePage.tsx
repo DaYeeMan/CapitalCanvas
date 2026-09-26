@@ -61,8 +61,10 @@ export default function HomePage() {
   }, []);
 
   return <SiteLayout active={active} home>
-    <section id="home" className="home-section" tabIndex={-1} aria-labelledby="home-title">
+    <div className="home-background">
       <FieldBackground enabled={!motionRestricted} />
+    </div>
+    <section id="home" className="home-section" tabIndex={-1} aria-labelledby="home-title">
       <div className="field-hero-copy">
       <h1 id="home-title">Explore pricing and market dynamics</h1>
       <p className="site-intro">Visual tools for understanding financial models</p>
@@ -143,7 +145,6 @@ export default function HomePage() {
       </details>
     </section>
     <section id="about" className="home-section reading-section" tabIndex={-1} aria-labelledby="about-title">
-      <FieldBackground enabled={!motionRestricted} />
       <h2 id="about-title">About CapitalCanvas</h2>
       <p>I built Capital Canvas to use visualization and experimentation to make quantitative finance easier to understand. Through interactive tools, building the intuition for pricing models, simulations, and market dynamics becomes easier.</p>
       <p className="about-contact"><span className="about-name">Emmanuel Zhang</span><br /><a href={contactHref}>{contactEmail}</a></p>
