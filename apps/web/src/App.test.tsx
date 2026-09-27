@@ -76,7 +76,10 @@ describe("CapitalCanvas route boundaries", () => {
     await waitFor(() => expect(document.activeElement).toBe(document.getElementById("crr")));
     expect(container.querySelector("details.resource-project")).toHaveAttribute("open");
     expect(screen.queryByText(/Used in Ithaca/)).not.toBeInTheDocument();
-    expect(screen.getAllByText("Implementation").length).toBeGreaterThan(0);
+    const reference = within(container.querySelector("#crr") as HTMLElement);
+    expect(reference.getByRole("link", { name: /Option pricing: A simplified approach/ })).toBeVisible();
+    expect(reference.getByText(/A discrete tree makes option valuation/)).toBeVisible();
+    expect(screen.queryByText("Implementation")).not.toBeInTheDocument();
     expect(within(container.querySelector("#about") as HTMLElement).getByText("Emmanuel Zhang")).toBeInTheDocument();
   });
 

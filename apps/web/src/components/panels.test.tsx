@@ -75,6 +75,7 @@ describe("workbench panels", () => {
     fireEvent.click(panel.getByText("Method reference"));
     expect(reference).toHaveAttribute("open");
     expect(panel.getByRole("link", { name: /Option pricing: A simplified approach/ })).toBeVisible();
-    expect(panel.getByText("Implementation")).toBeVisible();
+    expect(panel.getByText(/A discrete tree makes option valuation/)).toBeVisible();
+    expect(panel.queryByText("Implementation")).not.toBeInTheDocument();
   });
 });
