@@ -39,6 +39,10 @@ export function ScientificPlot({ data, layout, label, preserveCamera = false }: 
     const node = container.current;
     if (!node) return;
     const plotLayout = JSON.parse(JSON.stringify(layout)) as Partial<Layout>;
+    plotLayout.hoverlabel = {
+      bgcolor: "#0a1d2d", bordercolor: "#334452", font: { color: "#f2f5f5" },
+      ...plotLayout.hoverlabel,
+    };
     const previous = (node as HTMLDivElement & { layout?: Partial<Layout> }).layout;
     if (preserveCamera && plotLayout.scene && previous?.scene?.camera && previous.uirevision === plotLayout.uirevision) {
       plotLayout.scene.camera = JSON.parse(JSON.stringify(previous.scene.camera));
@@ -147,7 +151,7 @@ export function ChartPanel({
         [1, "#ffcb2c"],
       ],
       contours: { x: { show: true, color: "rgba(255,255,255,.28)", width: 1 }, y: { show: true, color: "rgba(255,255,255,.28)", width: 1 } },
-      hovertemplate: `Spot %{x:.2f}<br>τ %{y:.3f} yr<br>Price %{z:.4f}<extra>${resultLabel(activeResult)}</extra>`,
+      hovertemplate: `Spot %{x:.2f}<br>τ %{y:.3f} yr<br>Price %{z:.4f}<extra></extra>`,
       showscale: false,
     } as Data];
 
@@ -160,7 +164,7 @@ export function ChartPanel({
         z: result.surface.prices[selectedIndex],
         name: legendLabel(result),
         line: { color: methodColors[result.method], width: result.method === activeResult.method ? 6 : 3 },
-        hovertemplate: `Spot %{x:.2f}<br>Price %{z:.4f}<extra>${resultLabel(result)}</extra>`,
+        hovertemplate: `Spot %{x:.2f}<br>Price %{z:.4f}<extra></extra>`,
         showlegend: true,
       } as Data);
     }
@@ -239,7 +243,7 @@ export function ChartPanel({
         y: result.surface.prices[selectedIndex],
         name: legendLabel(result),
         line: { color: methodColors[result.method], width: result.method === activeResult?.method ? 3 : 2 },
-        hovertemplate: `Spot %{x:.2f}<br>Price %{y:.4f}<extra>${resultLabel(result)}</extra>`,
+        hovertemplate: `Spot %{x:.2f}<br>Price %{y:.4f}<extra></extra>`,
       } as Data);
       if (reference && result.method !== "closed_form") {
         traces.push({

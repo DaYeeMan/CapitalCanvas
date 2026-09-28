@@ -48,6 +48,8 @@
 .troy-return-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .troy-chart-card { min-width: 0; border: 1px solid var(--line-soft); border-radius: 5px; padding: 17px 10px 3px; background: var(--surface); overflow: hidden; }
 .troy-chart-heading { padding: 0 9px 8px; }
+/* Plotly adds a solid backing stroke that turns white on transparent plots. */
+.troy-chart-card .hoverlayer line.spikeline:not([stroke-dasharray]) { display: none; }
 .troy-workbench .troy-chart-heading h2 { font-size: 21px; }
 .troy-chart-heading p { color: var(--muted); font-size: 10px; line-height: 1.6; margin: 7px 0 0; }
 .troy-methods { color: var(--muted); font-size: 12px; line-height: 1.8; }
