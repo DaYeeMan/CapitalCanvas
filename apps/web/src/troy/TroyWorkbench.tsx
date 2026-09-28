@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, RotateCcw } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Sparkles } from 'lucide-react';
 import { defaultConfig } from './engine';
 import { freshSeed } from './experimentSeed';
 import type { Config, SimulationResult } from './types';
@@ -46,7 +46,10 @@ export default function TroyWorkbench() {
     <header className="topbar troy-topbar">
       <a className="back-home" href="/#home" aria-label="Back to CapitalCanvas"><ArrowLeft size={20} /></a>
       <h1 className="wordmark">Troy</h1>
-      <button className="secondary-button" onClick={() => updateConfig({ ...defaultConfig, seed: freshSeed(config.seed) })}><RotateCcw size={14} /> Reset</button>
+      <div className="topbar-actions">
+        <button className="secondary-button" onClick={() => updateConfig({ ...defaultConfig, seed: freshSeed(config.seed) })}><RotateCcw size={14} /> Reset</button>
+        <button className="solve-button" onClick={() => updateConfig({ ...config, seed: freshSeed(config.seed) })}><Sparkles size={16} />New market</button>
+      </div>
     </header>
     <aside className="troy-parameters" aria-label="Simulation parameters"><TroyParameters config={config} onChange={updateConfig} /></aside>
     <main className="troy-main" id="troy-main" tabIndex={-1}>

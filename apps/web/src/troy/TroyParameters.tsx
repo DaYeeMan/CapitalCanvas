@@ -3,7 +3,6 @@ import { useId, type ReactNode } from 'react';
 import { NumberField } from '../components/NumberField';
 import type { Config, Dynamics, Pricing } from './types';
 import { dynamicsLabels, pricingLabels } from './labels';
-import { freshSeed } from './experimentSeed';
 
 function Hint({ text, label }: { text: string; label: string }) {
   const id = useId();
@@ -42,7 +41,6 @@ export function TroyParameters({ config, onChange }: { config: Config; onChange:
     <Group title="02 · True Market Dynamics">
       <p className="troy-caption">Generates the simulated underlying.</p>
       <label className="troy-select">Dynamics model<select value={config.dynamics} onChange={e => set('dynamics', e.target.value as Dynamics)}>{Object.entries(dynamicsLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-      <div className="troy-concept">True Market: {dynamicsLabels[config.dynamics]}</div>
       {percent('drift', 'Drift μ', -100, 100)}
       {config.dynamics === 'heston' ? heston(false) : percent('volatility', config.dynamics === 'merton' ? 'Diffusion volatility σ' : 'Volatility σ')}
       {config.dynamics === 'merton' && <>
@@ -72,7 +70,6 @@ export function TroyParameters({ config, onChange }: { config: Config; onChange:
       {field('horizon', 'Simulation horizon', .01, 5, .05, 'yr', 'Effective horizon is capped at contract maturity.')}
       {field('steps', 'Time steps', 20, 1000, 20)}
       {field('seed', 'Random seed', 0, 2147483647, 1)}
-      <button type="button" className="secondary-button troy-new-market" onClick={() => set('seed', freshSeed(config.seed))}>New market</button>
       <p className="troy-caption">New market draws a fresh seed. Reuse a seed to replay the same experiment.</p>
       {field('samplePaths', 'Sample paths', 2, 50, 1)}
       {field('fillIntensity', 'Order arrival intensity', 0, 2000, 20, '/yr', 'Base total customer arrivals per year, before quote competitiveness reduces fills.')}

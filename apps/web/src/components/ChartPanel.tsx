@@ -39,16 +39,24 @@ export function ScientificPlot({ data, layout, label, preserveCamera = false }: 
     const node = container.current;
     if (!node) return;
     const plotLayout = JSON.parse(JSON.stringify(layout)) as Partial<Layout>;
+    const styles = getComputedStyle(node);
+    const fontFamily = styles.fontFamily;
     plotLayout.hoverlabel = {
-      bgcolor: "#0a1d2d", bordercolor: "#334452", font: { color: "#f2f5f5" },
+      bgcolor: styles.getPropertyValue("--surface-raised").trim() || "#0a1d2d",
+      bordercolor: styles.getPropertyValue("--line").trim() || "#334452",
       ...plotLayout.hoverlabel,
+      font: {
+        color: styles.color || "#f2f5f5",
+        family: fontFamily,
+        ...plotLayout.hoverlabel?.font,
+      },
     };
     const previous = (node as HTMLDivElement & { layout?: Partial<Layout> }).layout;
     if (preserveCamera && plotLayout.scene && previous?.scene?.camera && previous.uirevision === plotLayout.uirevision) {
       plotLayout.scene.camera = JSON.parse(JSON.stringify(previous.scene.camera));
     }
     // Resolve the shared CSS font stack for Plotly SVG and WebGL labels.
-    plotLayout.font = { ...plotLayout.font, family: getComputedStyle(node).fontFamily };
+    plotLayout.font = { ...plotLayout.font, family: fontFamily };
     void Plotly.react(node, data, plotLayout, plotConfig);
   }, [data, layout, preserveCamera]);
 
