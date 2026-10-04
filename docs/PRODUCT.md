@@ -4,7 +4,7 @@
 
 CapitalCanvas helps people understand quantitative finance through visualization and experimentation. It is a personal, noncommercial education and research project. Outputs are theoretical estimates, not investment advice, executable quotes, or promises of returns.
 
-The site name is CapitalCanvas; the displayed wordmark is Capital Canvas. The public About attribution is Emmanuel Zhang, with contact `dymteam23@gmail.com`.
+The site name is CapitalCanvas; the displayed name is Capital Canvas. The homepage header uses the transparent interlocking CC mark beside the Capital Canvas wordmark; policy headers and the footer retain the text wordmark. The browser icon and social thumbnail use the mark on navy. The public About attribution is Emmanuel Zhang, with contact `dymteam23@gmail.com`.
 
 Three tools exist: Ithaca, Troy, and Delphi. Delphi occupies the third home card with a launch link and surrogate-model features.
 

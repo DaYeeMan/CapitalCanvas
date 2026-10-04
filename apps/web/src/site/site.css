@@ -148,6 +148,8 @@ html { scroll-behavior: smooth; }
   background: rgb(3 16 29 / 97%);
 }
 .field-home .site-header .site-wordmark { font-size: 30px; letter-spacing: -.035em; }
+.field-home .site-logo { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 12px; color: inherit; text-decoration: none; }
+.field-home .site-logo img { display: block; width: 64px; height: 64px; object-fit: contain; }
 .field-home .site-navigation { margin-left: auto; gap: 30px; }
 .field-home .site-navigation a {
   display: block; padding: 14px 0 10px;
@@ -234,6 +236,8 @@ html { scroll-behavior: smooth; }
   .site-shell.field-home { --field-transition-space: 64px; }
   .field-home .site-header { display: grid; grid-template-columns: 1fr; gap: 8px 16px; padding-top: 18px; min-height: 112px; }
   .field-home .site-header .site-wordmark { font-size: 26px; }
+  .field-home .site-logo { justify-self: start; }
+  .field-home .site-logo img { width: 48px; height: 48px; }
   .field-home .site-navigation { grid-row: 2; grid-column: 1/-1; justify-content: center; gap: 30px; margin: 0; }
   .field-home .site-navigation a { padding: 10px 0 12px; }
   .field-home .field-hero-copy h1 { font-size: clamp(42px, 7vw, 60px); }

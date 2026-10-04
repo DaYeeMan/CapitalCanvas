@@ -5,7 +5,9 @@ export function SiteLayout({ children, active, home = false }: { children: React
   return <div className={home ? "site-shell field-home" : "site-shell"}>
     <a className="skip-link" href="#main-content">Skip to content</a>
     <header className="site-header">
-      <a className="site-wordmark" href="/#home">Capital Canvas</a>
+      {home
+        ? <a className="site-logo" href="/#home" aria-label="Capital Canvas home"><img src="/capital-canvas-logo.png" alt="" width={64} height={64} /><span className="site-wordmark">Capital Canvas</span></a>
+        : <a className="site-wordmark" href="/#home">Capital Canvas</a>}
       <SiteNavigation active={active} />
     </header>
     <main id="main-content" tabIndex={-1} className="site-content">{children}</main>
