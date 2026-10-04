@@ -7,7 +7,7 @@ const IthacaWorkbench = lazy(() => import("./IthacaWorkbench"));
 const TroyWorkbench = lazy(() => import("./troy/TroyWorkbench"));
 const DelphiWorkbench = lazy(() => import("./delphi/DelphiWorkbench"));
 const titles: Record<string, string> = {
-  "/": "CapitalCanvas — Quantitative tools",
+  "/": "CapitalCanvas",
   "/tools/ithaca": "Ithaca — CapitalCanvas",
   "/tools/troy": "Troy — CapitalCanvas",
   "/tools/delphi": "Delphi — CapitalCanvas",
