@@ -22,11 +22,11 @@ function finish(size: number, sample: (x: number, y: number) => number, repeat =
   return texture;
 }
 const wood = finish(128, (x, y) => 242 + Math.sin(y * 0.55 + Math.sin(x * 0.035) * 2) * 4 + Math.sin(y * 3.7 + x * 0.1) * 2);
-const weave = finish(64, (x, y) => 239 + ((x + y) % 2) * 10 + Math.sin(x * 2 + y * 3) * 3, 14);
+const weave = finish(64, (x, y) => 239 + ((x + y) % 2) * 8 + Math.sin(x * 2 + y * 3) * 2, 12);
 const tile = finish(512, (x, y) => {
   const u = x / 512 * BUILDING.width / 2, v = y / 512 * BUILDING.depth / 2;
-  const edge = u % 1 < 0.012 || v % 1 < 0.012;
-  return edge ? 235 : 249 + Math.sin(Math.floor(u) * 7 + Math.floor(v) * 13) * 3;
+  const edge = u % 1 < 0.009 || v % 1 < 0.009;
+  return edge ? 214 : 230 + Math.sin(Math.floor(u) * 7 + Math.floor(v) * 13) * 20;
 });
 
 function leafGeometry() {
@@ -102,8 +102,8 @@ seat.dispose(); back.dispose();
 const palette = {
   floor: "#f5ede2", wall: "#fcf5ea", slab: "#cad2df", wood: "#e6bd89",
   navy: "#154782", frame: "#35475e", partition: "#b5c0cd", screen: "#0b2548",
-  chart: "#4e8eff", rug: "#cfced8", cream: "#fff8ec", green: "#56822c",
-  leaf: "#8baa3d", white: "#ffffff", outside: "#b9d0f4", soil: "#524331",
+  chart: "#4e8eff", rug: "#c5c3d2", cream: "#fff8ec", green: "#56822c",
+  leaf: "#8baa3d", white: "#ffffff", outside: "#f7f9ff", outsideGround: "#bad4f2", soil: "#524331",
   metal: "#9caab7", trim: "#263447",
 };
 export type Tone = keyof typeof palette;
@@ -114,7 +114,8 @@ Object.assign(materials.rug, { map: weave, roughness: 1 });
 Object.assign(materials.navy, { roughness: 0.94 });
 Object.assign(materials.frame, { metalness: 0.25, roughness: 0.55 });
 Object.assign(materials.screen, { roughness: 0.32, emissive: materials.screen.color, emissiveIntensity: 0.15 });
-Object.assign(materials.outside, { emissive: materials.outside.color, emissiveIntensity: 0.8 });
+Object.assign(materials.outside, { roughness: 0.94 });
+Object.assign(materials.outsideGround, { roughness: 1 });
 // Single panes prevent six overlapping transparent box faces from clouding rooms.
 export const glassMaterial = new MeshStandardMaterial({ color: "#c4dced", transparent: true, opacity: 0.11, roughness: 0.24, depthWrite: false, side: DoubleSide });
 

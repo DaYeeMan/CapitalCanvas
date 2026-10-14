@@ -6,7 +6,7 @@ Updated October 14, 2026. Human answers below are confirmed direction; proposed 
 
 | Decision | Answer |
 | --- | --- |
-| Work authorized now | Latest request authorizes V5C implementation, now completed and verified. V6 rendered surroundings/light/materials and V7 remain pending |
+| Work authorized now | V0–V7/V5A–V5C remain completed desktop checkpoints. Latest requests update the follow-up plan with the header/logo, cloud wipe, conference doors, rear-corner upright removal and exterior glass; ten header and fifteen additional answers are confirmed. These requests authorize documentation, with runtime/asset implementation a subsequent task. Production migration/mobile/touch design are separate |
 | Stack | React Three Fiber and drei |
 | Assets | Reusable R3F furniture geometry plus animated GLB people |
 | Camera | Fixed isometric angle; latest direction adds bounded zoom/pan, superseding the previous locked view |
@@ -17,7 +17,7 @@ Updated October 14, 2026. Human answers below are confirmed direction; proposed 
 | Shared dimensions | Exactly identical outer floor dimensions, without Home's northeast wall protrusion |
 | Floor shape | Both floors must be square like the references; V0 replaced the old 22×18 blockout with one shared 20m side length |
 | Floor order | Home above Resources in the same office building |
-| Floor navigation | Header links switch Home/Resources with the vertical slide; wheel only zooms, superseding scroll-to-switch floors |
+| Floor navigation | Header links switch Home/Resources; wheel only zooms. Current runtime uses a vertical slide; the confirmed follow-up replaces it with a cloud wipe |
 | About scope | Do not build About yet |
 | About header | Keep About as plain noninteractive text to match the concept |
 | Integration | Separate preview routes; keep the current site available |
@@ -43,7 +43,7 @@ Updated October 14, 2026. Human answers below are confirmed direction; proposed 
 | Background form/density | Abstract stepped stacks without building details; asymmetric reference-like clusters with breathing room |
 | Background near/far treatment | Larger/sharper foreground forms, smaller/fainter distant forms with subtle haze/lower contrast; no noticeable distant blur |
 | Background camera | Share the office's actual orthographic camera for zoom/pan; no extra decorative parallax |
-| Background across floors | One shared environment, with gentle vertical movement driven by the existing Home/Resources slide progress |
+| Background across floors | One shared environment. Current runtime shifts it gently with slide progress; the cloud-wipe follow-up changes any floor-dependent offset only under opaque cover |
 | Background shadows/base | Real soft shadows on neighboring blocks and a subtle pale-blue 3D base/ground below the office, lit consistently with the office |
 | Background crop/clearance | Foreground stacks may crop off viewport edges, but geometry/base must stay clear of the office, furniture/pins and travel envelope |
 | Background idle motion | None; no floating/bobbing. Movement comes only from camera input and floor-transition presentation |
@@ -65,6 +65,25 @@ Updated October 14, 2026. Human answers below are confirmed direction; proposed 
 | Window-style scope | Exterior glazing only; glass-room partitions retain thin dark frames and current tan doors |
 | Tall perimeter wall height | Lower tall northwest/rear walls on both floors to the glass-room visible tops, including caps; low front walls stay 0.58m |
 | Pane rhythm/sill | Broad panes with a low cream sill; fit Resources main-run pane count to the reference/span, rather than enforcing equal counts across floors |
+| Follow-up top bar | Warm cream #FFF8EC at approximately 85% background opacity; fully opaque text/logo/navigation |
+| Follow-up bar shape/height | Full viewport width, flush top edge, 88px desktop height; thin subtle bottom divider, no added shadow |
+| Follow-up bar translucency | Scenery stays sharp beneath it; no backdrop blur |
+| Follow-up bar/scene relationship | Overlay the current scene; keep camera framing, fit, target and padding unchanged |
+| Follow-up brand grouping | 64×64px CC icon beside the existing “CapitalCanvas” wordmark; keep the current name spelling/typography |
+| Follow-up logo palette | Recolor only the white C to #081750; retain cyan C and the original interlocking shape/transparency |
+| Follow-up logo asset ownership | Create a separate office variant; preserve the real site's original white/cyan logo and dark header |
+| Follow-up cloud appearance | Soft illustrated white clouds with pale-blue shading enter from both left and right and retreat to their original edges |
+| Follow-up floor swap | Completely replace the vertical slide; clouds fully cover the scene opaquely before swapping floors and resetting the view |
+| Follow-up wipe timing | Approximately 1.2 seconds total, including a brief fully covered pause; exact phase timing/easing remains tuning |
+| Follow-up header during wipe | Top bar stays visible and usable above clouds; the latest floor choice wins |
+| Follow-up motion/fallback | Reduced motion switches immediately without cloud movement; the same wipe works for 3D and static fallback |
+| Follow-up conference doors | Resources' right room and Home's far-left room use the private-office pale-wood kit, dark frame, handle and upper glass at their current entrance locations |
+| Follow-up Home door width | Remove the narrow glass strip between the wood door and next full pane on its right; extend the door bay to that pane's jamb, retaining its entrance side |
+| Follow-up rear corner | Remove only the lone upright at the highest rear cream-wall junction behind the small private office on both floors; keep other dark framing |
+| Follow-up visible glass scope | Exterior windows only; interior partitions/transoms retain their current appearance |
+| Follow-up exterior glass appearance | Very light cool-blue translucent tint, clearly present but subtle, with gentle highlights from existing scene lighting |
+
+All ten header/logo and fifteen transition/door/corner/glass clarification answers are resolved, including the user's description of Home's intervening glass strip. [REMAINING-DIFFERENCES-PLAN.md](REMAINING-DIFFERENCES-PLAN.md) records the decision tables and F1–F3 implementation/verification scope. This is planning only; camera framing refinement remains excluded. Earlier slide/door/window completion evidence describes the current runtime, not fulfillment of these subsequent requirements.
 
 ## Proposed defaults, not separate user requirements
 
@@ -76,13 +95,13 @@ Updated October 14, 2026. Human answers below are confirmed direction; proposed 
 
 ## Details to settle during planning or the authorized build
 
-The latest eight V6 background questions are resolved: abstract stepped stacks; subtle distance haze; shared camera without decorative parallax; one environment with gentle floor-slide shift; real soft shadows on blocks/pale-blue base; cropped foreground allowed; asymmetric breathing space; no ambient movement. Exact stack dimensions/world positions, haze range, slide-shift amount and shadow settings remain implementation tuning choices. These answers authorize a plan revision only, not V6 implementation.
+The eight V6 background questions are resolved and implemented after the explicit V6/V7 request: 33 boxes in 11 deterministic near/middle/far clusters; 90–165m distance fog; one actual camera/environment without decorative parallax; 1.25m progress-driven vertical shift; real soft shadows on blocks and a 150m pale-blue receiving plane; cropped foreground, asymmetric breathing space and no ambient movement. A separate cached 2048px environment shadow map preserves office contact coverage. Two layer passes share the same scene/camera/depth buffer. Geometry and shadow reception are verified in VISUAL-REVIEW.md.
 
 The earlier nine window/height questions are resolved and implemented in V5C: exact cream frames; Resources main run stops before the rear office with a separate broad office window; two equal undivided Home middle windows/narrow center section plus retained private-office split; lower tall walls only; keep interior dark frames/tan doors/low fronts; broad panes and low sills. Tuning: 0.32m jamb/post width/depth, 0.3m sill, 0.24m header including 0.12m cap, 0.16m room margins and 0.76m combined Home center pier/jamb section. Actual cap/mullion tops align at 2.9225m.
 
 The earlier eleven camera/couch/hover answers remain valid and are implemented in V5A/V5B. The grey-band addition remains withdrawn. See [CAMERA-PLAN.md](CAMERA-PLAN.md).
 
-V5A–V5C are authorized, implemented and verified. Current tuning: walls 0.32m thick/front 0.58m high; Home Ithaca [-3,4.85]; navigation 18px system sans, 36px gap, 1px underline, hover #155cff / active hover #4677ff; camera zoom 1–2×, drag threshold 5px, stretch cap 48px, critically damped 0.55s settling and 700ms floor slide. V5C supersedes the old 3.4m wall target and exterior window coverage/style only. Thickness, furniture, door, header and control decisions remain. Next stages are V6 and V7; production migration remains separate.
+V5A–V5C and V6–V7 are authorized, implemented and verified. Current tuning: walls 0.32m thick/front 0.58m high; Home Ithaca [-3,4.85]; navigation 18px system sans, 36px gap, 1px underline, hover #155cff / active hover #4677ff; camera zoom 1–2×, drag threshold 5px, stretch cap 48px, critically damped 0.55s settling and 700ms floor slide. V5C supersedes the old 3.4m wall target/window style; V6 refines rendering/environment while retaining geometry and controls. The desktop preview pass is complete with documented reference/performance limits; production migration remains separate.
 
 1. Character files are verified and bundled: clothed Business Man (CC0) and Suit (CC BY 3.0), supplied Walk/Idle and authored DeskIdle. Sources, modifications and hashes are in ASSETS.md and the character manifest. No purchase was made.
 2. V0 replaced the old 22×18 rectangle with one shared 20 metre side length. Current structural dimensions: existing 0.45m slab, 2.9225m tall visible tops including caps, 0.32m wall thickness/0.58m front height and 7m physical floor spacing. Both private offices and Home conference retain flush corners using revised inner-edge anchors; the extra band is absent. V5C derives Home's equal broad middle windows from room edges, ending before the solid conference backing, and separates Resources' main and office glazing.
@@ -92,4 +111,4 @@ V5A–V5C are authorized, implemented and verified. Current tuning: walls 0.32m 
 6. Design mobile/touch behavior and determine production migration/deep-link treatment later. Neither is required to start the desktop preview after build authorization.
 7. Proposed keyboard alternatives while the scene is focused: +/− zoom, arrow keys pan, 0 resets; preserve browser shortcuts and native header Tab/Enter. These mappings, immediate reduced-motion release settling, static fallback without camera gestures and no in-bounds inertial fling are implementation defaults consistent with the confirmed mouse behavior.
 
-The earlier request, “Continue with the remaining phases,” authorized functional phases 5–8, followed by V0–V5 and V5A/V5B. The October 14 request authorizes V5C implementation; all these stages are implemented and verified. V6 rendered background/depth/shadows and V7 remain pending. [VISUAL-PLAN.md](VISUAL-PLAN.md), [CAMERA-PLAN.md](CAMERA-PLAN.md) and [VISUAL-REVIEW.md](VISUAL-REVIEW.md) record scope and evidence. Tool launching, About, resource readers and production migration remain separate work.
+The earlier request, “Continue with the remaining phases,” authorized functional phases 5–8, followed by V0–V5 and V5A/V5B. October 14's requests authorized V5C and then V6/V7; all these stages are implemented and verified for the desktop preview. [VISUAL-PLAN.md](VISUAL-PLAN.md), [CAMERA-PLAN.md](CAMERA-PLAN.md) and [VISUAL-REVIEW.md](VISUAL-REVIEW.md) record scope, captures, measurements and remaining differences. Tool launching, About, resource readers, production migration and mobile/touch approval remain separate work.

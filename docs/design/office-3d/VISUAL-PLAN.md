@@ -1,6 +1,6 @@
 # Office visual refinement plan
 
-Status: V0–V5 and V5A–V5C implemented and verified. V5C exterior windows/wall height completed October 14, 2026; V6's real 3D surroundings, depth/shadows and V7 remain pending. Nine window/height answers and eight background answers are recorded in [DECISIONS.md](DECISIONS.md). See [PROGRESS.md](PROGRESS.md) and completion evidence in [VISUAL-REVIEW.md](VISUAL-REVIEW.md).
+Status: V0–V7 and V5A–V5C implemented and verified for the desktop preview. V5C and V6–V7 completed October 14, 2026. Nine window/height answers and eight background answers are recorded in [DECISIONS.md](DECISIONS.md). See [PROGRESS.md](PROGRESS.md) and the captures, measurements and remaining reference differences in [VISUAL-REVIEW.md](VISUAL-REVIEW.md). Production migration and mobile/touch design remain separate.
 
 The functional preview from phases 1–8 is the starting point. This pass brings its composition, furniture, people and rendering closer to the approved [Home](concepts/home-approved.png) and [Resources](concepts/resources-approved.png) images. Those images remain the visual authority, with the user's recorded corrections/additions taking precedence, including the new Home couch and camera interaction. [DESIGN.md](DESIGN.md) defines current behavior and layout constraints. No reference regeneration is needed.
 
@@ -24,7 +24,7 @@ All implementation paths below are relative to `apps/web/src/site/office/`. Thes
 | V6 | Finish light, materials and rendered 3D surroundings | `OfficeCanvas.tsx`, `sceneResources.ts`, `OfficeSurroundings.tsx`, `office.css`; focused environment bounds/shadow checks if needed | Softer daylight/material depth; real white stepped block stacks at near/mid/far depths with haze, rendered soft shadows and pale-blue base; shared camera and gentle floor-slide movement |
 | V7 | Verify and present both floors | Existing office tests, browser QA, `PROGRESS.md`, `VISUAL-REVIEW.md` | Updated screenshot comparison, interaction checks, measured performance and remaining differences |
 
-V0–V5 and V5A–V5C are completed checkpoints. Window/height geometry and shared base fit/pan bounds are verified. V6 lighting/background and V7 remain the next stages when authorized. Reuse refined furniture and people rather than repeating their completed passes.
+V0–V7 and V5A–V5C are completed checkpoints. Window/height geometry, shared base fit/pan bounds, final lighting/background and desktop review are verified. Existing furniture/people and canonical references were reused.
 
 ## Review coverage audit
 
@@ -243,7 +243,7 @@ Retain the 0.58m low front cutaways, 0.32m structural thickness, square footprin
 
 Implemented V5C: one shared visible top at 2.9225m aligns perimeter caps with the unchanged 2.9m room panes and 0.045m top mullions. Exterior jambs/posts are 0.32m wide/deep, with a 0.3m sill and 0.24m header including the 0.12m cap, all using the exact wall material. Pane widths end at frame faces. Room-derived Home middle openings are z=[-5.28,-0.96] and [-0.84,3.48], each with one 3.68m clear pane; the combined center pier/jamb section is 0.76m. Private-office glazing retains its split. Resources' undivided office aperture is [-9.68,-5.6], and its four-pane main run is [-5.28,9.84], separated by solid cream infill/jambs. No room, furniture, door or path moves were needed. Camera fit now uses the actual shared top instead of the old wall+0.06 assumption; cinematic travel continues to derive from that fitted camera. Geometry/path/view tests, both-floor native captures and retained V5B browser checks are recorded in VISUAL-REVIEW.md.
 
-V5C is complete for this pass. V6 lights/materials/background and V7 final sign-off remain pending and were not authorized by the V5C implementation request.
+V5C is complete for this pass. The subsequent request authorized V6 lights/materials/background and V7 verification; both are now complete for the desktop preview.
 
 ## V6 — Final rendering
 
@@ -283,6 +283,10 @@ There is no idle floating/bobbing or new animation loop. Reduced motion selects 
 
 Capture both resting floors at 1672×941, plus zoomed/panned edge views and an intermediate floor slide. Compare stack silhouette, near/far composition, white/blue balance, real receiving shadows and haze against the concepts. Inspect actual scene meshes/materials and shadow flags to establish that this is live 3D geometry, with no raster background request. Verify base/stack clearance at the extreme camera/travel states, stable layout on reload/reset, reduced-motion/hidden pause and no ambient movement. Record environment draw calls/triangles and shadow cost in V7. Do not close B1 from a single static screenshot alone.
 
+Implemented V6: 33 cached instanced boxes form 11 deterministic asymmetric clusters with larger near blocks, smaller middle/far stacks, stepped terraces and adjoining prisms. Non-emissive near-white materials use real warm/cool light and 90–165m distance fog; office surfaces retain clear cream/wood/navy contrast. A real 150m pale-blue receiving plane sits below the entire camera-derived travel envelope, not just physical floor spacing. Scenery follows the existing progress by 1.25m vertically, with no idle motion or decorative parallax. Its resize placement preserves composition while keeping every block and the ground below the lowest incoming slab and behind every office depth. The environment never enters fit/pan calculations.
+
+Lighting/shadows are isolated with two layer passes through the same scene and the same orthographic camera, preserving the depth buffer between them. Three filters lights by camera layers rather than individual mesh layers; the explicit passes prevent the extra background key from brightening office materials or widening office contact-shadow coverage. The existing 2048px office map retains its 36m frustum; a separate 2048px/110m map covers all environment casters. Environment shadows refresh on resize/travel and cache at rest. Cream tile variation is stronger but restrained; lilac rug weave and edges are clearer without extra texture resolution, meshes or downloaded assets. Live geometry, shadow reception, clearance, lifecycle and costs are verified below and in VISUAL-REVIEW.md.
+
 ## V7 — Verification and stop condition
 
 - Capture settled Home and Resources at 1672×941 using repeatable stationary worker poses, plus representative active-motion frames. Compare each against its canonical PNG at equivalent display size; record differences in the review ledger.
@@ -298,3 +302,5 @@ Capture both resting floors at 1672×941, plus zoomed/panned edge views and an i
 Stop when the square footprint, Home north-area reconstruction and window defect are resolved, the review ledger's required visual items have evidence, runtime checks pass and both floors are presented with any remaining differences stated plainly. Production migration remains a separate task. Update [PROGRESS.md](PROGRESS.md) as each visual stage is actually completed.
 
 Resources' rear-office, lounge and right-bench corrections are also required for completion. A required ledger item cannot be silently deferred or closed just because screenshots/tests were produced. Keep unresolved items open with their remaining work stated; any accepted deviation must be recorded explicitly in the ledger.
+
+Implemented V7: both stationary native-size floors, active-worker samples, rear-office/window/lounge/bench/pod/person details, zoomed edge views and a deterministic intermediate slide were inspected against the references and current user corrections. All 30 required ledger items have evidence; S3 remains withdrawn. 120 tests/16 files, lint and production build pass (existing Delphi lint and bundle-size warnings remain). Normal/reduced motion and DPR 1/2 retain fitted views, native markers, bounded controls, header/history/reset, pause/resume and fallback behavior. Existing homepage/tools/policy/notices routes pass smoke checks. Same-host before/after frame-time/render measurements and shadow reception/caching proof are recorded in VISUAL-REVIEW.md. This completes the desktop preview pass with documented differences, not a pixel-identical illustration or cross-device performance guarantee.

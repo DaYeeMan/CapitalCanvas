@@ -1,6 +1,8 @@
 # Office zoom, pan and floor navigation plan
 
-Status: V5B implemented and browser-verified October 13, 2026, following V5A. V6/V7 remain pending. User answers and final tuning are in [DECISIONS.md](DECISIONS.md); completion evidence is in [VISUAL-REVIEW.md](VISUAL-REVIEW.md).
+Status: V5B implemented and browser-verified October 13, 2026, following V5A, and reverified after V5C and V6–V7 completion October 14. User answers and final tuning are in [DECISIONS.md](DECISIONS.md); completion evidence is in [VISUAL-REVIEW.md](VISUAL-REVIEW.md).
+
+Confirmed follow-up, planning only: [REMAINING-DIFFERENCES-PLAN.md](REMAINING-DIFFERENCES-PLAN.md#f3-cloud-wipe-replacing-vertical-floor-slides) supersedes the vertical-slide choreography below with a roughly 1.2-second left/right cloud cover → opaque floor/view commit → retreat. The header stays above the clouds and usable; latest selection wins. Reset to centered 1× happens immediately under opaque cover, with no visible floor/scenery slide or camera reset animation. Reduced motion switches immediately; fallback shares the wipe. Preserve settled camera fit, angle, zoom/pan bounds and marker sizing. The slide descriptions below document the preceding implemented checkpoint until this follow-up is built.
 
 V5C completed October 14, 2026: lowered tall wall/cap tops and revised exterior frames/openings before V6/V7. Fit now uses the actual shared 2.9225m cap/mullion top. Both-floor fits, pan bounds/rebound, projection at DPR 1/2 and header travel/reset are reverified. Minimum zoom remains centered 1×, maximum 2×, with existing elastic pan/header navigation. See [VISUAL-PLAN.md](VISUAL-PLAN.md) and [VISUAL-REVIEW.md](VISUAL-REVIEW.md).
 

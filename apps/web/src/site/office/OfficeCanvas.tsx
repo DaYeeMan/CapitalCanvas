@@ -10,6 +10,7 @@ import { LocationMarker } from "./LocationMarker";
 import { OfficePeople } from "./OfficePeople";
 import { OfficeViewControls } from "./OfficeViewControls";
 import type { ViewMotion } from "./officeView";
+import { floorTravelDistance, SURROUNDINGS } from "./surroundings";
 
 type MarkerElements = Record<ToolId, HTMLDivElement | null>;
 function MarkerProjection({ floor, elements, hits, progress, settled, revision, motion, element }: { floor: FloorId; elements: RefObject<MarkerElements>; hits: RefObject<MarkerElements>; progress: RefObject<number>; settled: boolean; revision: RefObject<number>; motion: RefObject<ViewMotion>; element: RefObject<HTMLDivElement | null> }) {
@@ -56,19 +57,37 @@ function MarkerProjection({ floor, elements, hits, progress, settled, revision, 
 
 function FloorTravel({ progress, floor, settled, animate }: { progress: RefObject<number>; floor: FloorId; settled: boolean; animate: boolean }) {
   const home = useRef<Group>(null), resources = useRef<Group>(null);
-  const verticalAxis = useRef(new Vector3());
   useFrame(({ camera }) => {
     const cam = camera as Camera;
     // Exaggerate the cinematic gap to one viewport. Physical floorSpacing stays
     // shared; this presentation offset keeps the upper slab off the lower floor.
-    const vertical = verticalAxis.current.set(0, 1, 0).transformDirection(cam.matrixWorldInverse).y;
-    const travel = (cam.top - cam.bottom) / Math.max(vertical, 0.1) * 1.08;
+    const travel = floorTravelDistance(cam.top - cam.bottom);
     home.current!.position.y = progress.current * travel;
     resources.current!.position.y = (progress.current - 1) * travel;
     home.current!.visible = progress.current < 0.999;
     resources.current!.visible = progress.current > 0.001;
   }, -1);
   return <><group ref={home} dispose={null}><OfficeFloor layout={FLOORS.home} /><OfficePeople floor="home" active={settled && floor === "home"} animate={animate} /></group><group ref={resources} dispose={null}><OfficeFloor layout={FLOORS.resources} /><OfficePeople floor="resources" active={settled && floor === "resources"} animate={animate} /></group></>;
+}
+
+function OfficeRender() {
+  // Three filters lights by camera layers, not mesh layers. Two passes through
+  // the SAME camera isolate scenery lighting/shadows from office contact detail.
+  // Preserve depth between passes: real background geometry stays behind floors.
+  useFrame(({ gl, scene, camera }) => {
+    const layers = camera.layers.mask, autoClear = gl.autoClear;
+    camera.layers.set(1);
+    gl.render(scene, camera);
+    const calls = gl.info.render.calls, triangles = gl.info.render.triangles;
+    camera.layers.set(0);
+    gl.autoClear = false;
+    gl.render(scene, camera);
+    gl.info.render.calls += calls;
+    gl.info.render.triangles += triangles;
+    camera.layers.mask = layers;
+    gl.autoClear = autoClear;
+  }, 1);
+  return null;
 }
 
 export default function OfficeCanvas({ floor, progress, settled, animate, pageVisible, reducedMotion, viewReset }: { floor: FloorId; progress: RefObject<number>; settled: boolean; animate: boolean; pageVisible: boolean; reducedMotion: boolean; viewReset: number }) {
@@ -80,15 +99,17 @@ export default function OfficeCanvas({ floor, progress, settled, animate, pageVi
   // already projected the prior nodes, so new refs must request another frame.
   const projectionRevision = useRef(0);
   return <div ref={element} className="office-scene"><Canvas orthographic frameloop={pageVisible && (animate || !settled) ? "always" : "demand"} dpr={[1, 1.5]} shadows="variance" camera={{ position: [...CAMERA.position], near: 0.1, far: 150 }} gl={{ antialias: true, alpha: true, toneMapping: NeutralToneMapping, toneMappingExposure: 1.1 }} fallback={<OfficeFallback floor={floor} />} aria-label={`${FLOORS[floor].title}: isometric 3D floor with three marked tool desks`}>
-    <OrthographicCamera makeDefault manual position={[...CAMERA.position]} near={0.1} far={150} />
+    <OrthographicCamera makeDefault manual position={[...CAMERA.position]} near={0.1} far={800} layers-mask={3} />
     <OfficeViewControls element={element} motion={motion} reset={viewReset} settled={settled} reducedMotion={reducedMotion} pageVisible={pageVisible} />
-    <ambientLight intensity={0.65} />
-    <hemisphereLight args={["#eef4ff", "#d4c2ad", 1.4]} />
-    <directionalLight position={[-9, 18, 7]} color="#fff3de" intensity={3.2} castShadow shadow-mapSize={[2048, 2048]} shadow-radius={8} shadow-blurSamples={8} shadow-camera-near={1} shadow-camera-far={60} shadow-camera-left={-18} shadow-camera-right={18} shadow-camera-top={18} shadow-camera-bottom={-18} shadow-normalBias={0.025} shadow-bias={-0.00015} />
-    <directionalLight position={[10, 9, -12]} color="#d9e7ff" intensity={0.7} />
-    <OfficeSurroundings />
+    <fog attach="fog" args={["#cfe2f8", SURROUNDINGS.fogNear, SURROUNDINGS.fogFar]} />
+    <ambientLight intensity={0.5} layers-mask={3} />
+    <hemisphereLight args={["#eef4ff", "#b5c9e3", 1.25]} layers-mask={3} />
+    <directionalLight name="office-daylight" position={[-9, 18, 7]} color="#fff3de" intensity={2.6} castShadow shadow-mapSize={[2048, 2048]} shadow-radius={5} shadow-blurSamples={8} shadow-camera-near={1} shadow-camera-far={60} shadow-camera-left={-18} shadow-camera-right={18} shadow-camera-top={18} shadow-camera-bottom={-18} shadow-normalBias={0.02} shadow-bias={-0.00015} />
+    <directionalLight position={[10, 9, -12]} color="#d9e7ff" intensity={0.85} layers-mask={3} />
+    <OfficeSurroundings progress={progress} />
     <FloorTravel progress={progress} floor={floor} settled={settled} animate={animate} />
     <MarkerProjection floor={floor} elements={markers} hits={hits} progress={progress} settled={settled} revision={projectionRevision} motion={motion} element={element} />
+    <OfficeRender />
   </Canvas>
     {FLOORS[floor].pods.map(pod => <LocationMarker key={`${floor}-${pod.tool}`} tool={pod.tool} label={pod.label} active={settled} anchorRef={element => { markers.current[pod.tool] = element; if (element) { projectionRevision.current++; invalidate(); } }} hitRef={element => { hits.current[pod.tool] = element; if (element) { projectionRevision.current++; invalidate(); } }} />)}
   </div>;
