@@ -37,7 +37,7 @@ export default function InformationPage({ path }: { path: string }) {
     {page ? <>
       {page.sections.map(([heading, body]) => <section key={heading}><h2>{heading}</h2><p>{body}</p></section>)}
       {path === "/privacy" && <p>Provider notices: <a href="https://vercel.com/legal/privacy-notice">Vercel</a> · <a href="https://policies.google.com/privacy">Google</a>.</p>}
-      {path === "/notices" && notices.map(notice => <details className="license-entry" key={notice.name}><summary>{notice.name} {notice.version}</summary><pre>{notice.text}</pre></details>)}
+      {path === "/notices" && notices.map(notice => <details className="license-entry" key={`${notice.name}@${notice.version}`}><summary>{notice.name} {notice.version}</summary><pre>{notice.text}</pre></details>)}
       <p>Contact: <a href={contactHref}>{contactEmail}</a></p>
       <p><a href="/#resources">Research and methods</a> · <a href="/disclaimer">Disclaimer</a> · <a href="/notices">Attributions</a></p>
     </> : <p>This page is not available. Return to CapitalCanvas to explore the tools and research.</p>}

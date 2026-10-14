@@ -6,8 +6,10 @@ import "./site/site.css";
 const IthacaWorkbench = lazy(() => import("./IthacaWorkbench"));
 const TroyWorkbench = lazy(() => import("./troy/TroyWorkbench"));
 const DelphiWorkbench = lazy(() => import("./delphi/DelphiWorkbench"));
+const OfficePreview = lazy(() => import("./site/office/OfficePreview"));
 const titles: Record<string, string> = {
   "/": "CapitalCanvas",
+  "/preview/office": "Office preview — CapitalCanvas",
   "/tools/ithaca": "Ithaca — CapitalCanvas",
   "/tools/troy": "Troy — CapitalCanvas",
   "/tools/delphi": "Delphi — CapitalCanvas",
@@ -54,5 +56,6 @@ export default function App() {
       <div className="ithaca-workbench"><IthacaWorkbench /></div>
     </Suspense>
   </WorkbenchBoundary>;
+  if (path === "/preview/office") return <Suspense fallback={<main className="route-message" aria-busy="true"><p role="status">Loading office…</p></main>}><OfficePreview /></Suspense>;
   return path === "/" ? <HomePage /> : <InformationPage path={path} />;
 }

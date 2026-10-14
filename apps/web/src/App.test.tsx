@@ -5,7 +5,11 @@ import { act, cleanup, render, screen, waitFor, within } from "@testing-library/
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
-const { loadWorkbench } = vi.hoisted(() => ({ loadWorkbench: vi.fn() }));
+const { loadWorkbench, loadOffice } = vi.hoisted(() => ({ loadWorkbench: vi.fn(), loadOffice: vi.fn() }));
+vi.mock("./site/office/OfficePreview", () => {
+  loadOffice();
+  return { default: () => <main><h1>Office preview test</h1></main> };
+});
 vi.mock("./IthacaWorkbench", () => {
   loadWorkbench();
   return { default: () => <main><h1>Ithaca test workbench</h1></main> };
@@ -38,6 +42,7 @@ describe("CapitalCanvas route boundaries", () => {
     await waitFor(() => expect(document.activeElement).toBe(resources));
     expect(container.querySelector("#home")).toBe(home);
     expect(loadWorkbench).not.toHaveBeenCalled();
+    expect(loadOffice).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: /Launch Ithaca/ })).toHaveAttribute("href", "/tools/ithaca");
     expect(screen.getByRole("link", { name: /Launch Troy/ })).toHaveAttribute("href", "/tools/troy");
@@ -81,6 +86,14 @@ describe("CapitalCanvas route boundaries", () => {
     expect(reference.getByText(/A discrete tree makes option valuation/)).toBeVisible();
     expect(screen.queryByText("Implementation")).not.toBeInTheDocument();
     expect(within(container.querySelector("#about") as HTMLElement).getByText("Emmanuel Zhang")).toBeInTheDocument();
+  });
+
+  it("loads the isolated office route with indexing disabled", async () => {
+    window.history.replaceState(null, "", "/preview/office#resources"); render(<App />);
+    expect(await screen.findByRole("heading", { name: "Office preview test" })).toBeInTheDocument();
+    expect(document.title).toBe("Office preview — CapitalCanvas");
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "noindex,follow");
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("does not treat Resources or About as separate pages", () => {
