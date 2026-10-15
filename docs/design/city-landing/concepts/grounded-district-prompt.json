@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-14",
+  "timezone": "America/Chicago",
+  "tool": "built-in image_gen.imagegen",
+  "skill": "taste-skill:imagegen-frontend-web",
+  "selectedConcept": "Grounded District",
+  "image": "landing-f-grounded-district.png",
+  "prompts": [
+    {
+      "id": "f-grounded-district",
+      "prompt": "Use case: ui-mockup. Generate ONE finished horizontal 16:9 desktop landing-page concept F for CapitalCanvas: GROUNDED DISTRICT, a professional architectural-finance editorial style. This is ONE hero section, not a collage. Reference image1 shows how a sparse city connects to continuous ground and fades out; use only that spatial principle, NOT its stock text, watermark, transit or cartoon blue material. Reference image2 supplies the serif typography the user likes and warm white/blue-glass office material identity, NOT its floating platform. Make a distinct new composition.\n\nCRITICAL: NO FLOATING BLOCK, NO visible base thickness, NO square island border or diorama plinth. Buildings stand on a continuous pale cool-gray ground plane that fills the entire page. A few white streets run diagonally through the upper-right two-thirds and softly disappear into light atmospheric ground toward page edges. Simplify aggressively: one dominant square-footprint cream-frame blue-glass office tower (about 10 storeys, footprint compatible with a broad square office slice), FOUR smaller supporting buildings of varied simple masses, 5-7 restrained faceted trees. Building contact shadows anchor them to ground. Tower architecture retains broad square floorplate, cream verticals/horizontal bands, flat roof, low penthouse. No train, vehicles, people crowds, road labels or tower explosion. Neighbor buildings fewer window bays and very limited detail. Orthographic isometric view from above, not street-level or skyline panorama.\n\nCOMPOSITION: city originates at UPPER RIGHT, architectural streets sweep diagonally through middle-right and toward bottom-right edge. The lower-left is a calm editorial text area contiguous with the same ground. Small original-style navy/cyan interlocking CC mark plus elegant serif CapitalCanvas wordmark top-left, restrained size; no header bar or navigation. Mid/lower-left beautiful confident high-contrast roman SERIF headline like reference2, navy ink, exactly TWO lines \"Explore pricing and\" / \"market dynamics\". Exact supporting sentence in readable navy sans below: \"Visual tools for understanding financial models\". Below, one professional navy filled rectangular button with white text \"Enter CapitalCanvas\" and a restrained right arrow. Exact readable text, no other copy.\n\nProfessional, polished architectural visualization, understated light gray/white continuous ground, bright daylight, cream stone, cool blue glazing, rich navy type, selective green planting. Material dimensionality close to current office, not monochrome toy city. Scene subtly loses contrast at far top/right and dissolves into ground rather than terminating at an edge. Enough architectural atmosphere and lighting to feel designed without density. No card panels, ornamental grid lines, badges, giant numbers, invented claims, watermark or browser frame. High fidelity website comp, one screen.",
+      "inputs": [
+        "user reference image1",
+        "concepts/landing-a-editorial.png"
+      ]
+    }
+  ],
+  "referenceNote": "Concept A was a generation-time reference for serif character and materials; its project PNG was removed at the user's request after selecting Grounded District."
+}

@@ -1,72 +1,60 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
-import { readFloor, type FloorId } from "./layouts";
+import type { FloorId } from "./layouts";
+import { readPreviewView, type PreviewView } from "./towerStructure";
 
-export type NavigationPhase = "idle" | "fade-out" | "hidden" | "fade-in";
-export const FADE = { out: 250, in: 250 } as const;
-interface Navigation { floor: FloorId; phase: NavigationPhase; viewReset: number; instantReset: boolean }
-
-export function useOfficeNavigation(reducedMotion: boolean) {
-  const [state, setState] = useState<Navigation>(() => ({ floor: readFloor(), phase: "idle", viewReset: 0, instantReset: true }));
-  const current = useRef(state), destination = useRef(state.floor);
-  const reduced = useRef(reducedMotion);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+export type NavigationPhase = "loading" | "moving" | "idle";
+interface Navigation { view: PreviewView; origin: PreviewView; viewReset: number; phase: NavigationPhase }
+export function useOfficeNavigation(reducedMotion = false, pageVisible = true) {
+  const [state, setState] = useState<Navigation>(() => {
+    const view = readPreviewView();
+    return { view, origin: view, viewReset: 0, phase: "loading" };
+  });
+  const current = useRef(state);
+  const preferences = useRef({ reducedMotion, pageVisible });
   const publish = useCallback((next: Navigation) => { current.current = next; setState(next); }, []);
-  const immediate = useCallback((floor: FloorId) => {
-    clearTimeout(timer.current);
-    publish({ floor, phase: "idle", viewReset: current.current.viewReset + 1, instantReset: true });
+  const select = useCallback((view: PreviewView) => {
+    const value = current.current;
+    if (value.view === view && (view === "city" || value.phase !== "idle")) return;
+    const instant = preferences.current.reducedMotion || !preferences.current.pageVisible || value.view === view;
+    publish({ view, origin: value.origin, viewReset: value.viewReset + 1, phase: instant ? "loading" : "moving" });
   }, [publish]);
-  const commitHidden = useCallback(() => {
-    clearTimeout(timer.current);
-    publish({ floor: destination.current, phase: "hidden", viewReset: current.current.viewReset + 1, instantReset: true });
-  }, [publish]);
-  const select = useCallback((next: FloorId) => {
-    destination.current = next;
-    if (reduced.current || document.visibilityState === "hidden") { immediate(next); return; }
-    const previous = current.current;
-    if (next === previous.floor && (previous.phase === "hidden" || previous.phase === "fade-in")) return;
-    if (previous.phase === "hidden") { commitHidden(); return; }
-    if (previous.phase === "fade-out") return;
-    if (previous.phase === "idle" && next === previous.floor) {
-      publish({ ...previous, viewReset: previous.viewReset + 1, instantReset: false });
-      return;
-    }
-    clearTimeout(timer.current);
-    // CSS fades from its current opacity if another choice arrives during fade-in.
-    publish({ ...previous, phase: "fade-out" });
-    timer.current = setTimeout(commitHidden, FADE.out);
-  }, [commitHidden, immediate, publish]);
-  const navigate = useCallback((next: FloorId) => {
-    if (window.location.hash !== `#${next}`) window.history.pushState(null, "", `#${next}`);
-    select(next);
+  const navigate = useCallback((view: PreviewView) => {
+    if (window.location.hash !== `#${view}`) window.history.pushState(null, "", `#${view}`);
+    select(view);
   }, [select]);
+  const skip = useCallback(() => {
+    if (current.current.phase === "moving") publish({ ...current.current, phase: "loading" });
+  }, [publish]);
   const presented = useCallback((floor: FloorId, reset: number) => {
-    const committed = current.current;
-    if (committed.phase !== "hidden" || committed.floor !== floor || committed.viewReset !== reset) return;
-    clearTimeout(timer.current);
-    // Wait for the destination's rendered camera/marker state, not just a timer.
-    timer.current = setTimeout(() => {
-      publish({ ...current.current, phase: "fade-in" });
-      timer.current = setTimeout(() => publish({ ...current.current, phase: "idle" }), FADE.in);
-    }, 0);
+    const value = current.current;
+    const expected = value.view === "resources" ? "resources" : "home";
+    if (value.phase !== "idle" && floor === expected && reset === value.viewReset) {
+      publish({ ...value, origin: value.view, phase: "idle" });
+    }
   }, [publish]);
   useLayoutEffect(() => {
-    reduced.current = reducedMotion;
-    if (reducedMotion && current.current.phase !== "idle") immediate(destination.current);
-  }, [reducedMotion, immediate]);
+    preferences.current = { reducedMotion, pageVisible };
+    if (reducedMotion || !pageVisible) skip();
+  }, [reducedMotion, pageVisible, skip]);
   useLayoutEffect(() => {
-    const onHistory = () => { const next = readFloor(); if (next !== destination.current) select(next); };
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden" && current.current.phase !== "idle") immediate(destination.current);
+    const normalize = () => {
+      const view = readPreviewView();
+      if (window.location.hash && !["#city", "#home", "#resources"].includes(window.location.hash)) window.history.replaceState(null, "", "#city");
+      return view;
     };
-    window.addEventListener("hashchange", onHistory);
-    window.addEventListener("popstate", onHistory);
-    document.addEventListener("visibilitychange", onVisibility);
+    normalize();
+    const history = () => {
+      const view = normalize();
+      if (view !== current.current.view) select(view);
+    };
+    const key = (event: KeyboardEvent) => { if (event.key === "Escape") skip(); };
+    window.addEventListener("hashchange", history); window.addEventListener("popstate", history);
+    window.addEventListener("keydown", key);
     return () => {
-      clearTimeout(timer.current);
-      window.removeEventListener("hashchange", onHistory);
-      window.removeEventListener("popstate", onHistory);
-      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("hashchange", history); window.removeEventListener("popstate", history);
+      window.removeEventListener("keydown", key);
     };
-  }, [select, immediate]);
-  return { ...state, settled: state.phase === "idle", navigate, presented };
+  }, [select, skip]);
+  return { ...state, floor: (state.view === "resources" ? "resources" : "home") as FloorId,
+    settled: state.phase === "idle", instantReset: true, navigate, presented, skip };
 }

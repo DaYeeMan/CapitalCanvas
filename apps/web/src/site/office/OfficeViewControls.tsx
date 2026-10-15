@@ -8,9 +8,10 @@ interface Fit { left: number; right: number; top: number; bottom: number; width:
 interface ReturnMotion { from: OfficeView; to: OfficeView; began: number }
 interface Drag { id: number; origin: ViewPoint; pan: ViewPoint; started: boolean }
 
-export function OfficeViewControls({ element, motion, reset, instantReset, settled, reducedMotion, pageVisible }: {
+export function OfficeViewControls({ element, motion, reset, instantReset, settled, reducedMotion, pageVisible, elevation = 0 }: {
   element: RefObject<HTMLDivElement | null>; motion: RefObject<ViewMotion>; reset: number;
   instantReset: boolean; settled: boolean; reducedMotion: boolean; pageVisible: boolean;
+  elevation?: number;
 }) {
   const { camera, size, invalidate } = useThree();
   const view = useRef<OfficeView>({ zoom: 1, pan: { x: 0, y: 0 } });
@@ -22,8 +23,8 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
 
   useLayoutEffect(() => {
     const cam = camera as OrthographicCamera;
-    cam.position.set(...CAMERA.position); cam.lookAt(...CAMERA.target); cam.updateMatrixWorld();
-    const corners = [-1, 1].flatMap(x => [-BUILDING.slab, TALL_WALL_TOP].flatMap(y => [-1, 1].map(z => new Vector3(x * (BUILDING.width + BUILDING.wallThickness) / 2, y, z * (BUILDING.depth + BUILDING.wallThickness) / 2).applyMatrix4(cam.matrixWorldInverse))));
+    cam.position.set(CAMERA.position[0], CAMERA.position[1] + elevation, CAMERA.position[2]); cam.lookAt(0, elevation, 0); cam.updateMatrixWorld();
+    const corners = [-1, 1].flatMap(x => [-BUILDING.slab, TALL_WALL_TOP].flatMap(y => [-1, 1].map(z => new Vector3(x * (BUILDING.width + BUILDING.wallThickness) / 2, y + elevation, z * (BUILDING.depth + BUILDING.wallThickness) / 2).applyMatrix4(cam.matrixWorldInverse))));
     const xs = corners.map(p => p.x), ys = corners.map(p => p.y);
     const left = Math.min(...xs), right = Math.max(...xs), bottom = Math.min(...ys), top = Math.max(...ys);
     const aspect = size.width / Math.max(size.height, 1);
@@ -37,7 +38,7 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
     if (node && id !== undefined && node.hasPointerCapture(id)) node.releasePointerCapture(id);
     motion.current.busy = false;
     invalidate();
-  }, [camera, size.width, size.height, element, motion, invalidate]);
+  }, [camera, size.width, size.height, element, motion, invalidate, elevation]);
 
   useLayoutEffect(() => {
     const node = element.current;

@@ -41,7 +41,7 @@ function Worker({ worker, simulation, session, visible }: { worker: Person; simu
     };
   }, [runtime, invalidate]);
   useFrame(() => {
-    if (!visible || !root.current || !session.ready) return;
+    if (!visible || !root.current || root.current.parent?.visible === false || !session.ready) return;
     const time = simulation.tick * STEP;
     const alpha = session.paused || worker.state === "seated" ? 1 : Math.max(0, Math.min(1, (session.time - time) / STEP));
     for (const action of Object.values(runtime.actions)) action.setEffectiveWeight(0);

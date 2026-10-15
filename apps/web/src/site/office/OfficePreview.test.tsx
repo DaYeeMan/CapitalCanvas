@@ -33,20 +33,34 @@ describe("isolated office shell", () => {
     await waitFor(() => expect(document.querySelector(".office-preview")).toHaveAttribute("data-traveling", "false"), { timeout: 2500 });
     expect(screen.getByTestId("office-scene")).toHaveTextContent("home");
   });
-  it("ignores scrolling and wheel for floor selection, but fades from header links", async () => {
+  it("ignores scrolling and wheel for floor selection, but changes pose from header links", async () => {
     render(<OfficePreview />); await screen.findByTestId("office-scene");
     const main = document.getElementById("office-main")!;
     fireEvent.wheel(main, { deltaY: 2000 }); main.scrollTop = 800; fireEvent.scroll(main);
     expect(window.location.hash).toBe("#home");
     expect(screen.getByTestId("office-scene")).toHaveTextContent("home");
     fireEvent.click(screen.getByRole("link", { name: "Resources" }));
-    expect(document.querySelector(".office-preview")).toHaveAttribute("data-traveling", "true");
     await waitFor(() => expect(document.querySelector(".office-preview")).toHaveAttribute("data-traveling", "false"), { timeout: 2500 });
     expect(screen.getByRole("link", { name: "Resources" })).toHaveAttribute("aria-current", "page");
     expect(window.location.hash).toBe("#resources");
     expect(document.querySelector(".office-preview")).toHaveAttribute("data-traveling", "false");
     fireEvent.click(screen.getByText("About"));
     expect(window.location.hash).toBe("#resources");
+  });
+  it("starts at the city, enters Home, inspects the tower and returns by the logo", async () => {
+    window.history.replaceState(null, "", "/preview/office");
+    render(<OfficePreview />); await screen.findByTestId("office-scene");
+    expect(screen.getByRole("heading", { name: "Explore pricing and market dynamics" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Enter CapitalCanvas" }));
+    expect(window.location.hash).toBe("#home");
+    fireEvent.click(screen.getByRole("button", { name: "View whole tower" }));
+    expect(screen.getByText("6 closed storeys between Home and Resources")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "Resources" }));
+    expect(screen.getByRole("button", { name: "View whole tower" })).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(screen.getByRole("link", { name: "CapitalCanvas preview city" }));
+    expect(window.location.hash).toBe("#city");
+    expect(screen.getByRole("button", { name: "Enter CapitalCanvas" })).toBeInTheDocument();
   });
 });
 

@@ -8,11 +8,11 @@ Both floors share a 20x20 metre square shell, 0.32m walls, 0.58m front cutaway w
 
 The visual system uses cream tile and walls, pale wood, navy upholstery, blue screens, faceted plants, and single-plane glass. Interior and exterior glass use separate materials. Cream exterior frames surround broad windows, with floor-specific opening spans. Furniture geometry, materials, textures, charts, and foliage are cached in `sceneResources.ts`.
 
-The office currently sits against a flat light-blue (`#cfe4ff`) CSS background in preparation for a future background rework. There are no surrounding blocks, background ground plane, fog, or scenery lights/shadows. One render pass draws the office through the orthographic camera, retaining its existing lighting and contact shadows.
+Office close-ups retain the light-blue (`#cfe4ff`) background and original orthographic framing, now with a lower tower facade. The city and whole-tower inspection add continuous pale ground, four supporting buildings, simple roads and trees, distance fog, and wider daylight shadow coverage. `towerStructure.ts` places Resources 23.8 metres below Home with six closed intervening storeys; `TowerAssembly.tsx` owns the persistent exterior assemblies. `cameraFit.ts` supplies the city/inspection and office fits while the motion driver and settled office controls share camera ownership. One render pass draws the persistent scene.
 
 ## Navigation and interaction
 
-`OfficePreview.tsx` owns the native header, accessible stage, lazy canvas boundary, and WebGL fallback. `useOfficeNavigation.ts` owns floor selection and fade-out/hidden/fade-in state; CSS fades the stage opacity while the header stays visible. Latest selection wins. The destination must acknowledge its actual presented frame or fallback before fade-in. Reduced motion switches immediately.
+`OfficePreview.tsx` owns the native header, accessible stage, lazy canvas boundary, and WebGL fallback. `useOfficeNavigation.ts` owns loading/moving/idle destinations, latest intent, history and skip/preference handling. `towerMotion.ts` defines deterministic staged journeys; `TowerMotionDriver.tsx` applies persistent assembly/office transforms and owns the camera until the actual destination frame is presented. Camera fits are shared in `cameraFit.ts`; office controls resume after arrival. Stale acknowledgements are ignored. See [motion structure and verification](../city-landing/MOTION_PROTOTYPE.md).
 
 `OfficeViewControls.tsx` and `officeView.ts` provide cursor-anchored wheel zoom from 1x to 2x, bounded mouse drag, elastic overshoot, keyboard controls, and reset on floor selection. The isometric angle stays fixed. Pins remain constant in CSS-pixel size while their world anchors and desk hit regions follow projection. `LocationMarker.tsx` supports whole-desk/pin hover, keyboard focus, and Escape dismissal. Activation is inert, and transitions temporarily disable disclosure.
 
@@ -32,7 +32,7 @@ Sofa poses use level thighs, vertical calves, and raised feet. Hip height is 5cm
 
 `PeopleSession` owns both logical floor simulations. Hidden pages perform cheap periodic behavior work without WebGL or mixers. Returning frames catch up elapsed time in bounded batches before presentation. Only the visible floor applies mixers. Reduced motion pauses session time and freezes poses and doors.
 
-The canvas renders continuously for visible motion and on demand when paused. Camera projection avoids unnecessary DOM updates. Shared scene resources persist across floor switches; per-person mixers and skeleton resources are disposed on unmount. Navigation timers, visibility listeners, and input handlers clean up. `OfficeFallback.tsx` imports both approved PNGs and shares floor navigation when WebGL fails.
+The canvas renders continuously for visible office motion and on demand when paused or in the city. Camera projection avoids unnecessary DOM updates and includes the selected floor's tower elevation. Shared scene resources persist across floor switches; per-person mixers, skeleton resources, and facade instance buffers are disposed on unmount. History/visibility listeners and input handlers clean up. `OfficeFallback.tsx` imports both approved floor PNGs and the Grounded District storyboard reference and shares preview navigation when WebGL fails.
 
 ## Verification and scope
 
