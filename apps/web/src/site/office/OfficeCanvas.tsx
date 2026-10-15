@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { Canvas, invalidate, useFrame } from "@react-three/fiber";
 import { OrthographicCamera } from "@react-three/drei";
-import { Vector3, Object3D, NeutralToneMapping, type Group, type DirectionalLight } from "three";
+import { Vector3, Object3D, NeutralToneMapping, type Color, type Group, type DirectionalLight } from "three";
 import { CAMERA, DESK, FLOORS, POD_SIZE, type FloorId, type ToolId } from "./layouts";
 import { OfficeFloor } from "./OfficeFloor";
 import { OfficeFallback } from "./OfficeFallback";
@@ -14,6 +14,7 @@ import { PeopleSession } from "./peopleSimulation";
 import { towerPose, type PreviewView } from "./towerStructure";
 import { TowerAssembly, type TowerGroups } from "./TowerAssembly";
 import { CityDistrict } from "./CityDistrict";
+import { CityAtmosphere } from "./CityAtmosphere";
 import { TowerMotionDriver, type MotionRuntime, type OfficeGroups } from "./TowerMotionDriver";
 
 type MarkerElements = Record<ToolId, HTMLDivElement | null>;
@@ -89,12 +90,18 @@ function Daylight({ light, fill, target }: { light: RefObject<DirectionalLight |
 
 function OfficeRender({ floor, phase, viewReset, onPresented, session, runtime, element }: { floor: FloorId; phase: NavigationPhase; viewReset: number; onPresented: (floor: FloorId, reset: number) => void; session: PeopleSession; runtime: RefObject<MotionRuntime>; element: RefObject<HTMLDivElement | null> }) {
   const drawn = useRef("");
+  const atmosphere = useRef<CityAtmosphere | null>(null);
+  useLayoutEffect(() => () => { atmosphere.current?.dispose(); atmosphere.current = null; }, []);
   const samples = useRef<number[]>([]), lastFrame = useRef<number | null>(null);
   useLayoutEffect(() => { samples.current = []; lastFrame.current = null; invalidate(); }, [floor, phase, viewReset]);
   // Present the office only after the logical simulation has caught up.
-  useFrame(({ gl, scene, camera }) => {
+  useFrame(({ gl, scene, camera, size }) => {
     if (!session.ready) return;
-    gl.render(scene, camera);
+    const presence = runtime.current.frame?.city ?? 0;
+    if (presence > 0.005) {
+      atmosphere.current ??= new CityAtmosphere(gl, scene, camera);
+      atmosphere.current.render(camera, size.width, size.height, presence, scene.background as Color);
+    } else gl.render(scene, camera);
     const node = element.current, now = performance.now();
     if (phase === "moving") {
       if (lastFrame.current !== null) samples.current.push(now - lastFrame.current);
@@ -116,7 +123,7 @@ function OfficeRender({ floor, phase, viewReset, onPresented, session, runtime, 
   return null;
 }
 
-export default function OfficeCanvas({ view, origin, overview, floor, phase, settled, animate, pageVisible, reducedMotion, viewReset, instantReset, onPresented, onEnter }: { view: PreviewView; origin: PreviewView; overview: boolean; floor: FloorId; phase: NavigationPhase; settled: boolean; animate: boolean; pageVisible: boolean; reducedMotion: boolean; viewReset: number; instantReset: boolean; onPresented: (floor: FloorId, reset: number) => void; onEnter: () => void }) {
+export default function OfficeCanvas({ view, origin, overview, floor, phase, settled, animate, pageVisible, reducedMotion, viewReset, instantReset, onPresented, onUnavailable, onEnter }: { view: PreviewView; origin: PreviewView; overview: boolean; floor: FloorId; phase: NavigationPhase; settled: boolean; animate: boolean; pageVisible: boolean; reducedMotion: boolean; viewReset: number; instantReset: boolean; onPresented: (floor: FloorId, reset: number) => void; onUnavailable: () => void; onEnter: () => void }) {
   const [session] = useState(() => new PeopleSession(crypto.getRandomValues(new Uint32Array(1))[0], performance.now(), reducedMotion));
   const element = useRef<HTMLDivElement>(null);
   const motion = useRef<ViewMotion>({ revision: 0, busy: false, pointer: null });
@@ -131,7 +138,7 @@ export default function OfficeCanvas({ view, origin, overview, floor, phase, set
   const [lightTarget] = useState(() => new Object3D());
   const runtime = useRef<MotionRuntime>({ frame: null, complete: false });
   const pins = view !== "city" && !overview && settled;
-  return <div ref={element} className="office-scene" data-framing={view === "city" || overview ? "tower" : "office"}><Canvas orthographic frameloop={pageVisible && (phase === "moving" || animate && settled) ? "always" : "demand"} dpr={[1, 1.5]} shadows="variance" camera={{ position: [...CAMERA.position], near: 0.1, far: 500 }} gl={{ antialias: true, alpha: true, toneMapping: NeutralToneMapping, toneMappingExposure: 1.1 }} fallback={<OfficeFallback floor={floor} view={view} viewReset={viewReset} onPresented={onPresented} />} aria-label={view === "city" ? "Grounded District: main tower and four supporting buildings" : overview ? `${FLOORS[floor].title}: opened floor in the whole tower` : `${FLOORS[floor].title}: isometric 3D floor with three marked tool desks`}>
+  return <div ref={element} className="office-scene" data-framing={view === "city" || overview ? "tower" : "office"}><Canvas orthographic frameloop={pageVisible && (phase === "moving" || animate && settled) ? "always" : "demand"} dpr={[1, 1.5]} shadows="variance" camera={{ position: [...CAMERA.position], near: 0.1, far: 500 }} gl={{ antialias: true, alpha: true, toneMapping: NeutralToneMapping, toneMappingExposure: 1.1 }} fallback={<OfficeFallback floor={floor} view={view} viewReset={viewReset} onPresented={onPresented} onUnavailable={onUnavailable} />} aria-label={view === "city" ? "Grounded District: main tower and four supporting buildings" : overview ? `${FLOORS[floor].title}: opened floor in the whole tower` : `${FLOORS[floor].title}: isometric 3D floor with three marked tool desks`}>
     <OrthographicCamera makeDefault manual position={[...CAMERA.position]} near={0.1} far={500} />
     <OfficeBehavior session={session} reducedMotion={reducedMotion} pageVisible={pageVisible} floor={floor} />
     {pins && <OfficeViewControls element={element} motion={motion} reset={viewReset} instantReset={instantReset} settled={settled} reducedMotion={reducedMotion} pageVisible={pageVisible} elevation={towerPose(view).floorY} />}

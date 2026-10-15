@@ -26,6 +26,14 @@ export function mixFrame(a: TowerFrame, b: TowerFrame, t: number): TowerFrame {
   return result;
 }
 
+function initialOpening(view: Exclude<PreviewView, "city">, camera: CameraPose): TowerFrame {
+  // The first reveal is deliberately compact. The slice finishes its lift here;
+  // only the upper assembly continues toward full clearance during the zoom.
+  const upper = TOWER.sliceLift * 2;
+  return { ...frameForView(view, camera), cap: upper, middle: view === "resources" ? upper : 0,
+    homeFacade: view === "home" ? upper : 0, resourcesFacade: view === "resources" ? upper : 0 };
+}
+
 // Every retarget begins at the actual sampled pose, including office pan/zoom.
 // The fixed base and district have no animated offsets in this model.
 export function planJourney(from: TowerFrame, origin: PreviewView, destination: PreviewView, fits: CameraFits): TowerJourney {
@@ -38,37 +46,20 @@ export function planJourney(from: TowerFrame, origin: PreviewView, destination: 
     add("reassembling-tower", origin === "resources" || from.middle > 1 ? 1.3 : 0.9, { ...target, city: 0.92, camera: mixFrame(seated, target, 0.94).camera });
     add("returning-city", 0.6, target);
   } else if (from.city > 0.98 && from.cap < 0.01 && from.middle < 0.01) {
-    const closed = frameForView("city", fits.city);
-    add("settling-city", 0.2, closed);
-    const first = frameForView(destination, fits.city);
-    first.city = 1; first.homeLift = first.resourcesLift = 0;
-    first.cap = 6; first.middle = destination === "resources" ? 6 : 0;
-    first.homeFacade = destination === "home" ? 6 : 0; first.resourcesFacade = destination === "resources" ? 6 : 0;
-    add(`opening-${destination}`, 0.4, first);
-    const split = { ...first, cap: 12, middle: destination === "resources" ? 12 : 0,
-      homeFacade: destination === "home" ? 12 : 0, resourcesFacade: destination === "resources" ? 12 : 0,
-      homeLift: destination === "home" ? TOWER.sliceLift : 0, resourcesLift: destination === "resources" ? TOWER.sliceLift : 0 };
-    add(`revealing-${destination}`, 0.45, split);
+    const split = { ...initialOpening(destination, from.camera), city: 1 };
+    add(`opening-${destination}`, 1.05, split);
     add(`entering-${destination}`, 1.55, target);
   } else {
-    const source = from.middle > 1 || origin === "resources" ? "resources" : "home";
-    const sourceY = levelY(source === "home" ? TOWER.homeLevel : TOWER.resourcesLevel);
     const destinationY = levelY(destination === "home" ? TOWER.homeLevel : TOWER.resourcesLevel);
-    const direction = destinationY >= sourceY ? 1 : -1;
-    const departureCamera = { ...fits[source], targetY: sourceY + direction * 7, height: fits[source].height * 1.08 };
-    const seated = { ...from, homeLift: 0, resourcesLift: 0, city: 0, camera: departureCamera };
-    add("leaving-floor", 0.35, seated);
+    const direction = destinationY >= from.camera.targetY ? 1 : -1;
+    const departureCamera = { ...from.camera, height: from.camera.height * 1.08 };
     const closed = { ...frameForView("city", departureCamera), city: 0 };
-    add("closing-floor", 0.4, closed);
+    // Reseat the slice and close its upper assembly together, with a small
+    // camera pullback. Vertical travel begins only after closure is complete.
+    add("closing-floor", 0.75, closed);
     const facadeCamera = { ...fits[destination], targetY: destinationY, height: fits[destination].height * 1.08 };
     add(direction < 0 ? "descending-facade" : "ascending-facade", 0.9, { ...closed, camera: facadeCamera });
-    const opening = { ...target, homeLift: 0, resourcesLift: 0, cap: 6, middle: destination === "resources" ? 6 : 0,
-      homeFacade: destination === "home" ? 6 : 0, resourcesFacade: destination === "resources" ? 6 : 0, camera: facadeCamera };
-    add(`opening-${destination}`, 0.4, opening);
-    const split = { ...target, cap: 12, middle: destination === "resources" ? 12 : 0,
-      homeFacade: destination === "home" ? 12 : 0, resourcesFacade: destination === "resources" ? 12 : 0,
-      camera: mixFrame(opening, target, 0.5).camera };
-    add(`revealing-${destination}`, 0.3, split);
+    add(`opening-${destination}`, 0.7, initialOpening(destination, facadeCamera));
     add(`arriving-${destination}`, 0.45, target);
   }
   return { from, steps, duration: steps.reduce((sum, step) => sum + step.duration, 0) };

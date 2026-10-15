@@ -1,6 +1,6 @@
 # City landing and tower entrance planning
 
-Status: the [motion prototype](MOTION_PROTOTYPE.md) is implemented in `/preview/office`: city entry, separate down/up facade travel, city reassembly and idle city parallax. Grounded District and the [seven-frame storyboard](storyboard/README.md) remain the visual references. The [structural phase](STRUCTURAL_PROTOTYPE.md) records the revised tower geometry. All application work stays in preview; production pages remain out of scope.
+Status: desktop preview implementation, integration and verification are complete in `/preview/office`. See [integration evidence and limits](INTEGRATION.md) and the [motion implementation](MOTION_PROTOTYPE.md). Grounded District and the [seven-frame storyboard](storyboard/README.md) remain the visual references. The [structural phase](STRUCTURAL_PROTOTYPE.md) records the revised tower geometry. Production pages remain unchanged and out of scope.
 
 ## Requested experience
 
@@ -21,7 +21,7 @@ The user requested Markdown planning and clarifying questions first, with taste 
 - Explore header and typography freely within preview; production branding is not a constraint.
 - Minimal CapitalCanvas wordmark on the landing. Inside, show Home, Resources, and an inactive About label.
 - Subtle pointer parallax; both the primary button and tower enter Home.
-- A 2-3 second entrance opens the tower into upper section, Home slice, and lower tower, then zooms into Home.
+- A 2.6 second entrance first opens compact equal gaps: Home slice +2.2 m, upper assembly/panels +4.4 m. During zoom, the slice holds its lift and the upper section continues upward out of view. Home ↔ Resources closes the outgoing pieces together with slight pullback, traverses the facade, then repeats this compact reveal and zoom.
 - Resources is many storeys below Home, separated by a substantial closed facade section. Slide down the tower, lift the entire structure above Resources, and raise the Resources slice from the lower base. Reverse the journey through a separate upward facade traverse and Home reveal.
 - The selected floor's front facade panels lift with the section above it.
 - Logo click zooms out and reassembles the city tower. Every subsequent city entry replays the entrance.
@@ -58,4 +58,4 @@ The user's sparse 3D brief takes precedence over generic skill prescriptions for
 
 A taste direction draw was performed: `borrowed-category`, “Dressed as something else,” seed `499073413`, interpreted as an architectural exhibition model. One hero redraw was made because the first blueprint contradicted the exact copy and dominant city requirement; the replacement still needs adaptation to those requirements. See [DESIGN.md](DESIGN.md). The generator's date is UTC; the planning date uses the user's local date.
 
-Grounded District and seven updated storyboard frames are retained; discarded landing alternatives, the previous storyboard, and the adjacent-floor travel frame were removed or replaced. The supplied opened-floor reference is saved locally. The live prototype now animates the shared 16-storey structure with six closed storeys between Home and Resources and six beneath Resources. Desktop motion captures and initial renderer measurements are recorded in [MOTION_PROTOTYPE.md](MOTION_PROTOTYPE.md). Integration hardening, final visual polish, broader device benchmarking and mobile behavior remain separate work.
+Grounded District and seven updated storyboard frames are retained; discarded landing alternatives, the previous storyboard, and the adjacent-floor travel frame were removed or replaced. The supplied opened-floor reference is saved locally. The integrated preview animates the shared 16-storey structure with six closed storeys between Home and Resources and six beneath Resources. A later architecture pass adds recessed framed glazing, varied window rhythms on the four neighbours, roof equipment/parapets, entrance canopies, rounded sidewalks, crossings and planted edges, with plain pale context blocks and no cars or street props. The city now sits slightly higher/left and closer, with the three foreground blank blocks removed and roads/context extending into blurred, fading outer edges. Tower dimensions and choreography remain unchanged. Its static alternatives use refreshed current-scene stills. Desktop evidence and remaining cross-device/mobile boundaries are recorded in [INTEGRATION.md](INTEGRATION.md).

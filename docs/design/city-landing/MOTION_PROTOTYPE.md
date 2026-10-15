@@ -1,18 +1,18 @@
 # Motion prototype
 
-Implemented in `/preview/office`, using the approved Grounded District direction and the revised 16-storey tower. Production pages, global styles, dependencies, office layouts, character assets, and people/door simulations remain unchanged. The character renderer now skips mixers when its actual office parent is hidden.
+Implemented and integrated in `/preview/office`, using the approved Grounded District direction and revised 16-storey tower. The latest October 15 clarification uses compact equal gaps before zoom: selected slice +2.2 m, upper assembly/panels +4.4 m. During zoom, the slice stays put and the upper assembly continues to +32 m. Floor-to-floor closure moves both together while the camera pulls back slightly. See [INTEGRATION.md](INTEGRATION.md) for evidence. Production pages, global styles, dependencies, office layouts, character assets, and people/door simulations remain unchanged.
 
 ## Journeys
 
 | Journey | Ready-scene duration | Choreography |
 | --- | --- | --- |
-| City → Home | 2.6 s | Settle parallax; lift exterior envelope/cap; raise Home; zoom to the original office fit. The split precedes the close-up. |
-| Home → Resources | 2.8 s | Reseat Home; close its exterior; descend past real closed facade; lift the entire upper stack; raise Resources and arrive. |
-| Resources → Home | 2.8 s | Reseat Resources; close the upper stack; ascend the facade; lift Home's cap/envelope and raise Home. |
+| City → Home | 2.6 s | Hold the city camera while compact equal gaps open for 1.05 s; zoom for 1.55 s while only the upper assembly/panels continue upward. |
+| Home → Resources | 2.8 s | Close all moving Home pieces together with slight pullback for 0.75 s; descend the closed facade for 0.9 s; open compact equal gaps for 0.7 s; zoom and clear the upper stack for 0.45 s. |
+| Resources → Home | 2.8 s | Close Resources and its upper stack together with pullback; ascend the facade; open compact equal gaps around Home; zoom while its cap/envelope rises clear, using the same durations as descent. |
 | Home → city | 1.8 s | Reseat the slice, reassemble while pulling back, finish the city camera settle. |
 | Resources → city | 2.2 s | Same return with more time for the tall upper assembly. |
 
-Timings start when the scene/session is ready. Direct floor hashes open the requested floor without an entrance. Back/Forward uses the same motion model without adding history entries. The logo returns to city; every settled city entry replays the entrance. The button and main tower share the entry action. Small pointer parallax runs only in the idle city and returns to canonical framing on entry.
+Timings start when the scene/session is ready. Direct floor hashes open the requested floor without an entrance. Back/Forward uses the same motion model without adding history entries. The logo returns to city; every settled city entry replays the entrance. The button and main tower share the entry action. Small pointer parallax runs only in the idle city. Entry captures its actual camera position, holds that framing during separation and moves continuously into the office.
 
 Floor navigation and the logo can retarget a journey from its current physical/camera pose. Repeated requests for the current in-flight destination are ignored. Escape and the visible Skip animation button settle the selected destination. Reduced motion and hidden-page navigation use immediate endpoints; changing either preference during travel skips the remaining travel. Unknown preview hashes normalize to city.
 
@@ -32,7 +32,7 @@ No GSAP, ScrollTrigger, new artwork, extra sections, or additional rendering sta
 
 ## Verification
 
-The motion tests cover the pre-zoom split, closed-facade traversal in both directions, reveal ordering, rigid Resources stack, sampled intermediate poses, exact endpoints, retarget continuity, remaining-time resize, city restoration, captured pan/zoom and office camera handoff. Navigation checks cover duplicate input, stale acknowledgements, history, skip, reduced motion, hidden pages and cleanup. The final full suite passed 175 tests across 22 files. Web build passed; lint passed with one pre-existing unrelated warning in `DelphiSurface.tsx`. Vite retains its existing large-chunk warning. Tests/build used the established sandbox workaround for temporary-file/worker realpath restrictions. Final diff checks were clean and runtime changes remained confined to preview-owned modules.
+The motion tests cover synchronized opening progress before zoom for both destinations and both entrances, closed-facade traversal, rigid Resources stack, sampled intermediate poses, exact endpoints, retarget continuity, remaining-time resize, city restoration, captured pan/zoom and office camera handoff. Navigation checks cover duplicate input, stale acknowledgements, history, skip, reduced motion, hidden pages and cleanup. Integration adds scene-failure navigation and dormant-canvas fallback checks. The full suite passed 180 tests across 22 files after the closer city framing and atmosphere follow-up. Web build passed; lint passed with one pre-existing unrelated warning in `DelphiSurface.tsx`. Vite retains its existing large-chunk warning. Tests/build used the established sandbox workaround for temporary-file/worker realpath restrictions.
 
 Real-browser checks use the live Vite app in the Codex in-app browser at 1280 × 720 and 1440 × 900. Checked entry/replay, down/up facade travel, both city returns, intermediate reveal frames, exact floor heights, lower-facade crop, interruption by logo, rapid floor retargeting, Escape/Skip animation, Back/Forward, resize during descent, and retained keyboard zoom/pan/reset and focused desk labels. Screenshots are session artifacts outside the repository.
 
@@ -48,10 +48,10 @@ Observed renderer measurements in this browser session (not cross-device guarant
 
 These are frame-to-frame renderer intervals from the current development session, including browser/CPU scheduling. They are not GPU timer measurements. GPU vendor/model was not recorded. Renderer-reported resource counts remained at 53 geometries and 187 textures across inspected repeated journeys after warm-up. Observed endpoint render counts were 651 calls / 213,478 triangles for Home, 697 / 217,182 for Resources, and 128 / 15,564 for city; these are renderer counters including shadow work, not separate performance budgets.
 
-## Design review and remaining integration
+## Design review and completion
 
-Taste review retains the approved art direction: an architectural financial workspace, serif headline, navy action, sparse grounded district, cream structure and blue glazing. The signature move is the tower opening; no unrelated scroll patterns or decorative animation were added. Browser captures show the split before zoom, a closed exterior between destinations, and the original interior composition at arrival. The facade remains simpler than the generated architectural reference; final material/detail polish belongs to integration.
+Taste review retains the approved art direction: an architectural financial workspace, serif headline, navy action, sparse grounded district, cream structure and blue glazing. The signature move is the tower opening; no unrelated scroll patterns or decorative animation were added. Browser captures show coordinated separation before zoom, a closed exterior between destinations, and the original interior composition at arrival. The facade intentionally remains simpler than the generated architectural reference, consistent with the sparse district brief.
 
 The generic taste inspector's image-count, scroll-motion and phone requirements are outside this approved one-screen 3D desktop brief. Review used the in-app browser, actual motion keyframes, DOM states and the approved references. No new direction draw was made. Desktop-scoped visual assessment: design 7.5, usability 8, creativity 8, content 7.5 (weighted 7.75); this is a prototype review, not mobile or launch approval.
 
-Browser-level reduced-motion emulation, hidden-tab lifecycle emulation and a WebGL-disabled browser run remain for integration; the preference/navigation/fallback unit checks pass. Interruption preserves positions/framing, while velocity can ease into the new route rather than remain derivative-continuous. No continuous collision solver or automated pixel comparison of every possible interruption frame is claimed. Mobile behavior, production rollout, functional About and tool activation remain out of scope.
+Browser fixture checks now cover reduced-motion preference changes, hidden-page lifecycle signals, unavailable WebGL contexts, failed lazy scene/optional character assets, and entry during a delayed scene load. See INTEGRATION.md for the method and final measurements; these are injected browser signals rather than OS preference or GPU-driver tests. Interruption preserves positions/framing, while velocity can ease into the new route rather than remain derivative-continuous. No continuous collision solver or automated pixel comparison of every possible interruption frame is claimed. Mobile behavior, production rollout, functional About and tool activation remain out of scope.

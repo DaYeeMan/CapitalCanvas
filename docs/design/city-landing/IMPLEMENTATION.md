@@ -1,6 +1,6 @@
 # Preview implementation and acceptance plan
 
-Status: structural and motion prototypes are implemented in preview. See [MOTION_PROTOTYPE.md](MOTION_PROTOTYPE.md) for actual choreography, implementation, checks and remaining integration limits; [STRUCTURAL_PROTOTYPE.md](STRUCTURAL_PROTOTYPE.md) records the geometry. The acceptance matrix below remains the full integration target, not a claim that every cross-device/failure-path check is complete.
+Status: structural, motion, preview integration, and verification/finish phases are complete for the agreed desktop preview scope. See [INTEGRATION.md](INTEGRATION.md) for acceptance evidence and test-method limits, [MOTION_PROTOTYPE.md](MOTION_PROTOTYPE.md) for choreography, and [STRUCTURAL_PROTOTYPE.md](STRUCTURAL_PROTOTYPE.md) for geometry. Mobile, cross-device certification and production rollout remain outside this delivery.
 
 ## Scope boundary
 
@@ -13,10 +13,10 @@ Preserve Home/Resources interiors, furniture layouts, people identities and simu
 | Phase | Deliverable | Completion condition |
 | --- | --- | --- |
 | Visual references | Selected Grounded District, supplied preview-floor reference, and the updated storyboard including facade descent and distant Resources reveal | Header/type direction and the same tower's closed/open construction are reviewable together |
-| Structural prototype — implemented, ready for visual review | Sparse city, closed tower, both preserved floors, lower base, and manually selectable exposure poses | City, Home, and Resources share one building; whole-tower inspection exposes their separation |
-| Motion prototype — implemented, ready for review | Entrance, vertical travel in both directions, reverse reassembly, camera handoff and parallax | Desktop journeys checked against the authored geometry; integration limits are documented |
-| Preview integration | Chosen typography/header, keyboard actions, history, interruption, reduced motion, loading, and fallback | Agreed desktop interaction is complete inside preview |
-| Verification and finish | Focused tests, browser walkthroughs, frame captures, measured rendering cost, documentation updates | Acceptance matrix below passes; production files remain unchanged |
+| Structural prototype — complete | Sparse city, closed tower, both preserved floors, lower base, and manually selectable exposure poses | City, Home, and Resources share one building; whole-tower inspection exposes their separation |
+| Motion prototype — complete | Entrance, vertical travel in both directions, reverse reassembly, camera handoff and parallax | Compact equal-gap opening followed by zoom/upper clearance; joint floor-to-floor closure |
+| Preview integration — complete | Chosen typography/header, keyboard actions, history, interruption, reduced motion, loading, and current-scene fallback | Agreed desktop interaction is complete inside preview |
+| Verification and finish — complete | Focused tests, browser walkthroughs, frame captures, measured rendering cost, documentation updates | Scoped evidence and limitations recorded in INTEGRATION.md; production files unchanged |
 
 Do not implement the live prototype before the generated concepts and storyboard are reviewed together. This is the user's chosen work sequence. Do not expand the visual-reference stage into a multi-section website or redesign the interiors.
 
@@ -28,12 +28,13 @@ Names for new files are suggestions; inspect the current code before implementin
 | --- | --- |
 | `OfficePreview.tsx`, `office.css` | City/floor interface states, preview-only header/type, entry controls, focus, loading/fallback boundaries |
 | `OfficeCanvas.tsx` | Persistent scene, camera/render lifecycle, city/tower/floor assemblies, transformed marker projection |
-| `CityDistrict.tsx`, `towerStructure.ts` | Four simple supporting buildings on continuous fading ground, restrained streets/landscaping, reused geometry |
+| `CityDistrict.tsx`, `towerStructure.ts` | Four detailed supporting buildings with varied facade rhythms, blank distant context, rounded paving, roads/crossings and planted edges on continuous ground; batched geometry |
 | `TowerAssembly.tsx`, `towerStructure.ts`, `towerResources.ts` | Closed facade, Home cap, substantial intermediate tower, distant Resources attachment, lower base and retractable panels; shared facade resources and one elevation system |
 | `OfficeFloor.tsx` / `OfficeShell.tsx` | Reuse the existing interior; expose only the narrow attachment options needed to compose external tower structure |
 | `useOfficeNavigation.ts` or a focused replacement | City/Home/Resources destinations, history, motion phases, latest intent, readiness acknowledgement |
 | `towerMotion.ts`, `TowerMotionDriver.tsx` | Shared waypoints, sampled assembly/camera transforms, retargeting, resize and presentation readiness; no per-frame React state updates |
 | `cameraFit.ts`, `OfficeViewControls.tsx` / `officeView.ts` | Shared district/inspection/office fits, captured framing and continuous office camera handoff |
+| `CityAtmosphere.ts`, `OfficeCanvas.tsx` | City-only depth-aware peripheral blur/fade and colour-correct output; native sharp rendering for settled offices; resize/disposal of owned render targets |
 | `sceneResources.ts` | Shared materials and repeated facade resources; explicit resource lifecycle |
 | `OfficeFallback.tsx` | City fallback and accessible destination selection alongside existing floor art |
 | `OfficePeople.tsx` / session integration | Retain current simulation behavior and correctly position visible characters during travel |
@@ -82,17 +83,17 @@ Mobile/touch design and phone performance acceptance are deferred; do not repres
 | --- | --- |
 | Production isolation | Final diff affects preview-owned modules/assets and design docs only; production routes, copy, links, and global styles are unchanged |
 | Landing | One screen at 1440 x 900 and 1280 x 720; exact copy, minimal wordmark, visible CTA, dominant tower, 4-6 supporting buildings |
-| Parallax | Small bounded motion; no free orbit; returns to canonical pose on entry; no motion under reduced-motion preference |
+| Parallax | Small bounded motion; no free orbit; continuous camera handoff on entry; no motion under reduced-motion preference |
 | Equivalent entrances | Keyboard/button and tower activation reach the same Home transition; repeated click starts only one journey |
-| Home entrance | Split visibly precedes close-up; completes in 2-3 seconds once ready; actual live floor appears without replacement jump |
-| Floor travel | Camera passes several real closed facade storeys, then upper tower lifts and Resources rises from the lower base; upward return closes Resources, traverses the facade, then opens Home; no adjacent-slab swap or main-effect fade |
+| Home entrance | Upper assembly/panels +4.4 m and slice +2.2 m open together in 1.05 s; zoom for 1.55 s while upper section continues to +32 m and slice stays put; total 2.6 s |
+| Floor travel | Outgoing slice and upper section close together with slight camera pullback; camera then passes closed facade storeys; equal gaps open at the destination before zoom/upper clearance, in both directions |
 | Building continuity | Selected front panels lift with upper assembly; lower facade remains visible below both active floors; closed return has no seams or stranded pieces |
 | Logo return | Works from either floor and mid-travel; zooms out/reassembles; a new city entry replays the full entrance |
 | Controls | Existing office pan/zoom, reset, keyboard commands, and desk disclosures work after arrival; no motion owner fights the camera |
 | Pins and focus | No pins or desk hit regions on moving/hidden floors; correct world projection after travel; focus moves to destination |
 | History and interruption | Direct hashes, Back/Forward, rapid navigation, resize, hidden-tab return, and changing motion preference settle consistently |
 | People and doors | Existing interior behavior is preserved; returning floors retain session state; people never detach from moving slabs |
-| Failure paths | Entry during loading, failed scene assets, and no WebGL still permit reaching static Home/Resources; reduced motion works independently |
+| Failure paths | Early entry retains its destination until ready; failed scene module or no WebGL permits static Home/Resources; optional character failures leave the live floor usable; reduced motion works independently |
 | Header | Home/Resources are working floor controls; About is visibly noninteractive; logo reaches city |
 | Performance | Measured frame behavior and resource counts across repeated journeys, with limitations documented |
 

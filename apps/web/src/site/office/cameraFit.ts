@@ -18,7 +18,14 @@ export function fittedCamera(view: PreviewView, width: number, height: number, o
   const bottom = Math.min(...points.map(p => p.y)), top = Math.max(...points.map(p => p.y));
   const aspect = width / Math.max(1, height);
   const fittedHeight = wide ? Math.max((top - bottom) * (city ? 1.12 : 1.4), (right - left) / aspect * (city ? 1.5 : 1.2)) : Math.max(top - bottom, (right - left) / aspect) * CAMERA.padding;
-  return { targetY, centerX: (left + right) / 2 - (city ? fittedHeight * aspect * 0.19 : 0), centerY: (bottom + top) / 2, height: fittedHeight };
+  // Reframe the district without moving the tower's physical footprint or
+  // changing either office endpoint. Positive camera offsets shift the scene
+  // left/down respectively, so lower centerY to raise the city on the page.
+  const heightInView = fittedHeight * (city ? 0.9 : 1);
+  const towerTop = city ? Math.max(...[-1, 1].flatMap(x => [-1, 1].map(z =>
+    new Vector3(x * TOWER_HALF, pose.top, z * TOWER_HALF).applyMatrix4(camera.matrixWorldInverse).y))) : top;
+  return { targetY, centerX: (left + right) / 2 - (city ? heightInView * aspect * 0.16 : 0),
+    centerY: city ? towerTop - heightInView * 0.44 : (bottom + top) / 2, height: heightInView };
 }
 const TOWER_HALF = (BUILDING.width + BUILDING.wallThickness) / 2;
 

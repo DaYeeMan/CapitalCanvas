@@ -1,6 +1,6 @@
 # Tower transition and storyboard
 
-Status: reference choreography implemented as a live motion prototype. The revised tower has six closed intervening storeys, six storeys beneath Resources and 23.8 metre office-origin separation. See [MOTION_PROTOTYPE.md](MOTION_PROTOTYPE.md) for actual waypoint timings, tests, browser evidence and integration limits. The tables below retain the storyboard's approximate timing ranges; code owns the sampled timeline.
+Status: implemented and integrated in preview. The revised tower has six closed intervening storeys, six storeys beneath Resources and 23.8 metre office-origin separation. See [MOTION_PROTOTYPE.md](MOTION_PROTOTYPE.md) and [INTEGRATION.md](INTEGRATION.md) for checks and scoped completion. The latest clarification governs: open compact, equal gaps first, then zoom while the upper section continues upward. Floor-to-floor closure reseats all moving pieces together with a slight pullback before vertical travel. The lower tower stays grounded.
 
 ## One building, several assemblies
 
@@ -32,6 +32,8 @@ Implementation constraints for the motion phase:
 - The implemented rig uses persistent hollow exterior envelopes and moving assemblies. Reveal/hide the original interior under its occluding exterior; retain this mechanism when changing the choreography.
 - Both offices now have independent canonical parent elevations throughout travel. At Resources, enclosed Home and its supporting deck travel with the upper assembly while Resources rises independently from the fixed base.
 - Keep the intermediate section, enclosed Home, cap, and Resources front panels rigidly aligned when Resources opens. At Home, move only its cap/front panels and Home slice; the middle tower stays seated.
+- Apply the same normalized easing progress to the initial slice and upper assembly/panel opening: +2.2 m for the slice and +4.4 m for the upper assembly, producing equal gaps around the slice. Hold the wider camera for this compact reveal. During zoom, hold the slice at +2.2 m and continue the upper assembly/panels to +32 m for clearance. At Resources, the intermediate/enclosed Home section remains rigid with that assembly throughout.
+- For Home ↔ Resources, close the upper assembly/panels and selected slice simultaneously. Begin a slight pullback during closure, but keep the camera's elevation fixed until the tower is closed; then traverse the facade. Preserve current framing on takeover, including interruption or pan/zoom.
 - Markers now project from the actual office world matrix and pins/hit regions unmount until arrival. Preserve this when adding further transforms.
 - The motion driver owns the camera during travel and finishes at the shared office fit; existing office controls mount only after the destination frame is presented. Capture current pan/zoom before takeover. City bounds use the new ground; office fits keep the base cropped.
 - Disable both casting and receiving shadows on lifted upper exterior pieces under variance shadow mapping, then restore them on reassembly. Check coverage through the enlarged vertical bounds and during camera travel.
@@ -45,10 +47,9 @@ Target total: 2.6 seconds, within the requested 2-3 seconds. Times describe read
 | Time | Building and camera | Interface |
 | --- | --- | --- |
 | Idle | Closed tower in Grounded District on continuous fading ground; small bounded pointer parallax | Landing wordmark, exact copy, and entry button visible; tower also enters |
-| 0.00-0.25 s | Settle parallax toward the canonical view; begin opening gently | Lock duplicate activations; fade landing copy and CTA; keep wordmark stable |
-| 0.20-1.00 s | Upper tower and Home front panels lift; Home slice separates above lower tower; Resources remains enclosed below | No office desk hits or pins yet |
-| 0.85-2.25 s | Camera target and orthographic scale move continuously toward Home; split continues enough to clear its upper structure; city moves outside the view | Introduce office navigation as composition settles |
-| 2.25-2.60 s | End at the authored Home view with lower facade visible | Present the actual destination frame, enable pins and existing controls, transfer keyboard focus |
+| 0.00-1.05 s | Hold the captured city camera; upper tower/front panels lift to +4.4 m while Home rises to +2.2 m on the same easing progress, leaving compact equal gaps; upper section remains visible | Lock duplicate activations; fade landing copy/CTA; hide office pins and desk hits |
+| 1.05-2.60 s | Keep Home at +2.2 m; zoom toward the office while the upper assembly continues to +32 m and leaves the view | Blend the wordmark into the office header and introduce navigation |
+| 2.60 s | Present the authored Home view with lower facade visible | Enable pins and existing controls, transfer keyboard focus |
 
 The split should be legible before most of the city has left the frame. Preserve the angle rather than introducing a swooping perspective camera. Avoid a cut from a rendered tower image to a differently framed WebGL floor.
 
@@ -58,15 +59,14 @@ Proposed duration: 2.6-3.0 seconds, starting at 2.8 seconds. The longer physical
 
 | Time | Building and camera | Interface |
 | --- | --- | --- |
-| 0.00-0.30 s | Settle office pan/zoom continuously; begin leaving Home | Hide pins and disable desk hit regions |
-| 0.20-0.65 s | Reseat Home and its cap as the camera leaves; Home becomes enclosed within the upper tower | Keep Home's interior/session intact; do not show two neighboring open office slices |
-| 0.45-1.65 s | Slide camera target DOWN the exterior past several complete, closed facade storeys; keep isometric orientation and a readable window grid | Home exits above; Resources stays enclosed until its reveal begins |
-| 1.45-2.30 s | At Resources level, lift the ENTIRE upper tower (intermediate storeys + enclosed Home + cap), taking Resources front panels with it; Resources slice rises modestly from the lower base | This is a second local three-part opening, matching the Home entrance mechanism |
-| 2.20-2.80 s | Move into the Resources arrival view; remaining lower facade visible below, substantial upper tower outside frame above | Present Resources before enabling its pins, focus, and controls |
+| 0.00-0.75 s | Close Home's upper assembly/front panels and reseat its slice together; camera pulls back slightly without starting the vertical traverse | Hide pins and desk hit regions; keep Home's interior/session intact |
+| 0.75-1.65 s | Slide camera DOWN past closed facade storeys | Home exits above; Resources remains enclosed |
+| 1.65-2.35 s | Hold the destination facade camera; lift the ENTIRE upper tower/front panels to +4.4 m and Resources to +2.2 m together, leaving equal gaps | Upper section remains visible above the compact opening |
+| 2.35-2.80 s | Hold Resources at +2.2 m, zoom to its office fit and continue the upper assembly to +32 m out of view | Present Resources before enabling pins, focus, and controls |
 
 The descent must read as travel along a real tower: closed window rows pass through the frame. Do not stretch the air gap between open offices to suggest distance, leave Home hovering immediately above Resources, teleport Resources up to Home's elevation, or replace the trip with a fade. The upper section at Resources is much taller than the cap lifted for Home.
 
-Resources → Home closes the local Resources opening, slides the camera upward along the closed intervening facade, then opens Home by lifting only the cap above Home. Each destination has its own reveal assembly; this is not a single joint moving two adjacent slabs in reverse.
+Resources → Home closes the Resources slice and full upper assembly together with the slight pullback, slides upward along the closed facade, then opens equal gaps around Home before zooming and lifting its cap/front panels out of view. Each destination has its own reveal assembly; this is not a single joint moving two adjacent slabs in reverse.
 
 For visual review, use two complementary travel keyframes: a facade descent view and a Resources reveal view. Neither requires both furnished floors to be visible together. At Resources close-up, Home is far above the viewport.
 
@@ -111,7 +111,7 @@ Direct floor links continue to support inspection without forcing city replay. T
 - Hidden tabs stop visual work. On return, settle the requested destination and present it before exposing controls, rather than replaying stale partial motion.
 - Reduced motion uses the same destinations immediately, without parallax, splitting, vertical travel, or zoom. If the preference changes mid-transition, settle the current requested destination.
 - Keep copy and a real entry control available while scene assets load. An early activation records one destination and shows a loading state; start motion only when its target can render. If loading or WebGL fails, proceed through the static fallback rather than waiting indefinitely.
-- No-WebGL mode uses a matching city image and the existing Home/Resources art initially, with the existing explanation that floor artwork differs from the live scene. Static floor switching remains functional. A faithful fallback scene capture is preferable once the prototype exists.
+- No-WebGL or failed-scene mode uses preview-owned stills captured from the actual city and both current floors, without baked header, pins or copy. Static floor switching and logo return remain functional; hide unavailable 3D inspection controls and use appropriate instructions. Missing optional character models degrade locally without disabling the office.
 - About remains a plain inactive label, never a broken link or button.
 
 Accessibility does not require designing the deferred mobile experience. Keep the entry button and equivalent tower control reachable by keyboard, give floor navigation an active state, transfer focus to the destination heading/stage after travel, and keep hidden controls out of the focus order.

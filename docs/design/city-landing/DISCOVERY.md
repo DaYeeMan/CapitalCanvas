@@ -67,7 +67,7 @@ The user's selections below supersede the initial suggestions.
 
 ## Proposed defaults, distinct from user decisions
 
-Use “Enter CapitalCanvas” as the primary action label. Keep a fixed isometric angle during travel; parallax settles before the entrance begins. Use explicit preview hashes for city, Home, and Resources; direct floor hashes open the selected floor without an entrance. Disable cinematic travel for reduced motion. Keep the existing static floor fallback and add a matching city fallback. These are implementation defaults for review, not answers attributed to the user. Detailed behavior is in [TRANSITION.md](TRANSITION.md).
+Use “Enter CapitalCanvas” as the primary action label. Keep a fixed isometric angle during travel; capture the current parallax framing continuously on entry. Use explicit preview hashes for city, Home, and Resources; direct floor hashes open the selected floor without an entrance. Disable cinematic travel for reduced motion. Use current-scene stills for static city/floor alternatives. These are implementation defaults, not answers attributed to the user. Detailed behavior is in [TRANSITION.md](TRANSITION.md).
 
 No further clarification blocks the written plan. Exact tower proportions, facade mechanics, typography, header dimensions, and animation timings will be judged in generated concepts and the storyboard before the live prototype.
 
@@ -87,4 +87,5 @@ The visual-reference phase produced planning documents, generated concept/storyb
 - The supplied opened preview floor is saved at [references/open-floor-preview.png](references/open-floor-preview.png) and guides the Home layout and opened-floor rendering style.
 - Resources is much farther down the tower than Home. The camera slides down past closed storeys, the entire tower above Resources lifts, and Resources rises from the lower base in a local reveal similar to Home.
 - The old adjacent-floor travel image is superseded. Six closed intervening storeys and a 2.8 second journey are proposed implementation defaults, not exact values supplied by the user.
-- Structural and motion prototypes are now implemented in preview only; production pages remain unchanged. See [motion prototype evidence and remaining integration work](MOTION_PROTOTYPE.md).
+- Structural, motion, integration and verification phases are implemented in preview only; production pages remain unchanged. See [integration evidence and limits](INTEGRATION.md).
+- Latest October 15 motion clarification supersedes the earlier full-separation-before-zoom interpretation: first open equal gaps around the floor while the upper section stays visible (+2.2 m slice, +4.4 m upper assembly). During zoom, keep the slice fixed and continue raising the upper assembly to clearance. Home ↔ Resources closes the outgoing pieces together with a slight pullback, then traverses the closed facade and repeats the compact opening/zoom at the destination. All three clarifications were explicitly confirmed before implementation.

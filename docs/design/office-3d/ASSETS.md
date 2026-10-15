@@ -41,13 +41,25 @@ SofaRest uses level thighs, vertical calves, and feet above the floor. Hips are 
 
 Walking uses a measured 1.96m cycle distance, scaled to 0.95m/s for each clip's duration. Navigation uses a 0.37m circular body margin and 0.73m full longitudinal stride reach. Shortened gait and seated-foot envelopes are independently checked.
 
-Furniture, foliage, screen charts, deterministic tile/wood/fabric finishes, glass, and CSS floor fades are project-authored resources. Their editable sources are `Furniture.tsx`, `sceneResources.ts`, and `office.css` under `apps/web/src/site/office/`. The current backdrop is a flat light-blue CSS color; background boxes, their ground plane, fog, materials, and scenery lights/shadows have been removed for a future rework.
+Furniture, foliage, screen charts, deterministic tile/wood/fabric finishes, glass and preview styling are project-authored resources. Their editable sources are `Furniture.tsx`, `sceneResources.ts`, and `office.css` under `apps/web/src/site/office/`. The city adds the shared tower exterior, grounded district, distance fog and daylight coverage; settled offices retain the light-blue backdrop.
+
+## Static preview alternatives
+
+`apps/web/public/office/fallback-city.jpg`, `fallback-home.jpg` and `fallback-resources.jpg` are screenshots refreshed from the actual preview on October 15, 2026. The city still includes raised framing, realigned neighboring plots, pale sidewalk strips, two fading foreground roads and varied neighboring facades and a distance fade without blur; the floor stills retain the architecture refinement. They preserve the current geometry, materials and floor layouts. The existing temporary loopback capture fixture hid header/copy, desk markers and inspection controls; accessible controls remain live HTML in fallback mode. These are local renderer stills, not new generated concepts. Character positions are illustrative snapshots of the existing random session.
+
+| File | Dimensions | Bytes |
+| --- | --- | ---: |
+| fallback-city.jpg | 1440 × 900 | 89,318 |
+| fallback-home.jpg | 1280 × 720 | 87,404 |
+| fallback-resources.jpg | 1280 × 720 | 92,861 |
+
+Total public fallback artwork is 269,583 bytes. The stills load only when their fallback image is mounted; working-canvas HTML alternatives may be fetched by browser fallback handling, so this is not a guaranteed zero-byte cost in every browser. The runtime no longer imports the much larger concept PNGs or storyboard image. Original approved artwork and its provenance remain unchanged in the design documents.
 
 ## Logos and approved references
 
 `apps/web/public/office/capital-canvas-logo-navy.png` is the office-only generated navy/cyan recolor of the site's original white/cyan logo. Its background and interior holes remain transparent. The original site's logo, favicon, and social thumbnail remain active assets.
 
-[home-approved.png](concepts/home-approved.png) and [resources-approved.png](concepts/resources-approved.png) are unchanged ImageGen references. They are also intentional static WebGL fallback artwork. The fallback explains differences from the live scene; the images are not scene geometry or current screenshots.
+[home-approved.png](concepts/home-approved.png) and [resources-approved.png](concepts/resources-approved.png) are unchanged ImageGen references. They are historical design artwork; the runtime fallback uses the current renderer stills above.
 
 ## Verification
 

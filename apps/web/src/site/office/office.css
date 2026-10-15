@@ -9,7 +9,7 @@
 .office-header nav[hidden] { display: none; }
 .office-header nav a, .office-header nav span { color: #10213d; font: 400 18px/1.5 var(--sans); text-decoration: none; padding: 14px 0 10px; border-bottom: 1px solid transparent; transition: color 120ms ease; }
 .office-header nav a[aria-current] { color: #155cff; border-color: #155cff; }
-.office-header nav a:hover, .office-header nav span:hover { color: #155cff; }
+.office-header nav a:hover { color: #155cff; }
 .office-header nav a[aria-current]:hover { color: #4677ff; }
 .office-preview a:focus-visible { outline: 2px solid #155cff; outline-offset: 5px; }
 .office-stage { position: absolute; inset: 0; outline: none; overflow: clip; overscroll-behavior: contain; opacity: 1; }
@@ -31,11 +31,11 @@
 .office-loading { position: absolute; inset: 45% 0 auto; text-align: center; font-size: 15px; }
 .office-skip { position: absolute; z-index: 10; top: -80px; left: 20px; padding: 12px; background: white; color: #10213d; }
 .office-skip:focus { top: 12px; }
-.office-fallback { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 12px; }
-.office-fallback-art { width: min(100%, 1500px); overflow: hidden; }
-.office-fallback-art img { display: block; width: 100%; margin-top: -6%; clip-path: inset(9% 0 0); }
+.office-fallback { position: absolute; inset: 0; }
+.office-fallback > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.office-fallback-notice { position: absolute; bottom: 22px; left: 28px; max-width: min(620px, calc(100% - 56px)); padding: 10px 14px; background: #fffaf0ed; }
 .office-fallback p { margin: 0; max-width: 760px; text-align: center; font-size: 14px; }
-.office-fallback ul { display: flex; gap: 28px; list-style: none; padding: 0; margin: 0; font-size: 15px; }
+.office-fallback ul { display: flex; justify-content: center; gap: 28px; list-style: none; padding: 0; margin: 8px 0 0; font-size: 15px; }
 @media (max-width: 700px) { .office-header { height: auto; min-height: 108px; padding: 10px 20px; gap: 6px 14px; flex-wrap: wrap; } .office-wordmark { font-size: 30px; gap: 10px; } .office-wordmark img { width: 44px; height: 44px; } .office-header nav { gap: 24px; } .office-header nav a, .office-header nav span { font-size: 15px; } .office-stage { top: 108px; } }
 /* Grounded District and structural inspection are owned by preview only. */
 .office-preview[data-view="city"] { background: #f5f4f0; }
@@ -50,9 +50,7 @@
 .office-structure-controls { position: absolute; bottom: 22px; right: 28px; z-index: 4; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 .office-structure-controls p { margin: 0; padding: 9px 12px; background: #fffaf0ed; font-size: 13px; }
 .office-structure-controls button { padding: 11px 17px; border: 1px solid #173e6d40; background: #fffaf0ed; color: #173e6d; font: 500 14px/1.3 var(--sans); cursor: pointer; }
-.office-city-fallback { position: absolute; inset: 0; padding: 0; }
-.office-city-fallback > img { width: 100%; height: 100%; object-fit: cover; }
-.office-city-fallback > p { position: absolute; top: 12px; right: 12px; padding: 8px 12px; background: #fffaf0; }
+.office-city-fallback .office-fallback-notice { top: 12px; right: 12px; bottom: auto; left: auto; }
 @media (max-width: 700px) { .office-preview[data-view="city"] .office-stage { top: 0; } .office-preview[data-view="city"] .office-header { top: 7%; } .office-city-copy h1 { font-size: clamp(33px, 6vw, 42px); } .office-city-copy p { max-width: 300px; } .office-city-copy { bottom: 7%; } }
 .office-preview[data-phase="moving"]:not([data-view="city"]) .office-city-copy { opacity: 0; }
 .office-preview[data-phase="loading"] .office-scene { visibility: hidden; }

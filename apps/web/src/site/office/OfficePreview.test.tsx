@@ -5,12 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OfficePreview from "./OfficePreview";
 import { useEffect } from "react";
 
+const sceneState = vi.hoisted(() => ({ failed: false }));
 vi.mock("./OfficeCanvas", () => ({ default: function MockOfficeCanvas({ floor, viewReset, onPresented }: { floor: "home" | "resources"; viewReset: number; onPresented: (floor: "home" | "resources", reset: number) => void }) {
   useEffect(() => { onPresented(floor, viewReset); }, [floor, viewReset, onPresented]);
+  if (sceneState.failed) throw new Error("Intentional scene failure");
   return <div data-testid="office-scene">{floor}</div>;
 } }));
-beforeEach(() => window.history.replaceState(null, "", "/preview/office#home"));
-afterEach(cleanup);
+beforeEach(() => { sceneState.failed = false; window.history.replaceState(null, "", "/preview/office#home"); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("isolated office shell", () => {
   it("selects a directly linked lower floor and keeps About noninteractive", async () => {
@@ -61,6 +63,27 @@ describe("isolated office shell", () => {
     fireEvent.click(screen.getByRole("link", { name: "CapitalCanvas preview city" }));
     expect(window.location.hash).toBe("#city");
     expect(screen.getByRole("button", { name: "Enter CapitalCanvas" })).toBeInTheDocument();
+  });
+  it("keeps all destinations usable after a scene failure without advertising 3D controls", async () => {
+    sceneState.failed = true;
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    window.history.replaceState(null, "", "/preview/office#city");
+    render(<OfficePreview />);
+    fireEvent.load(await screen.findByRole("img", { name: /Grounded District/ }));
+    expect(document.querySelector(".office-preview")).toHaveAttribute("data-renderer", "static");
+    fireEvent.click(screen.getByRole("button", { name: "Enter CapitalCanvas" }));
+    fireEvent.load(screen.getByRole("img", { name: /Home office above/ }));
+    expect(screen.getByRole("main")).toHaveAttribute("aria-busy", "false");
+    expect(screen.queryByRole("button", { name: "View whole tower" })).not.toBeInTheDocument();
+    expect(document.getElementById("office-instructions")).not.toHaveTextContent("zoom");
+    fireEvent.click(screen.getByRole("link", { name: "Resources" }));
+    fireEvent.load(screen.getByRole("img", { name: /Resources office above/ }));
+    expect(screen.getByRole("link", { name: "Resources" })).toHaveAttribute("aria-current", "page");
+    expect(document.activeElement).toBe(screen.getByRole("main"));
+    fireEvent.click(screen.getByRole("link", { name: "CapitalCanvas preview city" }));
+    fireEvent.load(screen.getByRole("img", { name: /Grounded District/ }));
+    expect(window.location.hash).toBe("#city");
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 });
 

@@ -36,8 +36,8 @@ export function towerPose(view: PreviewView) {
 }
 
 export const DISTRICT_BUILDINGS = [
-  { x: -24, z: -2, width: 11, depth: 12, storeys: 3 },
-  { x: -2, z: 29, width: 13, depth: 10, storeys: 2 },
-  { x: 29, z: -2, width: 11, depth: 13, storeys: 3 },
-  { x: 28, z: 29, width: 10, depth: 11, storeys: 2 },
+  { x: -24.5, z: 3.9, width: 11, depth: 12, storeys: 3 },
+  { x: 3.4, z: 29.1, width: 13, depth: 10, storeys: 2 },
+  { x: 29.6, z: 3.4, width: 11, depth: 13, storeys: 3 },
+  { x: 29.1, z: 29.6, width: 10, depth: 11, storeys: 2 },
 ] as const;
