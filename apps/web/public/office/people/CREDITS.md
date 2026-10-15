@@ -15,6 +15,10 @@ and subtle hand/head activity; removed unrelated animation clips during GLB expo
 The V5 revision broadens the body by 18%, adds 12% depth, enlarges the head by 16%
 and uses a 1.8m base normalization (about 1.84m after the head adjustment).
 The source mesh topology and rigs are retained; proportions and poses are modified.
+The people-behavior rework derives shared resting poses for conference chairs,
+armchairs, sofas and stools from the shipped rig at runtime, plus simple periodic
+keyboard typing and a shortened walking gait near turns. GLB bytes and hashes
+are unchanged by these runtime pose additions.
 The modified Suit asset remains available under CC BY 3.0. No endorsement is implied.
 
 Both assets are self-contained GLBs. Source and shipped hashes, normalized scale,

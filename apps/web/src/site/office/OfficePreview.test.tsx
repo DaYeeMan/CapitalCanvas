@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OfficePreview from "./OfficePreview";
+import { useEffect } from "react";
 
-vi.mock("./OfficeCanvas", () => ({ default: ({ floor }: { floor: string }) => <div data-testid="office-scene">{floor}</div> }));
+vi.mock("./OfficeCanvas", () => ({ default: function MockOfficeCanvas({ floor, viewReset, onPresented }: { floor: "home" | "resources"; viewReset: number; onPresented: (floor: "home" | "resources", reset: number) => void }) {
+  useEffect(() => { onPresented(floor, viewReset); }, [floor, viewReset, onPresented]);
+  return <div data-testid="office-scene">{floor}</div>;
+} }));
 beforeEach(() => window.history.replaceState(null, "", "/preview/office#home"));
 afterEach(cleanup);
 
@@ -23,13 +27,13 @@ describe("isolated office shell", () => {
   it("follows anchor state changes without tool activation", async () => {
     render(<OfficePreview />); await screen.findByTestId("office-scene");
     act(() => { window.history.pushState(null, "", "#resources"); window.dispatchEvent(new HashChangeEvent("hashchange")); });
-    await act(async () => { await new Promise(resolve => setTimeout(resolve, 750)); });
+    await waitFor(() => expect(document.querySelector(".office-preview")).toHaveAttribute("data-traveling", "false"), { timeout: 2500 });
     expect(screen.getByTestId("office-scene")).toHaveTextContent("resources");
     act(() => { window.history.replaceState(null, "", "#home"); window.dispatchEvent(new HashChangeEvent("hashchange")); });
-    await act(async () => { await new Promise(resolve => setTimeout(resolve, 750)); });
+    await waitFor(() => expect(document.querySelector(".office-preview")).toHaveAttribute("data-traveling", "false"), { timeout: 2500 });
     expect(screen.getByTestId("office-scene")).toHaveTextContent("home");
   });
-  it("ignores scrolling and wheel for floor selection, but slides from header links", async () => {
+  it("ignores scrolling and wheel for floor selection, but fades from header links", async () => {
     render(<OfficePreview />); await screen.findByTestId("office-scene");
     const main = document.getElementById("office-main")!;
     fireEvent.wheel(main, { deltaY: 2000 }); main.scrollTop = 800; fireEvent.scroll(main);
@@ -37,7 +41,7 @@ describe("isolated office shell", () => {
     expect(screen.getByTestId("office-scene")).toHaveTextContent("home");
     fireEvent.click(screen.getByRole("link", { name: "Resources" }));
     expect(document.querySelector(".office-preview")).toHaveAttribute("data-traveling", "true");
-    await act(async () => { await new Promise(resolve => setTimeout(resolve, 750)); });
+    await waitFor(() => expect(document.querySelector(".office-preview")).toHaveAttribute("data-traveling", "false"), { timeout: 2500 });
     expect(screen.getByRole("link", { name: "Resources" })).toHaveAttribute("aria-current", "page");
     expect(window.location.hash).toBe("#resources");
     expect(document.querySelector(".office-preview")).toHaveAttribute("data-traveling", "false");
@@ -45,3 +49,4 @@ describe("isolated office shell", () => {
     expect(window.location.hash).toBe("#resources");
   });
 });
+

@@ -1,11 +1,12 @@
 import { Component, Suspense, useEffect, useMemo, useRef, type ReactNode } from "react";
-import { useGLTF, useAnimations } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
-import { type Group, type Mesh, type SkinnedMesh } from "three";
-import { seatedWorkers, WALK_ROUTES, walkSample, type WalkRoute } from "./peoplePaths";
-import type { FloorId } from "./layouts";
+import { AnimationMixer, type Group, type Mesh, type SkinnedMesh } from "three";
 import characterManifest from "../../../public/office/people/manifest.json";
+import { characterGeometry } from "./characterAppearance";
+import { seatedClips, SEATED_CLIP, WALK_CYCLE_DISTANCE } from "./characterPoses";
+import { personSeat, STEP, WALK_SPEED, type FloorSimulation, type PeopleSession, type Person } from "./peopleSimulation";
 
 const MODEL = {
   man: { url: `/office/people/${characterManifest[0].file}?v=${characterManifest[0].sha256.slice(0, 12)}`, scale: characterManifest[0].scale },
@@ -16,54 +17,53 @@ class PeopleBoundary extends Component<{ children: ReactNode }, { failed: boolea
   static getDerivedStateFromError() { return { failed: true }; }
   render() { return this.state.failed ? null : this.props.children; }
 }
-function Worker({ model, x = 0, z = 0, angle = 0, phase = 0, route, active, animate }: { model: "man" | "woman"; x?: number; z?: number; angle?: number; phase?: number; route?: WalkRoute; active: boolean; animate: boolean }) {
-  const { scene, animations } = useGLTF(MODEL[model].url, false, false);
-  const invalidate = useThree(state => state.invalidate);
-  const person = useMemo(() => {
-    const instance = clone(scene);
-    instance.traverse(object => { if ((object as Mesh).isMesh) { object.castShadow = true; object.receiveShadow = true; object.frustumCulled = false; } });
-    return instance;
-  }, [scene]);
-  const { actions, mixer } = useAnimations(animations, person);
-  const root = useRef<Group>(null);
-  const elapsed = useRef(0);
-  const walking = useRef(true);
+function Worker({ worker, simulation, session, visible }: { worker: Person; simulation: FloorSimulation; session: PeopleSession; visible: boolean }) {
+  const model = MODEL[worker.model], { scene, animations } = useGLTF(model.url, false, false);
+  const invalidate = useThree(state => state.invalidate), root = useRef<Group>(null);
+  const runtime = useMemo(() => {
+    const clips = seatedClips(scene, animations, model.scale), person = clone(scene);
+    person.traverse(object => {
+      const mesh = object as Mesh;
+      if (mesh.isMesh) { mesh.geometry = characterGeometry(mesh.geometry); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false; }
+    });
+    const mixer = new AnimationMixer(person);
+    const actions = Object.fromEntries([...animations.filter(clip => clip.name !== "DeskIdle"), ...clips].map(clip => [clip.name, mixer.clipAction(clip)]));
+    // The two rigs have different cycle durations; match both to ground speed.
+    actions.Walk.setEffectiveTimeScale(WALK_SPEED * actions.Walk.getClip().duration / WALK_CYCLE_DISTANCE);
+    return { person, mixer, actions };
+  }, [scene, animations, model.scale]);
   useEffect(() => {
-    const initial = actions[route ? "Walk" : "DeskIdle"]!;
-    initial.reset().play(); initial.time = phase * initial.getClip().duration;
-    mixer.update(0);
-    if (route && root.current) {
-      const sample = walkSample(route, 0); root.current.position.set(sample.x, 0.03, sample.z); root.current.rotation.y = sample.angle;
-    }
-    // Effects can apply the seated pose after a paused Canvas has already drawn
-    // its first frame. Render once more so reduced motion shows that pose too.
-    invalidate();
+    for (const action of Object.values(runtime.actions)) action.play().setEffectiveWeight(0);
+    runtime.actions.Idle.setEffectiveWeight(1); runtime.mixer.setTime(0); invalidate();
     return () => {
-      mixer.stopAllAction();
-      // SkeletonUtils clones independent GPU bone textures, while retaining the
-      // cached model's geometry/materials. Dispose only the per-person skeletons.
-      person.traverse(object => { if ((object as SkinnedMesh).isSkinnedMesh) (object as SkinnedMesh).skeleton.dispose(); });
+      runtime.mixer.stopAllAction(); runtime.mixer.uncacheRoot(runtime.person);
+      runtime.person.traverse(object => { if ((object as SkinnedMesh).isSkinnedMesh) (object as SkinnedMesh).skeleton.dispose(); });
     };
-  }, [actions, mixer, person, route, phase, invalidate]);
-  useEffect(() => { mixer.timeScale = active && animate ? 1 : 0; }, [mixer, active, animate]);
-  useFrame((_, delta) => {
-    if (!active || !animate || !route || !root.current) return;
-    elapsed.current += Math.min(delta, 0.05);
-    const sample = walkSample(route, elapsed.current);
-    root.current.position.set(sample.x, 0.03, sample.z);
-    const difference = Math.atan2(Math.sin(sample.angle - root.current.rotation.y), Math.cos(sample.angle - root.current.rotation.y));
-    root.current.rotation.y += difference * (1 - Math.exp(-Math.min(delta, 0.05) * 9));
-    if (walking.current !== sample.walking) {
-      walking.current = sample.walking;
-      actions[sample.walking ? "Idle" : "Walk"]?.fadeOut(0.2);
-      actions[sample.walking ? "Walk" : "Idle"]?.reset().fadeIn(0.2).play();
+  }, [runtime, invalidate]);
+  useFrame(() => {
+    if (!visible || !root.current || !session.ready) return;
+    const time = simulation.tick * STEP;
+    const alpha = session.paused || worker.state === "seated" ? 1 : Math.max(0, Math.min(1, (session.time - time) / STEP));
+    for (const action of Object.values(runtime.actions)) action.setEffectiveWeight(0);
+    const seat = personSeat(simulation, worker);
+    if (worker.state === "seated" && seat) {
+      const typing = seat.kind === "desk" && time < worker.typingUntil && !session.paused;
+      runtime.actions[typing ? "DeskTyping" : SEATED_CLIP[seat.kind]].setEffectiveWeight(1);
+    } else {
+      const walking = worker.previousStride + (worker.stride - worker.previousStride) * alpha;
+      runtime.actions.Walk.setEffectiveWeight(walking); runtime.actions.Idle.setEffectiveWeight(1 - walking);
     }
+    // Behavior is stepped; sample the animation on the continuous session clock.
+    // It advances every rendered frame and freezes with reduced motion.
+    runtime.mixer.setTime(session.time + worker.phase);
+    root.current.position.set(worker.previous[0] + (worker.at[0] - worker.previous[0]) * alpha, 0.03, worker.previous[1] + (worker.at[1] - worker.previous[1]) * alpha);
+    const turn = Math.atan2(Math.sin(worker.angle - worker.previousAngle), Math.cos(worker.angle - worker.previousAngle));
+    root.current.rotation.y = worker.previousAngle + turn * alpha;
+    root.current.name = `${worker.state}-worker`;
+    root.current.userData.state = worker.state; root.current.userData.seat = worker.seat; root.current.userData.home = worker.home;
   });
-  return <group ref={root} position={[x, 0.03, z]} rotation-y={angle} scale={MODEL[model].scale} dispose={null} name={route ? "walking-worker" : "seated-worker"}><primitive object={person} /></group>;
+  return <group ref={root} position={[worker.at[0], 0.03, worker.at[1]]} rotation-y={worker.angle} scale={model.scale} dispose={null} userData={{ personId: worker.id }}><primitive object={runtime.person} /></group>;
 }
-export function OfficePeople({ floor, active, animate }: { floor: FloorId; active: boolean; animate: boolean }) {
-  return <PeopleBoundary><Suspense fallback={null}>
-    {seatedWorkers(floor).map((seat, i) => <Worker key={seat.id} {...seat} phase={i / 7} active={active} animate={animate} />)}
-    {WALK_ROUTES[floor].map((route, i) => <Worker key={`walk-${i}`} model={route.model} route={route} active={active} animate={animate} />)}
-  </Suspense></PeopleBoundary>;
+export function OfficePeople({ simulation, session, visible }: { simulation: FloorSimulation; session: PeopleSession; visible: boolean }) {
+  return <PeopleBoundary><Suspense fallback={null}>{simulation.people.map(worker => <Worker key={worker.id} worker={worker} simulation={simulation} session={session} visible={visible} />)}</Suspense></PeopleBoundary>;
 }

@@ -1,6 +1,6 @@
 const {chromium}=require(process.env.FIELD_PLAYWRIGHT||'playwright');
 const fs=require('fs');const path=require('path');const assert=require('assert/strict');
-const root=path.resolve(__dirname,'../../..');const output=path.join(__dirname,'asset-checks');fs.mkdirSync(output,{recursive:true});
+const root=path.resolve(__dirname,'../../..');const output=path.join(root,'.tools/field-render/asset-checks');fs.mkdirSync(output,{recursive:true});
 (async()=>{
 const browser=await chromium.launch({channel:'msedge',headless:true,args:['--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1920,height:1080}});const errors=[];page.on('pageerror',e=>errors.push(String(e)));

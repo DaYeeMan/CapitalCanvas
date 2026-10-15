@@ -8,9 +8,9 @@ interface Fit { left: number; right: number; top: number; bottom: number; width:
 interface ReturnMotion { from: OfficeView; to: OfficeView; began: number }
 interface Drag { id: number; origin: ViewPoint; pan: ViewPoint; started: boolean }
 
-export function OfficeViewControls({ element, motion, reset, settled, reducedMotion, pageVisible }: {
+export function OfficeViewControls({ element, motion, reset, instantReset, settled, reducedMotion, pageVisible }: {
   element: RefObject<HTMLDivElement | null>; motion: RefObject<ViewMotion>; reset: number;
-  settled: boolean; reducedMotion: boolean; pageVisible: boolean;
+  instantReset: boolean; settled: boolean; reducedMotion: boolean; pageVisible: boolean;
 }) {
   const { camera, size, invalidate } = useThree();
   const view = useRef<OfficeView>({ zoom: 1, pan: { x: 0, y: 0 } });
@@ -146,10 +146,18 @@ export function OfficeViewControls({ element, motion, reset, settled, reducedMot
     if (node && id !== undefined && node.hasPointerCapture(id)) node.releasePointerCapture(id);
     const to = { zoom: 1, pan: { x: 0, y: 0 } };
     const same = view.current.zoom === 1 && view.current.pan.x === 0 && view.current.pan.y === 0;
-    if (options.current.reducedMotion || !options.current.pageVisible || same) { view.current = to; returning.current = null; motion.current.busy = false; }
+    if (instantReset || options.current.reducedMotion || !options.current.pageVisible || same) { view.current = to; returning.current = null; motion.current.busy = false; }
     else { returning.current = { from: { zoom: view.current.zoom, pan: { ...view.current.pan } }, to, began: performance.now() }; motion.current.busy = true; }
     invalidate();
-  }, [reset, element, motion, invalidate]);
+  }, [reset, instantReset, element, motion, invalidate]);
+
+  useLayoutEffect(() => {
+    if (settled) return;
+    const node = element.current, id = drag.current?.id;
+    drag.current = null; returning.current = null; motion.current.busy = false;
+    if (node && id !== undefined && node.hasPointerCapture(id)) node.releasePointerCapture(id);
+    invalidate();
+  }, [settled, element, motion, invalidate]);
 
   useLayoutEffect(() => {
     if (!pageVisible || reducedMotion) {

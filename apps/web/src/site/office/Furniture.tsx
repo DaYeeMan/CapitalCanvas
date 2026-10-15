@@ -1,22 +1,28 @@
-import { geometry, furnitureGeometry, materials, glassMaterial, chartGeometry, chartMaterial, type Tone } from "./sceneResources";
-import { BUILDING, DESK, POD_SIZE, ROOM_FRAME, type Fixture, type Room } from "./layouts";
+import { geometry, furnitureGeometry, foliageGeometry, roundedBox, materials, glassMaterial, exteriorGlassMaterial, chartGeometry, chartMaterial, type Tone } from "./sceneResources";
+import { useRef, type ReactNode } from "react";
+import { useFrame } from "@react-three/fiber";
+import type { Group } from "three";
+import { BUILDING, DESK, POD_SIZE, ROOM_FRAME, SEATING, type Fixture, type Room } from "./layouts";
+import { partitionSections } from "./partitions";
+import { roomDoorConfig, roomPlants } from "./officeSpatial";
+import type { DoorState } from "./peopleSimulation";
 
 type XYZ = [number, number, number];
-export function Block({ at, size, tone = "wood", glass = false, rounded = false }: { at: XYZ; size: XYZ; tone?: Tone; glass?: boolean; rounded?: boolean }) {
+export function Block({ at, size, tone = "wood", glass = false, exterior = false, rounded = false }: { at: XYZ; size: XYZ; tone?: Tone; glass?: boolean; exterior?: boolean; rounded?: boolean }) {
   if (glass) {
     const side = size[0] < size[2];
-    return <mesh position={at} rotation-y={side ? Math.PI / 2 : 0} scale={[side ? size[2] : size[0], size[1], 1]} geometry={geometry.pane} material={glassMaterial} renderOrder={1} />;
+    return <mesh position={at} rotation-y={side ? Math.PI / 2 : 0} scale={[side ? size[2] : size[0], size[1], 1]} geometry={geometry.pane} material={exterior ? exteriorGlassMaterial : glassMaterial} renderOrder={1} />;
   }
-  return <mesh position={at} scale={size} geometry={rounded ? geometry.cushion : geometry.box} material={materials[tone]} castShadow receiveShadow />;
+  return <mesh position={at} scale={rounded ? 1 : size} geometry={rounded ? roundedBox(size) : geometry.box} material={materials[tone]} castShadow receiveShadow />;
 }
 function Cylinder({ at, size, tone }: { at: XYZ; size: XYZ; tone: Tone }) {
   return <mesh position={at} scale={size} geometry={geometry.cylinder} material={materials[tone]} castShadow receiveShadow />;
 }
-export function Chair({ at = [0, 0, 0], rotation = 0 }: { at?: XYZ; rotation?: number }) {
+export function Chair({ at = [0, 0, 0], rotation = 0, conference = false }: { at?: XYZ; rotation?: number; conference?: boolean }) {
   return <group name="desk-chair" position={at} rotation-y={rotation}>
     <mesh geometry={furnitureGeometry.chairCushions} material={materials.navy} castShadow receiveShadow />
     <mesh geometry={furnitureGeometry.chairFrame} material={materials.metal} castShadow receiveShadow />
-    <mesh geometry={furnitureGeometry.chairTrim} material={materials.trim} castShadow receiveShadow />
+    <mesh geometry={conference ? furnitureGeometry.conferenceChairTrim : furnitureGeometry.chairTrim} material={materials.trim} castShadow receiveShadow />
   </group>;
 }
 function Table({ width = DESK.width, depth = DESK.depth }: { width?: number; depth?: number }) {
@@ -55,7 +61,7 @@ export function Plant() {
     <Block at={[0, 0.27, 0]} size={[0.62, 0.54, 0.62]} tone="cream" rounded />
     <Block at={[0, 0.535, 0]} size={[0.51, 0.025, 0.51]} tone="soil" />
     <Cylinder at={[0, 0.82, 0]} size={[0.045, 0.6, 0.045]} tone="green" />
-    {Array.from({ length: 9 }, (_, i) => <mesh key={i} position={[Math.sin(i * 2.4) * 0.02, 0.62 + (i % 3) * 0.03, Math.cos(i * 2.4) * 0.02]} rotation={[0, i * 2.4, [0.8, 0.5, 0.2][i % 3]]} scale={[0.6, [0.65, 0.8, 1][i % 3], 0.9]} geometry={geometry.leaf} material={materials[i % 2 ? "green" : "leaf"]} castShadow />)}
+    {foliageGeometry.map((leaves, i) => <mesh key={i} geometry={leaves} material={materials[i ? "green" : "leaf"]} castShadow />)}
   </group>;
 }
 function Sofa() {
@@ -146,8 +152,8 @@ function Copier() {
 export function Furnishing({ fixture }: { fixture: Fixture }) {
   const { kind, at, rotation = 0 } = fixture;
   return <group name={fixture.id} position={[at[0], 0, at[1]]} rotation-y={rotation}>
-    {kind === "bench" ? <><Block at={[0, 0.01, 0]} size={[3.9, 0.02, 2.3]} tone="rug" /><Workstation at={[-0.95, 0, -0.22]} /><Workstation at={[0.95, 0, -0.22]} /></> : null}
-    {kind === "lounge" ? <><Block at={[0, 0.01, 0]} size={[4, 0.02, 3.8]} tone="rug" /><group position={[0, 0, -0.4]}><Sofa /></group><group position={[0, -0.3, 1.3]}><Table width={1.6} depth={0.8} /></group><group position={[0, 0.58, 1.3]} scale={0.2}><Plant /></group></> : null}
+    {kind === "bench" ? <><Block at={[0, 0.01, 0]} size={[Math.abs(Math.sin(rotation)) > 0.5 ? fixture.size[1] : fixture.size[0], 0.02, Math.abs(Math.sin(rotation)) > 0.5 ? fixture.size[0] : fixture.size[1]]} tone="rug" /><Workstation at={[-0.95, 0, -0.22]} /><Workstation at={[0.95, 0, -0.22]} /></> : null}
+    {kind === "lounge" ? <><Block at={[0, 0.01, 0]} size={[4, 0.02, 3.8]} tone="rug" /><group position={[0, 0, -0.4]}><Sofa /></group><group position={[0, -0.3, SEATING.loungeTableZ]}><Table width={1.6} depth={0.8} /></group><group position={[0, 0.58, SEATING.loungeTableZ]} scale={0.2}><Plant /></group></> : null}
     {kind === "plant" ? <Plant /> : null}
     {kind === "storage" ? <>
       <Block at={[0, 0.63, 0]} size={[2, 1.26, 0.55]} /><Block at={[0, 0.64, 0.29]} size={[1.85, 1.05, 0.04]} tone="cream" />
@@ -169,25 +175,27 @@ export function Furnishing({ fixture }: { fixture: Fixture }) {
     {kind === "bookcase" ? <Bookcase width={Math.abs(Math.sin(rotation)) > 0.5 ? fixture.size[1] : fixture.size[0]} /> : null}
   </group>;
 }
-function GlassPartition({ at, length, rotation = 0, door, woodDoor = false }: { at: XYZ; length: number; rotation?: number; door?: number; woodDoor?: boolean }) {
-  const h = ROOM_FRAME.paneHeight, doorWidth = 1;
-  const posts = [-length / 2, length / 2];
-  const bays = Math.ceil(length / 1.3);
-  for (let i = 1; i < bays; i++) {
-    const x = -length / 2 + i * length / bays;
-    if (door === undefined || Math.abs(x - door) > doorWidth / 2 + 0.1) posts.push(x);
-  }
-  if (door !== undefined) posts.push(door - doorWidth / 2, door + doorWidth / 2);
-  const cuts = [...new Set(posts)].sort((a, b) => a - b);
+export function DoorPivot({ start, state, swing, children }: { start: number; state?: DoorState; swing: number; children: ReactNode }) {
+  const root = useRef<Group>(null);
+  useFrame(() => { if (root.current) root.current.rotation.y = (state?.progress ?? 0) * swing; });
+  return <group ref={root} name="door-leaf" position={[start + ROOM_FRAME.width / 2, 0, 0]}>
+    {children}
+  </group>;
+}
+function GlassPartition({ at, length, rotation = 0, door, woodDoor = false, extendDoor = false, state, swing = Math.PI / 2 }: { at: XYZ; length: number; rotation?: number; door?: number; woodDoor?: boolean; extendDoor?: boolean; state?: DoorState; swing?: number }) {
+  const h = ROOM_FRAME.paneHeight;
+  const { cuts, panes } = partitionSections(length, door, extendDoor);
   return <group name="glass-partition" position={at} rotation-y={rotation}>
-    {cuts.slice(1).map((right, i) => {
-      const left = cuts[i], x = (left + right) / 2, isDoor = door !== undefined && Math.abs(x - door) < 0.01;
-      return <group key={left}>
+    {panes.map(({ left, right, door: isDoor }) => {
+      const x = (left + right) / 2;
+      return <group key={left} name={isDoor ? "room-door" : "room-pane"}>
         {isDoor ? <>
-          <Block at={[x, 1.275, 0]} size={[right - left - 0.045, 2.55, 0.065]} glass={!woodDoor} tone="wood" />
+          <DoorPivot start={left} state={state} swing={swing}>
+            <Block at={[(right - left - 0.045) / 2, 1.275, 0]} size={[right - left - 0.045, 2.55, 0.065]} glass={!woodDoor} tone="wood" />
+            <Block at={[right - left - 0.045 - 0.12, 1.25, 0.07]} size={[0.035, 0.27, 0.055]} tone="frame" />
+          </DoorPivot>
           <Block at={[x, 2.725, 0]} size={[right - left - 0.045, 0.35, 0.06]} glass />
           <Block at={[x, 2.55, 0]} size={[right - left, 0.045, 0.045]} tone="frame" />
-          <Block at={[x + 0.35, 1.25, 0.07]} size={[0.035, 0.27, 0.055]} tone="frame" />
         </> : <Block at={[x, h / 2, 0]} size={[right - left - 0.045, h, 0.06]} glass />}
       </group>;
     })}
@@ -197,29 +205,28 @@ function GlassPartition({ at, length, rotation = 0, door, woodDoor = false }: { 
   </group>;
 }
 
-export function OfficeRoom({ room }: { room: Room }) {
+export function OfficeRoom({ room, doors: doorStates }: { room: Room; doors?: Map<string, DoorState> }) {
   const [w, d] = room.size;
   const h = ROOM_FRAME.paneHeight;
   const meetsLeftWall = Math.abs(room.at[0] - w / 2 + BUILDING.width / 2 - BUILDING.wallThickness / 2) < 0.001;
   const privateOffice = room.kind === "private";
+  const floorPlants = roomPlants(room);
   const sideEntry = meetsLeftWall && !privateOffice;
-  const doors = room.doors ?? { side: sideEntry ? "glass" : undefined, front: privateOffice || sideEntry ? "wood" : "glass" };
+  const doors = roomDoorConfig(room);
   const meetsBackWall = Math.abs(room.at[1] - d / 2 + BUILDING.depth / 2 - BUILDING.wallThickness / 2) < 0.001;
   return <group name={room.id} position={[room.at[0], 0, room.at[1]]}>
     <Block at={[0, 0.015, 0]} size={[w, 0.03, d]} tone="rug" />
     {!meetsLeftWall ? <GlassPartition at={[-w / 2, 0, 0]} length={d} rotation={Math.PI / 2} /> : null}
-    <GlassPartition at={[w / 2, 0, 0]} length={d} rotation={Math.PI / 2} door={doors.side ? -d / 2 + 0.55 : undefined} woodDoor={doors.side === "wood"} />
-    <GlassPartition at={[0, 0, d / 2]} length={w} door={doors.front ? privateOffice || sideEntry ? -w / 2 + 0.55 : w / 2 - 0.55 : undefined} woodDoor={doors.front === "wood"} />
+    <GlassPartition at={[w / 2, 0, 0]} length={d} rotation={Math.PI / 2} door={doors.side ? -d / 2 + 0.55 : undefined} woodDoor={doors.side === "wood"} extendDoor={doors.sideToNextPane} state={doorStates?.get(`${room.id}-side`)} swing={-Math.PI / 2} />
+    <GlassPartition at={[0, 0, d / 2]} length={w} door={doors.front ? privateOffice || sideEntry ? -w / 2 + 0.55 : w / 2 - 0.55 : undefined} woodDoor={doors.front === "wood"} state={doorStates?.get(`${room.id}-front`)} />
     {!meetsBackWall ? <GlassPartition at={[0, 0, -d / 2]} length={w} /> : null}
-    {[-1, 1].flatMap(x => [-1, 1].map(z => <Block key={`${x}-${z}`} at={[x * w / 2, h / 2, z * d / 2]} size={[0.055, h, 0.055]} tone="frame" />))}
+    {[-1, 1].flatMap(x => [-1, 1].filter(z => !(x === -1 && z === -1 && meetsLeftWall && meetsBackWall)).map(z => <Block key={`${x}-${z}`} at={[x * w / 2, h / 2, z * d / 2]} size={[0.055, h, 0.055]} tone="frame" />))}
     {room.kind === "conference" ? <>
-      <group rotation-y={room.tableRotation ?? 0}><Table width={4.2} depth={1.4} />{[-1.4, 0, 1.4].flatMap(x => [-1, 1].map(z => <Chair key={`${x}-${z}`} at={[x, 0, z * 1.2]} rotation={z < 0 ? Math.PI : 0} />))}</group>
+      <group rotation-y={room.tableRotation ?? 0}><Table width={SEATING.conferenceWidth} depth={1.4} />{SEATING.conferenceColumns.flatMap(x => [-1, 1].map(z => <Chair key={`${x}-${z}`} at={[x, 0, z * SEATING.conferenceRow]} rotation={z < 0 ? Math.PI : 0} conference />))}</group>
       <group position={meetsLeftWall ? [-w / 2 + 0.12, 1.95, 0] : [0, 1.95, -d / 2 + 0.12]} rotation-y={meetsLeftWall ? Math.PI / 2 : 0}>
         <Block at={[0, 0, 0]} size={[2.1, 1, 0.08]} tone="white" />
         <lineSegments position={[0, -0.05, 0.045]} scale={[2.6, 2.1, 1]} geometry={chartGeometry} material={chartMaterial} />
       </group>
-      <group position={[-w / 2 + 0.55, 0, -d / 2 + 0.55]}><Plant /></group>
-      <group position={[w / 2 - 0.55, 0, -d / 2 + 0.55]}><Plant /></group>
     </> : null}
     {privateOffice ? <>
       <Workstation at={[0, 0, -0.4]} />
@@ -228,7 +235,7 @@ export function OfficeRoom({ room }: { room: Room }) {
         <Block at={[0, 0, 0]} size={[1.3, 0.9, 0.06]} tone="white" />
         <lineSegments position={[0, -0.05, 0.04]} scale={[1.6, 1.7, 1]} geometry={chartGeometry} material={chartMaterial} />
       </group>
-      <group position={[w / 2 - 0.55, 0, d / 2 - 0.65]}><Plant /></group>
     </> : null}
+    {floorPlants.map(([x, z], i) => <group key={i} position={[x, 0, z]}><Plant /></group>)}
   </group>;
 }

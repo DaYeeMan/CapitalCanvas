@@ -16,7 +16,7 @@ export function OfficeShell({ openings }: { openings: readonly WallOpening[] }) 
     {openings.map(opening => <group key={opening.id} name={`window-${opening.id}`}>
       <Block at={[-w / 2, sill / 2, (opening.start + opening.end) / 2]} size={[depth, sill, opening.end - opening.start]} tone="wall" />
       <Block at={[-w / 2, (glassTop + body) / 2, (opening.start + opening.end) / 2]} size={[depth, body - glassTop, opening.end - opening.start]} tone="wall" />
-      {windowSections(opening).map(section => <Block key={`${section.glass ? "pane" : "post"}-${section.start}`} at={[-w / 2, (sill + glassTop) / 2, (section.start + section.end) / 2]} size={[depth, glassTop - sill, section.end - section.start]} tone="wall" glass={section.glass} />)}
+      {windowSections(opening).map(section => <Block key={`${section.glass ? "pane" : "post"}-${section.start}`} at={[-w / 2, (sill + glassTop) / 2, (section.start + section.end) / 2]} size={[depth, glassTop - sill, section.end - section.start]} tone="wall" glass={section.glass} exterior={section.glass} />)}
     </group>)}
     <Block at={[w / 2, frontWall / 2, 0]} size={[t, frontWall, d]} tone="cream" />
     <Block at={[0, frontWall / 2, d / 2]} size={[w, frontWall, t]} tone="cream" />

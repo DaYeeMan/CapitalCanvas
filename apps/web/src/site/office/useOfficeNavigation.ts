@@ -1,50 +1,72 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { readFloor, type FloorId } from "./layouts";
 
+export type NavigationPhase = "idle" | "fade-out" | "hidden" | "fade-in";
+export const FADE = { out: 250, in: 250 } as const;
+interface Navigation { floor: FloorId; phase: NavigationPhase; viewReset: number; instantReset: boolean }
+
 export function useOfficeNavigation(reducedMotion: boolean) {
-  const progress = useRef(readFloor() === "resources" ? 1 : 0);
-  const [floor, setFloor] = useState<FloorId>(readFloor);
-  const [settled, setSettled] = useState(true);
-  const [viewReset, setViewReset] = useState(0);
-  const frame = useRef(0);
-  const destination = useRef<FloorId>(readFloor());
+  const [state, setState] = useState<Navigation>(() => ({ floor: readFloor(), phase: "idle", viewReset: 0, instantReset: true }));
+  const current = useRef(state), destination = useRef(state.floor);
+  const reduced = useRef(reducedMotion);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const publish = useCallback((next: Navigation) => { current.current = next; setState(next); }, []);
+  const immediate = useCallback((floor: FloorId) => {
+    clearTimeout(timer.current);
+    publish({ floor, phase: "idle", viewReset: current.current.viewReset + 1, instantReset: true });
+  }, [publish]);
+  const commitHidden = useCallback(() => {
+    clearTimeout(timer.current);
+    publish({ floor: destination.current, phase: "hidden", viewReset: current.current.viewReset + 1, instantReset: true });
+  }, [publish]);
   const select = useCallback((next: FloorId) => {
-    cancelAnimationFrame(frame.current);
     destination.current = next;
-    setViewReset(value => value + 1);
-    const target = next === "resources" ? 1 : 0;
-    const start = progress.current;
-    const finish = () => { progress.current = target; setFloor(next); setSettled(true); };
-    if (reducedMotion || document.visibilityState === "hidden" || Math.abs(start - target) < 0.001) { finish(); return; }
-    setSettled(false);
-    const began = performance.now();
-    const tick = () => {
-      const t = Math.min(1, (performance.now() - began) / 700);
-      progress.current = start + (target - start) * (t * t * (3 - 2 * t));
-      if (t < 1) frame.current = requestAnimationFrame(tick);
-      else finish();
-    };
-    frame.current = requestAnimationFrame(tick);
-  }, [reducedMotion]);
+    if (reduced.current || document.visibilityState === "hidden") { immediate(next); return; }
+    const previous = current.current;
+    if (next === previous.floor && (previous.phase === "hidden" || previous.phase === "fade-in")) return;
+    if (previous.phase === "hidden") { commitHidden(); return; }
+    if (previous.phase === "fade-out") return;
+    if (previous.phase === "idle" && next === previous.floor) {
+      publish({ ...previous, viewReset: previous.viewReset + 1, instantReset: false });
+      return;
+    }
+    clearTimeout(timer.current);
+    // CSS fades from its current opacity if another choice arrives during fade-in.
+    publish({ ...previous, phase: "fade-out" });
+    timer.current = setTimeout(commitHidden, FADE.out);
+  }, [commitHidden, immediate, publish]);
   const navigate = useCallback((next: FloorId) => {
     if (window.location.hash !== `#${next}`) window.history.pushState(null, "", `#${next}`);
     select(next);
   }, [select]);
+  const presented = useCallback((floor: FloorId, reset: number) => {
+    const committed = current.current;
+    if (committed.phase !== "hidden" || committed.floor !== floor || committed.viewReset !== reset) return;
+    clearTimeout(timer.current);
+    // Wait for the destination's rendered camera/marker state, not just a timer.
+    timer.current = setTimeout(() => {
+      publish({ ...current.current, phase: "fade-in" });
+      timer.current = setTimeout(() => publish({ ...current.current, phase: "idle" }), FADE.in);
+    }, 0);
+  }, [publish]);
   useLayoutEffect(() => {
-    const onHash = () => select(readFloor());
+    reduced.current = reducedMotion;
+    if (reducedMotion && current.current.phase !== "idle") immediate(destination.current);
+  }, [reducedMotion, immediate]);
+  useLayoutEffect(() => {
+    const onHistory = () => { const next = readFloor(); if (next !== destination.current) select(next); };
     const onVisibility = () => {
-      if (document.visibilityState === "hidden" && progress.current !== (destination.current === "resources" ? 1 : 0)) select(destination.current);
+      if (document.visibilityState === "hidden" && current.current.phase !== "idle") immediate(destination.current);
     };
-    if (reducedMotion && progress.current !== (destination.current === "resources" ? 1 : 0)) select(destination.current);
-    window.addEventListener("hashchange", onHash);
-    window.addEventListener("popstate", onHash);
+    window.addEventListener("hashchange", onHistory);
+    window.addEventListener("popstate", onHistory);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      cancelAnimationFrame(frame.current);
-      window.removeEventListener("hashchange", onHash);
-      window.removeEventListener("popstate", onHash);
+      clearTimeout(timer.current);
+      window.removeEventListener("hashchange", onHistory);
+      window.removeEventListener("popstate", onHistory);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [select, reducedMotion]);
-  return { progress, floor, settled, navigate, viewReset };
+  }, [select, immediate]);
+  return { ...state, settled: state.phase === "idle", navigate, presented };
 }

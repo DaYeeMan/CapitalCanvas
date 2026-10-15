@@ -6,20 +6,20 @@ import { useOfficeNavigation } from "./useOfficeNavigation";
 import "./office.css";
 
 const OfficeCanvas = lazy(() => import("./OfficeCanvas"));
-class SceneBoundary extends Component<{ floor: FloorId; children: ReactNode }, { failed: boolean }> {
+class SceneBoundary extends Component<{ floor: FloorId; viewReset: number; onPresented: (floor: FloorId, reset: number) => void; children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  render() { return this.state.failed ? <OfficeFallback floor={this.props.floor} /> : this.props.children; }
+  render() { return this.state.failed ? <OfficeFallback floor={this.props.floor} viewReset={this.props.viewReset} onPresented={this.props.onPresented} /> : this.props.children; }
 }
 
 export default function OfficePreview() {
   const reducedMotion = useReducedMotion();
   const visible = usePageVisible();
-  const { progress, floor, settled, navigate, viewReset } = useOfficeNavigation(reducedMotion);
-  return <div className="office-preview" data-floor={floor} data-traveling={!settled}>
+  const { floor, phase, settled, navigate, viewReset, instantReset, presented } = useOfficeNavigation(reducedMotion);
+  return <div className="office-preview" data-floor={floor} data-traveling={!settled} data-phase={phase}>
     <a className="office-skip" href="#office-main" onClick={event => { event.preventDefault(); document.getElementById("office-main")?.focus(); }}>Skip to office</a>
     <header className="office-header">
-      <a className="office-wordmark" href="#home" aria-label="CapitalCanvas preview home" onClick={event => { event.preventDefault(); navigate("home"); }}>CapitalCanvas</a>
+      <a className="office-wordmark" href="#home" aria-label="CapitalCanvas preview home" onClick={event => { event.preventDefault(); navigate("home"); }}><img src="/office/capital-canvas-logo-navy.png" alt="" width="64" height="64" />CapitalCanvas</a>
       <nav aria-label="Office floors">
         <a href="#home" aria-current={floor === "home" ? "page" : undefined} onClick={event => { event.preventDefault(); navigate("home"); }}>Home</a>
         <a href="#resources" aria-current={floor === "resources" ? "page" : undefined} onClick={event => { event.preventDefault(); navigate("resources"); }}>Resources</a>
@@ -29,8 +29,8 @@ export default function OfficePreview() {
     <main id="office-main" className="office-stage" tabIndex={0} aria-label="Office floors" aria-describedby="office-instructions">
       <h1 className="sr-only">{FLOORS[floor].title}</h1>
       <p id="office-instructions" className="sr-only">Use Home and Resources to switch floors. When 3D is available, scroll to zoom and drag to pan. With the office focused, use plus or minus to zoom, arrow keys to pan, and zero to reset. Hover or focus a marked desk to reveal its tool name. Desk activation is not enabled.</p>
-      <SceneBoundary floor={floor}>
-        <Suspense fallback={<p className="office-loading" role="status">Loading office&#8230;</p>}><OfficeCanvas floor={floor} progress={progress} settled={settled} animate={visible && !reducedMotion} pageVisible={visible} reducedMotion={reducedMotion} viewReset={viewReset} /></Suspense>
+      <SceneBoundary floor={floor} viewReset={viewReset} onPresented={presented}>
+        <Suspense fallback={<p className="office-loading" role="status">Loading office&#8230;</p>}><OfficeCanvas floor={floor} phase={phase} settled={settled} animate={visible && !reducedMotion} pageVisible={visible} reducedMotion={reducedMotion} viewReset={viewReset} instantReset={instantReset} onPresented={presented} /></Suspense>
       </SceneBoundary>
     </main>
   </div>;

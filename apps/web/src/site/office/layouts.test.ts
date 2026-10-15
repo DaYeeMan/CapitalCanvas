@@ -2,14 +2,17 @@ import { describe, expect, it } from "vitest";
 import { Children, isValidElement, type ReactNode } from "react";
 import { Vector3, OrthographicCamera } from "three";
 import { BUILDING, CAMERA, DESK, EXTERIOR_FRAME, FLOORS, POD_SIZE, ROOM_FRAME, TALL_WALL_TOP, overlaps, readFloor, solidWallSpans, windowSections } from "./layouts";
-import { furnitureGeometry } from "./sceneResources";
+import { furnitureGeometry, exteriorGlassMaterial, glassMaterial } from "./sceneResources";
 import { OfficeShell } from "./OfficeShell";
-import { Block, OfficeRoom } from "./Furniture";
+import { Block, DoorPivot, OfficeRoom } from "./Furniture";
 
 function blocks(node: ReactNode): Parameters<typeof Block>[0][] {
   return Children.toArray(node).flatMap(child => {
     if (!isValidElement<{ children?: ReactNode }>(child)) return [];
     if (child.type === Block) return [child.props as Parameters<typeof Block>[0]];
+    // Geometry assertions inspect the leaf's authored children, while its frame
+    // hook is exercised by browser/lifecycle checks inside a real Canvas.
+    if (child.type === DoorPivot) return blocks(child.props.children);
     if (typeof child.type === "function") return blocks((child.type as (props: unknown) => ReactNode)(child.props));
     return blocks(child.props.children);
   });
@@ -42,21 +45,42 @@ describe("office floor invariants", () => {
       expect(shell.some(b => b.tone === "frame")).toBe(false);
     }
   });
-  it("adds Home furniture and relocates its door without changing other room doors", () => {
+  it("retains Home furniture and authors both conference wood entries explicitly", () => {
     const fixtures = FLOORS.home.fixtures;
     expect(fixtures.find(f => f.id === "window-couch")?.kind).toBe("lounge");
     expect(fixtures.find(f => f.id === "lounge")?.kind).toBe("lounge");
     for (const id of ["right-bookcase", "northeast-bookcase"]) expect(fixtures.find(f => f.id === id)?.kind).toBe("bookcase");
     expect(fixtures.find(f => f.id === "northeast-countertop")?.kind).toBe("countertop");
     expect(fixtures.find(f => f.id === "coffee")?.kind).toBe("coffee");
-    expect(FLOORS.home.rooms.find(r => r.kind === "conference")?.doors).toEqual({ side: "wood" });
-    expect(FLOORS.resources.rooms.every(r => r.doors === undefined)).toBe(true);
+    expect(FLOORS.home.rooms.find(r => r.kind === "conference")?.doors).toEqual({ side: "wood", sideToNextPane: true });
+    expect(FLOORS.resources.rooms.find(r => r.kind === "conference")?.doors).toEqual({ front: "wood" });
+    expect(FLOORS.resources.rooms.find(r => r.kind === "private")?.doors).toBeUndefined();
     const couch = fixtures.find(f => f.id === "window-couch")!;
     const [meeting, office] = FLOORS.home.rooms;
     expect(couch.at[1] - couch.size[1] / 2).toBeGreaterThan(office.at[1] + office.size[1] / 2);
     expect(couch.at[1] + couch.size[1] / 2).toBeLessThan(meeting.at[1] - meeting.size[1] / 2);
   });
+  it("removes only each wall-backed rear upright and separates exterior glass from room panes", () => {
+    for (const floor of Object.values(FLOORS)) {
+      for (const room of floor.rooms) {
+        const parts = blocks(OfficeRoom({ room }));
+        const corners = parts.filter(b => b.tone === "frame" && b.size[0] === 0.055 && b.size[2] === 0.055 && b.size[1] === ROOM_FRAME.paneHeight);
+        expect(corners).toHaveLength(room.kind === "private" ? 3 : 4);
+        if (room.kind === "private") expect(corners.some(b => b.at[0] === -room.size[0] / 2 && b.at[2] === -room.size[1] / 2)).toBe(false);
+        expect(parts.filter(b => b.tone === "wood" && b.size[1] === 2.55 && !b.glass)).toHaveLength(1);
+        expect(parts.filter(b => b.glass).every(b => !b.exterior)).toBe(true);
+      }
+      const shell = blocks(OfficeShell({ openings: floor.northwestOpenings }));
+      expect(shell.filter(b => b.glass).every(b => b.exterior)).toBe(true);
+    }
+    const pane = { at: [0, 1, 0] as [number, number, number], size: [1, 2, 0.06] as [number, number, number], glass: true };
+    expect(Block(pane).props.material).toBe(glassMaterial);
+    expect(Block({ ...pane, exterior: true }).props.material).toBe(exteriorGlassMaterial);
+    expect(glassMaterial.opacity).toBe(0.11);
+    expect(exteriorGlassMaterial.opacity).toBeGreaterThan(glassMaterial.opacity);
+  });
   it("keeps shaped chairs and desks within the rug and projected interaction volume", () => {
+    expect(furnitureGeometry.conferenceChairTrim.boundingBox!.max.y).toBeLessThan(DESK.height - DESK.top / 2);
     const chairParts = [furnitureGeometry.chairCushions, furnitureGeometry.chairFrame, furnitureGeometry.chairTrim];
     for (const geometry of chairParts) {
       const bounds = geometry.boundingBox!;
