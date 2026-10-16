@@ -24,4 +24,7 @@ export function zoomAt(view: OfficeView, zoom: number, cursor: ViewPoint, limits
 export function wheelPixels(delta: number, mode: number, viewportHeight: number) {
   return delta * (mode === 1 ? 16 : mode === 2 ? viewportHeight : 1);
 }
-export interface ViewMotion { revision: number; busy: boolean; pointer: ViewPoint | null }
+export interface ViewMotion {
+  revision: number; busy: boolean; pointer: ViewPoint | null;
+  inspecting?: boolean; inspectionWide?: number; cameraTargetY?: number;
+}

@@ -18,3 +18,5 @@ The generator also reads installed license files for the preview's camera and GL
 ## Office character licenses
 
 The preview bundles Quaternius's Business Man (CC0 1.0) and Suit (CC BY 3.0) character assets. Their attribution and modification record is retained in `apps/web/public/office/people/CREDITS.md` and included in generated site notices. `CC0-1.0.txt` and `CC-BY-3.0.txt` retain the Creative Commons legal texts. Asset hashes and binary details are in the adjacent character manifest.
+
+Geist variable font for the After Hours preview was retrieved October 15, 2026 from the official Google Fonts `ofl/geist` directory. The unmodified font and OFL license are bundled in `apps/web/public/office/fonts/`; `generate_notices.py` includes its attribution.

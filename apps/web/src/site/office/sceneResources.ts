@@ -26,7 +26,7 @@ const weave = finish(64, (x, y) => 239 + ((x + y) % 2) * 8 + Math.sin(x * 2 + y 
 const tile = finish(512, (x, y) => {
   const u = x / 512 * BUILDING.width / 2, v = y / 512 * BUILDING.depth / 2;
   const edge = u % 1 < 0.009 || v % 1 < 0.009;
-  return edge ? 214 : 230 + Math.sin(Math.floor(u) * 7 + Math.floor(v) * 13) * 20;
+  return edge ? 220 : 241 + Math.sin(Math.floor(u) * 7 + Math.floor(v) * 13) * 5;
 });
 
 function leafGeometry() {
@@ -143,10 +143,10 @@ const foliage = Array.from({ length: 12 }, (_, i): Part => {
 });
 export const foliageGeometry = [0, 1].map(tone => assembly(foliage.filter((_, i) => i % 2 === tone)));
 const palette = {
-  floor: "#f5ede2", wall: "#fcf5ea", slab: "#cad2df", wood: "#e6bd89",
-  navy: "#154782", frame: "#35475e", partition: "#b5c0cd", screen: "#0b2548",
-  chart: "#4e8eff", rug: "#c5c3d2", cream: "#fff8ec", green: "#568637",
-  leaf: "#81a849", white: "#ffffff", soil: "#524331",
+  floor: "#ece1d4", wall: "#e9e5e2", slab: "#adb6c3", wood: "#dfb889",
+  navy: "#17354d", frame: "#35475e", partition: "#b5c0cd", screen: "#0b2548",
+  chart: "#4e8eff", rug: "#858b94", cream: "#fff8ec", green: "#4f6b39",
+  leaf: "#71894d", white: "#ffffff", soil: "#524331",
   metal: "#9caab7", trim: "#263447",
 };
 export type Tone = keyof typeof palette;
@@ -156,7 +156,7 @@ Object.assign(materials.floor, { map: tile, roughness: 0.84 });
 Object.assign(materials.rug, { map: weave, roughness: 1 });
 Object.assign(materials.navy, { roughness: 0.94 });
 Object.assign(materials.frame, { metalness: 0.25, roughness: 0.55 });
-Object.assign(materials.screen, { roughness: 0.32, emissive: materials.screen.color, emissiveIntensity: 0.15 });
+Object.assign(materials.screen, { roughness: 0.32, emissive: materials.screen.color, emissiveIntensity: 0.42 });
 // Single panes prevent six overlapping transparent box faces from clouding rooms.
 export const glassMaterial = new MeshStandardMaterial({ color: "#c4dced", transparent: true, opacity: 0.11, roughness: 0.24, depthWrite: false, side: DoubleSide });
 export const exteriorGlassMaterial = new MeshStandardMaterial({ color: "#9ac9ed", transparent: true, opacity: 0.23, roughness: 0.18, metalness: 0.08, depthWrite: false, side: DoubleSide });
@@ -164,4 +164,4 @@ export const exteriorGlassMaterial = new MeshStandardMaterial({ color: "#9ac9ed"
 const chartPoints = [[-0.32, -0.08], [-0.23, 0.04], [-0.13, -0.01], [-0.04, 0.09], [0.06, -0.04], [0.16, 0.12], [0.24, 0.06], [0.32, 0.17]];
 export const chartGeometry = new BufferGeometry();
 chartGeometry.setAttribute("position", new Float32BufferAttribute(chartPoints.slice(1).flatMap((point, i) => [...chartPoints[i], 0, ...point, 0]), 3));
-export const chartMaterial = new LineBasicMaterial({ color: "#3788ff", toneMapped: false });
+export const chartMaterial = new LineBasicMaterial({ color: "#739fbf", toneMapped: false });

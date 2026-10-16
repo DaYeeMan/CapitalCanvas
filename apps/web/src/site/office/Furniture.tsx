@@ -3,6 +3,7 @@ import { useRef, type ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
 import { BUILDING, DESK, POD_SIZE, ROOM_FRAME, SEATING, type Fixture, type Room } from "./layouts";
+import { TaskLamp } from "./OfficeLamps";
 import { partitionSections } from "./partitions";
 import { roomDoorConfig, roomPlants } from "./officeSpatial";
 import type { DoorState } from "./peopleSimulation";
@@ -42,13 +43,13 @@ function Monitor() {
     <lineSegments position={[0, 1.24, -0.186]} scale={[1.15, 1.15, 1]} geometry={chartGeometry} material={chartMaterial} />
   </group>;
 }
-function Workstation({ at, rotation = 0 }: { at: XYZ; rotation?: number }) {
-  return <group name="workstation" position={at} rotation-y={rotation}><Table /><Monitor /><Chair at={[0, 0, DESK.chairOffset]} /></group>;
+function Workstation({ at, rotation = 0, illuminate = false }: { at: XYZ; rotation?: number; illuminate?: boolean }) {
+  return <group name="workstation" position={at} rotation-y={rotation}><Table /><Monitor /><group position={[0.68, DESK.height + DESK.top / 2, -0.28]}><TaskLamp illuminate={illuminate} /></group><Chair at={[0, 0, DESK.chairOffset]} /></group>;
 }
 export function DeskPod() {
   return <group>
     <Block at={[0, 0.015, 0]} size={[POD_SIZE[0], 0.03, POD_SIZE[1]]} tone="rug" />
-    {[-1, 1].flatMap(x => [-1, 1].map(z => <Workstation key={`${x}-${z}`} at={[x * DESK.podX, 0, z * DESK.podZ]} rotation={z < 0 ? Math.PI : 0} />))}
+    {[-1, 1].flatMap(x => [-1, 1].map(z => <Workstation key={`${x}-${z}`} at={[x * DESK.podX, 0, z * DESK.podZ]} rotation={z < 0 ? Math.PI : 0} illuminate={x === 1 && z === 1} />))}
     <Block at={[0, 1.1, 0]} size={[3.8, 0.58, 0.07]} tone="partition" rounded />
     <Block at={[0, 1.1, 0]} size={[0.07, 0.58, 2.3]} tone="partition" rounded />
     <Block at={[0, 1.4, 0]} size={[3.8, 0.025, 0.075]} tone="metal" />
@@ -152,7 +153,7 @@ function Copier() {
 export function Furnishing({ fixture }: { fixture: Fixture }) {
   const { kind, at, rotation = 0 } = fixture;
   return <group name={fixture.id} position={[at[0], 0, at[1]]} rotation-y={rotation}>
-    {kind === "bench" ? <><Block at={[0, 0.01, 0]} size={[Math.abs(Math.sin(rotation)) > 0.5 ? fixture.size[1] : fixture.size[0], 0.02, Math.abs(Math.sin(rotation)) > 0.5 ? fixture.size[0] : fixture.size[1]]} tone="rug" /><Workstation at={[-0.95, 0, -0.22]} /><Workstation at={[0.95, 0, -0.22]} /></> : null}
+    {kind === "bench" ? <><Block at={[0, 0.01, 0]} size={[Math.abs(Math.sin(rotation)) > 0.5 ? fixture.size[1] : fixture.size[0], 0.02, Math.abs(Math.sin(rotation)) > 0.5 ? fixture.size[0] : fixture.size[1]]} tone="rug" /><Workstation at={[-0.95, 0, -0.22]} illuminate /><Workstation at={[0.95, 0, -0.22]} /></> : null}
     {kind === "lounge" ? <><Block at={[0, 0.01, 0]} size={[4, 0.02, 3.8]} tone="rug" /><group position={[0, 0, -0.4]}><Sofa /></group><group position={[0, -0.3, SEATING.loungeTableZ]}><Table width={1.6} depth={0.8} /></group><group position={[0, 0.58, SEATING.loungeTableZ]} scale={0.2}><Plant /></group></> : null}
     {kind === "plant" ? <Plant /> : null}
     {kind === "storage" ? <>
@@ -222,14 +223,14 @@ export function OfficeRoom({ room, doors: doorStates }: { room: Room; doors?: Ma
     {!meetsBackWall ? <GlassPartition at={[0, 0, -d / 2]} length={w} /> : null}
     {[-1, 1].flatMap(x => [-1, 1].filter(z => !(x === -1 && z === -1 && meetsLeftWall && meetsBackWall)).map(z => <Block key={`${x}-${z}`} at={[x * w / 2, h / 2, z * d / 2]} size={[0.055, h, 0.055]} tone="frame" />))}
     {room.kind === "conference" ? <>
-      <group rotation-y={room.tableRotation ?? 0}><Table width={SEATING.conferenceWidth} depth={1.4} />{SEATING.conferenceColumns.flatMap(x => [-1, 1].map(z => <Chair key={`${x}-${z}`} at={[x, 0, z * SEATING.conferenceRow]} rotation={z < 0 ? Math.PI : 0} conference />))}</group>
+      <group rotation-y={room.tableRotation ?? 0}><Table width={SEATING.conferenceWidth} depth={1.4} /><group position={[-1.65, DESK.height + DESK.top / 2, 0]}><TaskLamp illuminate /></group>{SEATING.conferenceColumns.flatMap(x => [-1, 1].map(z => <Chair key={`${x}-${z}`} at={[x, 0, z * SEATING.conferenceRow]} rotation={z < 0 ? Math.PI : 0} conference />))}</group>
       <group position={meetsLeftWall ? [-w / 2 + 0.12, 1.95, 0] : [0, 1.95, -d / 2 + 0.12]} rotation-y={meetsLeftWall ? Math.PI / 2 : 0}>
         <Block at={[0, 0, 0]} size={[2.1, 1, 0.08]} tone="white" />
         <lineSegments position={[0, -0.05, 0.045]} scale={[2.6, 2.1, 1]} geometry={chartGeometry} material={chartMaterial} />
       </group>
     </> : null}
     {privateOffice ? <>
-      <Workstation at={[0, 0, -0.4]} />
+      <Workstation at={[0, 0, -0.4]} illuminate />
       <group name="private-office-shelving" position={[-w / 2 + 1, 0, -d / 2 + 0.4]}><Bookcase width={1.5} /><group position={[0.4, 1.29, 0]} scale={0.22}><Plant /></group></group>
       <group name="private-office-art" position={[0.75, 1.95, -d / 2 + 0.12]}>
         <Block at={[0, 0, 0]} size={[1.3, 0.9, 0.06]} tone="white" />

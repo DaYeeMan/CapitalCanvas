@@ -15,12 +15,12 @@ beforeEach(() => { sceneState.failed = false; window.history.replaceState(null, 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("isolated office shell", () => {
-  it("selects a directly linked lower floor and keeps About noninteractive", async () => {
+  it("selects a directly linked lower floor and offers About without activating tools", async () => {
     window.history.replaceState(null, "", "/preview/office#resources"); render(<OfficePreview />);
     expect(await screen.findByTestId("office-scene")).toHaveTextContent("resources");
     expect(screen.getByRole("link", { name: "Resources" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByText("About").tagName).toBe("SPAN");
-    expect(screen.queryByRole("link", { name: "About" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "#about");
+    expect(screen.getByRole("link", { name: "About" })).not.toHaveAttribute("aria-current");
     expect(screen.queryByRole("link", { name: /Ithaca|Troy|Delphi/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("link", { name: "Skip to office" }));
     expect(window.location.hash).toBe("#resources");
@@ -47,22 +47,22 @@ describe("isolated office shell", () => {
     expect(window.location.hash).toBe("#resources");
     expect(document.querySelector(".office-preview")).toHaveAttribute("data-traveling", "false");
     fireEvent.click(screen.getByText("About"));
-    expect(window.location.hash).toBe("#resources");
+    expect(window.location.hash).toBe("#about");
   });
-  it("starts at the city, enters Home, inspects the tower and returns by the logo", async () => {
+  it("starts at the city, enters both floors without inspection controls and returns by the logo", async () => {
     window.history.replaceState(null, "", "/preview/office");
     render(<OfficePreview />); await screen.findByTestId("office-scene");
-    expect(screen.getByRole("heading", { name: "Explore pricing and market dynamics" })).toBeInTheDocument();
-    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Enter CapitalCanvas" }));
+    expect(screen.getByRole("heading", { name: "A Different Perspective" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Office floors" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Enter Capital Canvas" }));
     expect(window.location.hash).toBe("#home");
-    fireEvent.click(screen.getByRole("button", { name: "View whole tower" }));
-    expect(screen.getByText("6 closed storeys between Home and Resources")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "View whole tower" })).not.toBeInTheDocument();
+    expect(screen.queryByText("6 closed storeys between Home and Resources")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("link", { name: "Resources" }));
-    expect(screen.getByRole("button", { name: "View whole tower" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByRole("button", { name: "View whole tower" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("link", { name: "CapitalCanvas preview city" }));
     expect(window.location.hash).toBe("#city");
-    expect(screen.getByRole("button", { name: "Enter CapitalCanvas" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Enter Capital Canvas" })).toBeInTheDocument();
   });
   it("keeps all destinations usable after a scene failure without advertising 3D controls", async () => {
     sceneState.failed = true;
@@ -71,7 +71,7 @@ describe("isolated office shell", () => {
     render(<OfficePreview />);
     fireEvent.load(await screen.findByRole("img", { name: /Grounded District/ }));
     expect(document.querySelector(".office-preview")).toHaveAttribute("data-renderer", "static");
-    fireEvent.click(screen.getByRole("button", { name: "Enter CapitalCanvas" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enter Capital Canvas" }));
     fireEvent.load(screen.getByRole("img", { name: /Home office above/ }));
     expect(screen.getByRole("main")).toHaveAttribute("aria-busy", "false");
     expect(screen.queryByRole("button", { name: "View whole tower" })).not.toBeInTheDocument();
@@ -83,7 +83,36 @@ describe("isolated office shell", () => {
     fireEvent.click(screen.getByRole("link", { name: "CapitalCanvas preview city" }));
     fireEvent.load(screen.getByRole("img", { name: /Grounded District/ }));
     expect(window.location.hash).toBe("#city");
-    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Office floors" })).toBeVisible();
+  });
+  it("shows the city-backed About note with one heading, contact and legal destinations", async () => {
+    window.history.replaceState(null, "", "/preview/office#about");
+    render(<OfficePreview />); await screen.findByTestId("office-scene");
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("heading", { name: "About Capital Canvas" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "dymteam23@gmail.com" })).toHaveAttribute("href", "mailto:dymteam23@gmail.com");
+    expect(screen.getByRole("link", { name: "Attributions" })).toHaveAttribute("href", "/notices");
+    expect(screen.queryByRole("button", { name: "Enter Capital Canvas" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "View whole tower" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "CapitalCanvas preview city" }));
+    expect(window.location.hash).toBe("#city");
+    expect(screen.getByRole("heading", { name: "A Different Perspective" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Legal" })).not.toBeInTheDocument();
+  });
+  it("keeps About over the district still when WebGL fails", async () => {
+    sceneState.failed = true;
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    window.history.replaceState(null, "", "/preview/office#about");
+    render(<OfficePreview />);
+    fireEvent.load(await screen.findByRole("img", { name: /Grounded District/ }));
+    expect(document.querySelector(".office-preview")).toHaveAttribute("data-renderer", "static");
+    expect(screen.getByRole("heading", { name: "About Capital Canvas" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
+    fireEvent.click(screen.getByRole("link", { name: "Home" }));
+    fireEvent.load(screen.getByRole("img", { name: /Home office above/ }));
+    expect(screen.queryByRole("navigation", { name: "Legal" })).not.toBeInTheDocument();
   });
 });
 

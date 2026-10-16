@@ -72,6 +72,8 @@ Delphi uses bounded stateless `/v1/delphi` endpoints and the same execution capa
 
 ## Shared design and behavior
 
+The isolated `/preview/office` uses its own After Hours system: locally hosted Geist, graphite surfaces, the original CC mark, physical lamp fixtures and a persistent 3D district. Its desk panels launch tools or open the existing research anchors. This preview styling does not change the production pages or workbenches.
+
 Use the existing dark navy surfaces, cream serif display text, muted sans-serif body text, thin borders, and cyan accents. Typography uses shared `--serif` (Georgia with serif fallbacks) and `--sans` (system sans-serif) tokens across the site and all three tools. Plotly inherits the same computed sans-serif family as its container. Mathematical notation retains its specialized math fonts; license/code text retains monospace. Spectral colors support charts and preview art. Reuse existing controls and charts where their behavior fits.
 
 Home and policy pages use natural document scrolling. Tool viewport layouts remain scoped to their workbenches. Tool code and heavy chart dependencies are lazy-loaded; home should remain usable without the solver API or a background solve.

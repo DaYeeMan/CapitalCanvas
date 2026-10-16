@@ -3,12 +3,13 @@ import { levelY, TOWER, type PreviewView } from "./towerStructure";
 export interface CameraPose { targetY: number; centerX: number; centerY: number; height: number }
 export interface TowerFrame {
   homeLift: number; resourcesLift: number; middle: number; cap: number;
-  homeFacade: number; resourcesFacade: number; city: number; camera: CameraPose;
+  homeFacade: number; resourcesFacade: number; city: number; cityCopy: number; camera: CameraPose;
 }
 export interface MotionStep { phase: string; duration: number; to: TowerFrame }
 export interface TowerJourney { from: TowerFrame; steps: MotionStep[]; duration: number }
 export type CameraFits = Record<PreviewView, CameraPose>;
-const keys = ["homeLift", "resourcesLift", "middle", "cap", "homeFacade", "resourcesFacade", "city"] as const;
+const keys = ["homeLift", "resourcesLift", "middle", "cap", "homeFacade", "resourcesFacade", "city", "cityCopy"] as const;
+const OPENING_DURATION = 1.05, APPROACH_DURATION = 1.55;
 const cameraKeys = ["targetY", "centerX", "centerY", "height"] as const;
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 const ease = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
@@ -17,7 +18,7 @@ export function frameForView(view: PreviewView, camera: CameraPose): TowerFrame 
   return { homeLift: view === "home" ? TOWER.sliceLift : 0, resourcesLift: view === "resources" ? TOWER.sliceLift : 0,
     middle: view === "resources" ? TOWER.upperLift : 0, cap: view !== "city" ? TOWER.upperLift : 0,
     homeFacade: view === "home" ? TOWER.upperLift : 0, resourcesFacade: view === "resources" ? TOWER.upperLift : 0,
-    city: view === "city" ? 1 : 0, camera: { ...camera } };
+    city: view === "city" ? 1 : 0, cityCopy: view === "city" ? 1 : 0, camera: { ...camera } };
 }
 export function mixFrame(a: TowerFrame, b: TowerFrame, t: number): TowerFrame {
   const result = { ...a, camera: { ...a.camera } };
@@ -36,24 +37,36 @@ function initialOpening(view: Exclude<PreviewView, "city">, camera: CameraPose):
 
 // Every retarget begins at the actual sampled pose, including office pan/zoom.
 // The fixed base and district have no animated offsets in this model.
-export function planJourney(from: TowerFrame, origin: PreviewView, destination: PreviewView, fits: CameraFits): TowerJourney {
+export function planJourney(from: TowerFrame, _origin: PreviewView, destination: PreviewView, fits: CameraFits): TowerJourney {
   const steps: MotionStep[] = [];
   const add = (phase: string, duration: number, to: TowerFrame) => steps.push({ phase, duration, to });
   const target = frameForView(destination, fits[destination]);
   if (destination === "city") {
-    const seated = { ...from, homeLift: 0, resourcesLift: 0, camera: { ...from.camera, height: from.camera.height * 1.18 } };
-    add("reseating-floor", 0.3, seated);
-    add("reassembling-tower", origin === "resources" || from.middle > 1 ? 1.3 : 0.9, { ...target, city: 0.92, camera: mixFrame(seated, target, 0.94).camera });
-    add("returning-city", 0.6, target);
+    // Reverse entry's structural order: hold the exposed slice while its upper
+    // assembly returns to the compact split, then close every gap together.
+    // Clamp to the actual pose so an interrupted opening never reopens a slice.
+    const upper = Math.min(from.cap, TOWER.sliceLift * 2);
+    const compactHeight = Math.min(target.camera.height, Math.max(from.camera.height, target.camera.height * 0.9));
+    const compact = { ...from, cap: upper, middle: Math.min(from.middle, upper),
+      homeFacade: Math.min(from.homeFacade, upper), resourcesFacade: Math.min(from.resourcesFacade, upper),
+      city: 0.9, cityCopy: 0, camera: { ...target.camera, height: compactHeight } };
+    // An entry reversed before its zoom already has the compact city framing.
+    // Close it directly instead of adding an inward zoom or a motionless wait.
+    if (from.cap > upper + 0.0001 || from.middle > upper + 0.0001 || from.camera.height < compactHeight - 0.0001) {
+      add("withdrawing-office", APPROACH_DURATION, compact);
+    }
+    // The last 10% of the pullback closes the slices and reveals the landing
+    // copy on the same sampled clock, with no extra settle or CSS delay.
+    add("returning-city", OPENING_DURATION, target);
   } else if (from.city > 0.98 && from.cap < 0.01 && from.middle < 0.01) {
     const split = { ...initialOpening(destination, from.camera), city: 1 };
-    add(`opening-${destination}`, 1.05, split);
-    add(`entering-${destination}`, 1.55, target);
+    add(`opening-${destination}`, OPENING_DURATION, split);
+    add(`entering-${destination}`, APPROACH_DURATION, target);
   } else {
     const destinationY = levelY(destination === "home" ? TOWER.homeLevel : TOWER.resourcesLevel);
     const direction = destinationY >= from.camera.targetY ? 1 : -1;
     const departureCamera = { ...from.camera, height: from.camera.height * 1.08 };
-    const closed = { ...frameForView("city", departureCamera), city: 0 };
+    const closed = { ...frameForView("city", departureCamera), city: 0, cityCopy: 0 };
     // Reseat the slice and close its upper assembly together, with a small
     // camera pullback. Vertical travel begins only after closure is complete.
     add("closing-floor", 0.75, closed);

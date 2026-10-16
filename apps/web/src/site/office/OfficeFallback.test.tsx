@@ -22,7 +22,9 @@ describe("static preview alternatives", () => {
     fireEvent.error(screen.getByRole("img", { name: /Resources office above/ }));
     expect(screen.getByRole("img")).toHaveAttribute("src", "/office/fallback-resources.jpg");
     expect(presented).toHaveBeenCalledWith("resources", 5);
-    expect(screen.getByRole("list", { name: "Tool desks" })).toHaveTextContent("IthacaTroyDelphi");
+    expect(screen.getByRole("link", { name: "Ithaca — Read research" })).toHaveAttribute("href", "/#black-scholes");
+    expect(screen.getByRole("link", { name: "Troy — Read research" })).toHaveAttribute("href", "/#troy-market-making");
+    expect(screen.getByRole("link", { name: "Delphi — Read research" })).toHaveAttribute("href", "/#delphi-methods");
   });
   it("does not report the dormant HTML alternative inside a working canvas", () => {
     const presented = vi.fn(), unavailable = vi.fn();

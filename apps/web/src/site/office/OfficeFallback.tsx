@@ -1,4 +1,5 @@
-import type { FloorId } from "./layouts";
+import { TOOLS, type FloorId, type ToolId } from "./layouts";
+import { officeToolDestination } from "./officeTools";
 import { useLayoutEffect, useRef } from "react";
 import type { PreviewView } from "./towerStructure";
 
@@ -14,7 +15,7 @@ export function OfficeFallback({ floor, view = floor, viewReset = 0, onPresented
   return <div className="office-fallback">
     <img ref={art} src={`/office/fallback-${floor}.jpg`} alt={`${floor === "home" ? "Home" : "Resources"} office above the lower tower facade`} onLoad={ready} onError={ready} />
     <div className="office-fallback-notice"><p role="status">3D is unavailable. Showing a still of this floor. Use Home and Resources to switch floors.</p>
-      <ul aria-label="Tool desks"><li>Ithaca</li><li>Troy</li><li>Delphi</li></ul>
+      <ul aria-label="Tool desks">{TOOLS.map(name => <li key={name}><a href={officeToolDestination(name.toLowerCase() as ToolId, floor)}>{name}<span className="sr-only"> — {floor === "resources" ? "Read research" : "Open tool"}</span></a></li>)}</ul>
     </div>
   </div>;
 }

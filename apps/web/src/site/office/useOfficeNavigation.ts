@@ -1,26 +1,31 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { FloorId } from "./layouts";
-import { readPreviewView, type PreviewView } from "./towerStructure";
+import type { PreviewView } from "./towerStructure";
+import { pageScene, readPreviewPage, type PreviewPage } from "./officePage";
 
 export type NavigationPhase = "loading" | "moving" | "idle";
-interface Navigation { view: PreviewView; origin: PreviewView; viewReset: number; phase: NavigationPhase }
+interface Navigation { page: PreviewPage; view: PreviewView; origin: PreviewView; viewReset: number; phase: NavigationPhase }
 export function useOfficeNavigation(reducedMotion = false, pageVisible = true) {
   const [state, setState] = useState<Navigation>(() => {
-    const view = readPreviewView();
-    return { view, origin: view, viewReset: 0, phase: "loading" };
+    const page = readPreviewPage(), view = pageScene(page);
+    return { page, view, origin: view, viewReset: 0, phase: "loading" };
   });
   const current = useRef(state);
   const preferences = useRef({ reducedMotion, pageVisible });
   const publish = useCallback((next: Navigation) => { current.current = next; setState(next); }, []);
-  const select = useCallback((view: PreviewView) => {
+  const select = useCallback((page: PreviewPage) => {
     const value = current.current;
+    const view = pageScene(page);
+    // Landing and About share the same pending/settled city pose. Changing
+    // only its page must not restart a journey or reset city parallax.
+    if (value.view === view && value.page !== page) { publish({ ...value, page }); return; }
     if (value.view === view && (view === "city" || value.phase !== "idle")) return;
     const instant = preferences.current.reducedMotion || !preferences.current.pageVisible || value.view === view;
-    publish({ view, origin: value.origin, viewReset: value.viewReset + 1, phase: instant ? "loading" : "moving" });
+    publish({ page, view, origin: value.origin, viewReset: value.viewReset + 1, phase: instant ? "loading" : "moving" });
   }, [publish]);
-  const navigate = useCallback((view: PreviewView) => {
-    if (window.location.hash !== `#${view}`) window.history.pushState(null, "", `#${view}`);
-    select(view);
+  const navigate = useCallback((page: PreviewPage) => {
+    if (window.location.hash !== `#${page}`) window.history.pushState(null, "", `#${page}`);
+    select(page);
   }, [select]);
   const skip = useCallback(() => {
     if (current.current.phase === "moving") publish({ ...current.current, phase: "loading" });
@@ -38,14 +43,14 @@ export function useOfficeNavigation(reducedMotion = false, pageVisible = true) {
   }, [reducedMotion, pageVisible, skip]);
   useLayoutEffect(() => {
     const normalize = () => {
-      const view = readPreviewView();
-      if (window.location.hash && !["#city", "#home", "#resources"].includes(window.location.hash)) window.history.replaceState(null, "", "#city");
-      return view;
+      const page = readPreviewPage();
+      if (window.location.hash && !["#city", "#home", "#resources", "#about"].includes(window.location.hash)) window.history.replaceState(null, "", "#city");
+      return page;
     };
     normalize();
     const history = () => {
-      const view = normalize();
-      if (view !== current.current.view) select(view);
+      const page = normalize();
+      if (page !== current.current.page) select(page);
     };
     const key = (event: KeyboardEvent) => { if (event.key === "Escape") skip(); };
     window.addEventListener("hashchange", history); window.addEventListener("popstate", history);

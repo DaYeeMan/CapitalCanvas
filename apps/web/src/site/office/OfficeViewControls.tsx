@@ -1,30 +1,39 @@
 import { useLayoutEffect, useRef, type RefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Vector3, type OrthographicCamera } from "three";
+import { OrthographicCamera, Vector3 } from "three";
 import { BUILDING, CAMERA, TALL_WALL_TOP } from "./layouts";
+import type { FloorId } from "./layouts";
+import { TOWER_SITE } from "./towerStructure";
+import { applyCamera, CAMERA_OFFSET, captureCamera, fittedCamera, inspectionCamera, inspectionEase } from "./cameraFit";
+import type { CameraPose } from "./towerMotion";
 import { clampPan, clampZoom, panLimits, resistPan, VIEW, wheelPixels, zoomAt, type OfficeView, type ViewMotion, type ViewPoint } from "./officeView";
 
 interface Fit { left: number; right: number; top: number; bottom: number; width: number; height: number }
 interface ReturnMotion { from: OfficeView; to: OfficeView; began: number }
 interface Drag { id: number; origin: ViewPoint; pan: ViewPoint; started: boolean }
 
-export function OfficeViewControls({ element, motion, reset, instantReset, settled, reducedMotion, pageVisible, elevation = 0 }: {
+export function OfficeViewControls({ element, motion, reset, instantReset, settled, reducedMotion, pageVisible, elevation = 0, floor, overview }: {
   element: RefObject<HTMLDivElement | null>; motion: RefObject<ViewMotion>; reset: number;
   instantReset: boolean; settled: boolean; reducedMotion: boolean; pageVisible: boolean;
-  elevation?: number;
+  elevation?: number; floor: FloorId; overview: boolean;
 }) {
   const { camera, size, invalidate } = useThree();
   const view = useRef<OfficeView>({ zoom: 1, pan: { x: 0, y: 0 } });
   const fit = useRef<Fit>({ left: -1, right: 1, top: 1, bottom: -1, width: 1, height: 1 });
   const returning = useRef<ReturnMotion | null>(null);
   const drag = useRef<Drag | null>(null);
-  const options = useRef({ settled, reducedMotion, pageVisible });
-  useLayoutEffect(() => { options.current = { settled, reducedMotion, pageVisible }; }, [settled, reducedMotion, pageVisible]);
+  const inspection = useRef<{ from: CameraPose; to: CameraPose; fromWide: number; toWide: number; began: number } | null>(null);
+  const inspectionFit = useRef<CameraPose | null>(null);
+  const lastOverview = useRef(overview);
+  const options = useRef({ settled, reducedMotion, pageVisible, overview });
+  useLayoutEffect(() => { options.current = { settled, reducedMotion, pageVisible, overview }; }, [settled, reducedMotion, pageVisible, overview]);
 
   useLayoutEffect(() => {
-    const cam = camera as OrthographicCamera;
-    cam.position.set(CAMERA.position[0], CAMERA.position[1] + elevation, CAMERA.position[2]); cam.lookAt(0, elevation, 0); cam.updateMatrixWorld();
-    const corners = [-1, 1].flatMap(x => [-BUILDING.slab, TALL_WALL_TOP].flatMap(y => [-1, 1].map(z => new Vector3(x * (BUILDING.width + BUILDING.wallThickness) / 2, y + elevation, z * (BUILDING.depth + BUILDING.wallThickness) / 2).applyMatrix4(cam.matrixWorldInverse))));
+    // Measure with an independent camera: resizing must not disturb a running
+    // inspection before its current pose has been captured.
+    const cam = new OrthographicCamera();
+    cam.position.set(CAMERA_OFFSET[0], CAMERA_OFFSET[1] + elevation, CAMERA_OFFSET[2]); cam.lookAt(0, elevation, 0); cam.updateMatrixWorld();
+    const corners = [-1, 1].flatMap(x => [-BUILDING.slab, TALL_WALL_TOP].flatMap(y => [-1, 1].map(z => new Vector3(TOWER_SITE.x + x * (BUILDING.width + BUILDING.wallThickness) / 2, y + elevation, TOWER_SITE.z + z * (BUILDING.depth + BUILDING.wallThickness) / 2).applyMatrix4(cam.matrixWorldInverse))));
     const xs = corners.map(p => p.x), ys = corners.map(p => p.y);
     const left = Math.min(...xs), right = Math.max(...xs), bottom = Math.min(...ys), top = Math.max(...ys);
     const aspect = size.width / Math.max(size.height, 1);
@@ -61,7 +70,8 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
       invalidate();
     };
     const down = (event: PointerEvent) => {
-      if (event.button !== 0 || !event.isPrimary || !options.current.settled || !options.current.pageVisible || event.pointerType === "touch") return;
+      if ((event.target as HTMLElement).closest(".office-tool-panel, .office-location")) return;
+      if (event.button !== 0 || !event.isPrimary || !options.current.settled || !options.current.pageVisible || options.current.overview || motion.current.inspecting || event.pointerType === "touch") return;
       returning.current = null;
       motion.current.pointer = point(event);
       drag.current = { id: event.pointerId, origin: point(event), pan: { ...view.current.pan }, started: false };
@@ -91,7 +101,8 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
       returnTo({ zoom: view.current.zoom, pan: clampPan(view.current.pan, limits()) });
     };
     const wheel = (event: WheelEvent) => {
-      if (event.ctrlKey || event.metaKey || !options.current.settled || !options.current.pageVisible) return;
+      if ((event.target as HTMLElement).closest(".office-tool-panel")) return;
+      if (event.ctrlKey || event.metaKey || !options.current.settled || !options.current.pageVisible || options.current.overview || motion.current.inspecting) return;
       event.preventDefault(); releaseCapture(); returning.current = null; motion.current.busy = false;
       motion.current.pointer = { x: event.clientX, y: event.clientY };
       const rect = node.getBoundingClientRect();
@@ -101,7 +112,7 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
       invalidate();
     };
     const key = (event: KeyboardEvent) => {
-      if (event.target !== node.parentElement || event.ctrlKey || event.metaKey || event.altKey || !options.current.settled) return;
+      if (event.target !== node.parentElement || event.ctrlKey || event.metaKey || event.altKey || !options.current.settled || options.current.overview || motion.current.inspecting) return;
       if (!["+", "=", "-", "0", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
       event.preventDefault(); releaseCapture(); returning.current = null; motion.current.busy = false;
       if (event.key === "0") returnTo({ zoom: 1, pan: { x: 0, y: 0 } });
@@ -120,7 +131,7 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
     };
     const focus = (event: FocusEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.matches(".office-location:focus-visible") || !options.current.settled) return;
+      if (!target.matches(".office-location:focus-visible") || !options.current.settled || options.current.overview || motion.current.inspecting) return;
       const rect = target.getBoundingClientRect(), stage = node.getBoundingClientRect();
       const header = document.querySelector(".office-header")?.getBoundingClientRect();
       const top = Math.max(stage.top + 24, (header?.bottom ?? 0) + 12), bottom = stage.bottom - 64;
@@ -171,9 +182,63 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
     if (pageVisible) invalidate();
   }, [pageVisible, reducedMotion, element, motion, invalidate]);
 
+  useLayoutEffect(() => {
+    const cam = camera as OrthographicCamera, toWide = Number(overview);
+    const to = fittedCamera(floor, size.width, size.height, overview);
+    inspectionFit.current = to;
+    const changed = lastOverview.current !== overview;
+    lastOverview.current = overview;
+    if (changed || inspection.current) {
+      const from = captureCamera(cam, motion.current.cameraTargetY ?? elevation);
+      const fromWide = motion.current.inspectionWide ?? 0;
+      inspection.current = reducedMotion || !pageVisible ? null : { from, to, fromWide, toWide, began: performance.now() };
+      returning.current = null; view.current = { zoom: 1, pan: { x: 0, y: 0 } };
+      motion.current.inspectionWide = inspection.current ? fromWide : toWide;
+      motion.current.inspecting = Boolean(inspection.current);
+      motion.current.busy = overview || Boolean(inspection.current);
+      if (!inspection.current) { applyCamera(cam, to, size.width / size.height); motion.current.cameraTargetY = to.targetY; }
+    } else {
+      motion.current.inspectionWide = toWide;
+      motion.current.cameraTargetY = elevation;
+    }
+    element.current?.setAttribute("data-inspecting", String(Boolean(inspection.current)));
+    invalidate();
+  }, [overview, floor, size.width, size.height, reducedMotion, pageVisible, camera, elevation, element, motion, invalidate]);
+
+  useLayoutEffect(() => () => {
+    motion.current.inspecting = false; motion.current.busy = false;
+    delete motion.current.inspectionWide; delete motion.current.cameraTargetY;
+    element.current?.removeAttribute("data-inspecting");
+  }, [element, motion]);
+
   useFrame(() => {
     const node = element.current;
     if (!node) return;
+    const cam = camera as OrthographicCamera, inspecting = inspection.current;
+    if (inspecting) {
+      const progress = Math.min(1, (performance.now() - inspecting.began) / 720);
+      const pose = inspectionCamera(inspecting.from, inspecting.to, progress);
+      const wide = inspecting.fromWide + (inspecting.toWide - inspecting.fromWide) * inspectionEase(progress);
+      applyCamera(cam, pose, size.width / size.height);
+      motion.current.inspectionWide = wide; motion.current.cameraTargetY = pose.targetY;
+      motion.current.revision++;
+      node.dataset.inspectionProgress = String(wide); node.dataset.cameraHeight = String(pose.height);
+      if (progress < 1) { invalidate(); return; }
+      inspection.current = null; motion.current.inspecting = false; motion.current.busy = overview;
+      node.dataset.inspecting = "false";
+    }
+    if (overview) {
+      const pose = inspectionFit.current!;
+      applyCamera(cam, pose, size.width / size.height);
+      motion.current.inspectionWide = 1; motion.current.cameraTargetY = pose.targetY;
+      node.dataset.inspectionProgress = "1"; node.dataset.cameraHeight = String(pose.height);
+      return;
+    }
+    motion.current.inspectionWide = 0; motion.current.cameraTargetY = elevation;
+    node.dataset.inspectionProgress = "0";
+    if (cam.position.y !== CAMERA_OFFSET[1] + elevation) {
+      cam.position.set(CAMERA_OFFSET[0], CAMERA_OFFSET[1] + elevation, CAMERA_OFFSET[2]); cam.lookAt(0, elevation, 0); cam.updateMatrixWorld();
+    }
     const bounce = returning.current;
     if (bounce) {
       const t = (performance.now() - bounce.began) / 1000;
@@ -182,7 +247,7 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
       if (t > 0.55) { view.current = bounce.to; returning.current = null; motion.current.busy = false; }
       else invalidate();
     }
-    const cam = camera as OrthographicCamera, base = fit.current, current = view.current;
+    const base = fit.current, current = view.current;
     const dx = current.pan.x / Math.max(size.width, 1) * (base.right - base.left) / current.zoom;
     const dy = current.pan.y / Math.max(size.height, 1) * (base.top - base.bottom) / current.zoom;
     if (cam.left !== base.left - dx || cam.top !== base.top + dy || cam.zoom !== current.zoom || cam.right !== base.right - dx) {
@@ -191,6 +256,7 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
     }
     const limits = panLimits(current.zoom, base.width, base.height);
     node.dataset.zoom = String(current.zoom);
+    node.dataset.cameraHeight = String((cam.top - cam.bottom) / cam.zoom);
     node.dataset.panX = String(current.pan.x); node.dataset.panY = String(current.pan.y);
     node.dataset.panLimitX = String(limits.x); node.dataset.panLimitY = String(limits.y);
     node.dataset.dragging = String(Boolean(drag.current?.started)); node.dataset.viewBusy = String(motion.current.busy);

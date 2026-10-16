@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BUILDING } from "./layouts";
-import { DISTRICT_BUILDINGS, GROUND_Y, INTERVENING_STOREYS, levelY, readPreviewView, TOWER, towerPose } from "./towerStructure";
+import { DISTRICT_BUILDINGS, GROUND_Y, INTERVENING_STOREYS, levelY, readPreviewView, TOWER, TOWER_SITE, towerPose } from "./towerStructure";
 
 describe("one tower with distant office floors", () => {
   it("places six closed storeys between Home and Resources", () => {
@@ -47,7 +47,7 @@ describe("one tower with distant office floors", () => {
   });
   it("keeps four subordinate buildings clear of the main tower and each other", () => {
     expect(DISTRICT_BUILDINGS).toHaveLength(4);
-    const buildings = [{ x: 0, z: 0, width: TOWER.width, depth: TOWER.depth, storeys: TOWER.storeys }, ...DISTRICT_BUILDINGS];
+    const buildings = [{ x: TOWER_SITE.x, z: TOWER_SITE.z, width: TOWER.width, depth: TOWER.depth, storeys: TOWER.storeys }, ...DISTRICT_BUILDINGS];
     for (let i = 0; i < buildings.length; i++) for (const other of buildings.slice(i + 1)) {
       const b = buildings[i];
       expect(Math.abs(b.x - other.x) > (b.width + other.width) / 2 + 2 || Math.abs(b.z - other.z) > (b.depth + other.depth) / 2 + 2).toBe(true);

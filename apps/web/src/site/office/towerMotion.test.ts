@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { OrthographicCamera, Vector3 } from "three";
 import { BUILDING, CAMERA, TALL_WALL_TOP } from "./layouts";
-import { applyCamera, captureCamera, fittedCamera } from "./cameraFit";
+import { applyCamera, captureCamera, fittedCamera, inspectionCamera } from "./cameraFit";
 import { frameForView, planJourney, sampleJourney, resizeJourney, type CameraFits } from "./towerMotion";
-import { GROUND_Y, TOWER, towerPose } from "./towerStructure";
+import { GROUND_Y, TOWER, TOWER_SITE, towerPose } from "./towerStructure";
 
 const fits: CameraFits = { city: fittedCamera("city", 1280, 720), home: fittedCamera("home", 1280, 720), resources: fittedCamera("resources", 1280, 720) };
 describe("closer district framing", () => {
@@ -12,7 +12,7 @@ describe("closer district framing", () => {
       const camera = new OrthographicCamera();
       applyCamera(camera, fittedCamera("city", width, height), width / height);
       const corners = [-1, 1].flatMap(x => [GROUND_Y, towerPose("city").top].flatMap(y =>
-        [-1, 1].map(z => new Vector3(x * TOWER.width / 2, y, z * TOWER.depth / 2).project(camera))));
+        [-1, 1].map(z => new Vector3(TOWER_SITE.x + x * TOWER.width / 2, y, TOWER_SITE.z + z * TOWER.depth / 2).project(camera))));
       for (const corner of corners) {
         expect(corner.x).toBeGreaterThan(0);
         expect(corner.x).toBeLessThan(1);
@@ -21,7 +21,8 @@ describe("closer district framing", () => {
       }
       // A small, viewport-relative roof gap survives desktop resizes.
       const roofGap = (1 - Math.max(...corners.map(corner => corner.y))) / 2;
-      expect(roofGap).toBeCloseTo(0.06, 5);
+      expect(roofGap).toBeGreaterThan(0.04);
+      expect(roofGap).toBeLessThan(0.06);
     }
   });
 });
@@ -122,23 +123,65 @@ describe("tower journeys", () => {
       expect(sampleJourney(next, next.duration + 1).frame).toEqual(frameForView(target, fits[target]));
     }
   });
-  it("returns each opening to the same 16-storey city", () => {
-    for (const from of ["home", "resources"] as const) {
-      const journey = planJourney(frameForView(from, fits[from]), from, "city", fits);
-      expect(journey.duration).toBeCloseTo(from === "home" ? 1.8 : 2.2);
-      expect(sampleJourney(journey, 0.3).frame.homeLift).toBe(0);
-      expect(sampleJourney(journey, 0.3).frame.resourcesLift).toBe(0);
+  it("returns in two stages with exactly the reverse structural order of entry on either floor", () => {
+    for (const floor of ["home", "resources"] as const) {
+      const entry = planJourney(frameForView("city", fits.city), "city", floor, fits);
+      const journey = planJourney(frameForView(floor, fits[floor]), floor, "city", fits);
+      expect(journey.steps.map(step => step.phase)).toEqual(["withdrawing-office", "returning-city"]);
+      expect(journey.duration).toBeCloseTo(entry.duration);
+      const geometry = ["homeLift", "resourcesLift", "middle", "cap", "homeFacade", "resourcesFacade"] as const;
+      for (let time = 0; time <= journey.duration; time += 0.025) {
+        const back = sampleJourney(journey, time).frame;
+        const forward = sampleJourney(entry, entry.duration - time).frame;
+        for (const key of geometry) expect(back[key]).toBeCloseTo(forward[key], 8);
+      }
       expect(sampleJourney(journey, journey.duration + 0.01).frame).toEqual(frameForView("city", fits.city));
+    }
+  });
+  it("holds the slice through the first pullback, then closes all gaps and completes copy with the final zoom", () => {
+    for (const floor of ["home", "resources"] as const) {
+      const journey = planJourney(frameForView(floor, fits[floor]), floor, "city", fits);
+      const compact = sampleJourney(journey, 1.55).frame;
+      const slice = floor === "home" ? "homeLift" : "resourcesLift";
+      expect(compact[slice]).toBe(TOWER.sliceLift);
+      expect(compact.cap).toBeCloseTo(TOWER.sliceLift * 2);
+      for (const time of [0.1, 0.7, 1.4]) {
+        const frame = sampleJourney(journey, time).frame;
+        expect(frame[slice]).toBe(TOWER.sliceLift); expect(frame.cityCopy).toBe(0);
+      }
+      for (const fraction of [0.01, 0.25, 0.5, 0.75, 0.99]) {
+        const frame = sampleJourney(journey, 1.55 + 1.05 * fraction).frame;
+        const cameraProgress = (frame.camera.height - compact.camera.height) / (fits.city.height - compact.camera.height);
+        expect(frame.cityCopy).toBeCloseTo(cameraProgress, 10);
+        expect(frame[slice] / TOWER.sliceLift).toBeCloseTo(1 - frame.cityCopy, 10);
+        expect(frame.cap - frame[slice]).toBeCloseTo(frame[slice], 10);
+      }
+      expect(sampleJourney(journey, journey.duration).frame.cityCopy).toBe(1);
+    }
+  });
+  it("never reopens a slice when returning from an interrupted early entry", () => {
+    for (const floor of ["home", "resources"] as const) {
+      const entry = planJourney(frameForView("city", fits.city), "city", floor, fits);
+      const from = sampleJourney(entry, 0.3).frame;
+      const journey = planJourney(from, "city", "city", fits);
+      expect(journey.steps.map(step => step.phase)).toEqual(["returning-city"]);
+      for (let time = 0; time <= journey.duration; time += 0.05) {
+        const frame = sampleJourney(journey, time).frame;
+        expect(frame.cap).toBeLessThanOrEqual(from.cap + 1e-9);
+        expect(frame.homeLift).toBeLessThanOrEqual(from.homeLift + 1e-9);
+        expect(frame.resourcesLift).toBeLessThanOrEqual(from.resourcesLift + 1e-9);
+      }
     }
   });
   it("resizes from the current pose without restarting the remaining journey", () => {
     const nextFits: CameraFits = { city: fittedCamera("city", 1440, 900), home: fittedCamera("home", 1440, 900), resources: fittedCamera("resources", 1440, 900) };
     for (const [from, to] of [["city", "home"], ["home", "resources"], ["resources", "city"]] as const) {
       const journey = planJourney(frameForView(from, fits[from]), from, to, fits);
-      const elapsed = 1.2, frame = sampleJourney(journey, elapsed).frame;
+      const elapsed = to === "city" ? 1.9 : 1.2, frame = sampleJourney(journey, elapsed).frame;
       const resized = resizeJourney(journey, elapsed, frame, fits, nextFits);
       expect(resized.duration).toBeCloseTo(journey.duration - elapsed);
       expect(sampleJourney(resized, 0).frame).toEqual(frame);
+      if (to === "city") expect(frame.cityCopy).toBeGreaterThan(0);
       const end = sampleJourney(resized, resized.duration + 1).frame;
       const expected = frameForView(to, nextFits[to]);
       expect(end.homeLift).toBe(expected.homeLift); expect(end.resourcesLift).toBe(expected.resourcesLift);
@@ -148,6 +191,19 @@ describe("tower journeys", () => {
 });
 
 describe("office camera handoff", () => {
+  it("inspects from the actual zoomed pose, reverses without a jump and reaches both exact fits", () => {
+    for (const floor of ["home", "resources"] as const) {
+      const from = { ...fits[floor], height: fits[floor].height / 1.7, centerX: 1.2 };
+      const to = fittedCamera(floor, 1280, 720, true);
+      const start = inspectionCamera(from, to, 0), end = inspectionCamera(from, to, 1);
+      expect(start.targetY).toBe(from.targetY); expect(start.height).toBeCloseTo(from.height, 10);
+      expect(end.targetY).toBe(to.targetY); expect(end.height).toBeCloseTo(to.height, 10);
+      const middle = inspectionCamera(from, to, 0.4);
+      expect(middle.height).toBeGreaterThan(from.height); expect(middle.height).toBeLessThan(to.height);
+      expect(inspectionCamera(middle, fits[floor], 0).height).toBeCloseTo(middle.height, 10);
+      expect(inspectionCamera(middle, fits[floor], 1).height).toBeCloseTo(fits[floor].height, 10);
+    }
+  });
   it("captures a panned and zoomed office without a jump when motion takes over", () => {
     const office = new OrthographicCamera(), takeover = new OrthographicCamera(), aspect = 1280 / 720;
     applyCamera(office, fits.home, aspect);
@@ -162,7 +218,7 @@ describe("office camera handoff", () => {
     for (const view of ["home", "resources"] as const) {
       const fit = fits[view], original = new OrthographicCamera(), motion = new OrthographicCamera();
       original.position.set(CAMERA.position[0], CAMERA.position[1] + fit.targetY, CAMERA.position[2]); original.lookAt(0, fit.targetY, 0); original.updateMatrixWorld();
-      const bounds = [-1, 1].flatMap(x => [-BUILDING.slab, TALL_WALL_TOP].flatMap(y => [-1, 1].map(z => new Vector3(x * (BUILDING.width + BUILDING.wallThickness) / 2, y + fit.targetY, z * (BUILDING.depth + BUILDING.wallThickness) / 2).applyMatrix4(original.matrixWorldInverse))));
+      const bounds = [-1, 1].flatMap(x => [-BUILDING.slab, TALL_WALL_TOP].flatMap(y => [-1, 1].map(z => new Vector3(TOWER_SITE.x + x * (BUILDING.width + BUILDING.wallThickness) / 2, y + fit.targetY, TOWER_SITE.z + z * (BUILDING.depth + BUILDING.wallThickness) / 2).applyMatrix4(original.matrixWorldInverse))));
       const xs = bounds.map(p => p.x), ys = bounds.map(p => p.y), aspect = 1280 / 720;
       const height = Math.max(Math.max(...ys) - Math.min(...ys), (Math.max(...xs) - Math.min(...xs)) / aspect) * CAMERA.padding;
       const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;

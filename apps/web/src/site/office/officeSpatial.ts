@@ -1,4 +1,5 @@
 import { BUILDING, DESK, FLOORS, SEATING, ROOM_FRAME, type FloorId, type Point, type Room, type Size } from "./layouts";
+import { floorLampPositions, LAMP_BASE_SIZE } from "./officeLighting";
 import { partitionSections } from "./partitions";
 
 export type SeatKind = "desk" | "conference" | "armchair" | "sofa" | "stool";
@@ -113,6 +114,7 @@ export function createOfficeSpace(floor: FloorId): OfficeSpace {
     }
     roomPlants(room).forEach((at, i) => solid(`${room.id}-plant-${i}`, room.at, at, [1, 0.94]));
   }
+  for (const lamp of floorLampPositions(floor)) solids.push({ id: lamp.id, at: lamp.at, size: [LAMP_BASE_SIZE, LAMP_BASE_SIZE], angle: 0 });
   return { seats, solids, doors };
 }
 

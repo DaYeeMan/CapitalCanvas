@@ -7,6 +7,32 @@ beforeEach(() => window.history.replaceState(null, "", "/preview/office"));
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("motion preview navigation", () => {
+  it("loads About over the city and changes city pages without issuing scene commands", () => {
+    window.history.replaceState(null, "", "#about");
+    const { result } = renderHook(() => useOfficeNavigation());
+    expect(result.current).toMatchObject({ page: "about", view: "city", phase: "loading", viewReset: 0 });
+    act(() => result.current.presented("home", 0));
+    act(() => result.current.navigate("city"));
+    expect(result.current).toMatchObject({ page: "city", view: "city", origin: "city", phase: "idle", viewReset: 0 });
+    act(() => { window.history.replaceState(null, "", "#about"); window.dispatchEvent(new PopStateEvent("popstate")); window.dispatchEvent(new HashChangeEvent("hashchange")); });
+    expect(result.current).toMatchObject({ page: "about", view: "city", phase: "idle", viewReset: 0 });
+    expect(window.location.hash).toBe("#about");
+  });
+  it("returns from a floor to About and can change the city page without restarting that return", () => {
+    window.history.replaceState(null, "", "#resources");
+    const { result } = renderHook(() => useOfficeNavigation());
+    act(() => result.current.presented("resources", 0));
+    act(() => result.current.navigate("about"));
+    expect(result.current).toMatchObject({ page: "about", view: "city", origin: "resources", phase: "moving", viewReset: 1 });
+    act(() => result.current.navigate("city"));
+    act(() => result.current.navigate("about"));
+    act(() => result.current.presented("resources", 0));
+    expect(result.current).toMatchObject({ page: "about", phase: "moving", viewReset: 1 });
+    act(() => result.current.presented("home", 1));
+    expect(result.current).toMatchObject({ page: "about", view: "city", origin: "city", phase: "idle", viewReset: 1 });
+    act(() => result.current.navigate("home"));
+    expect(result.current).toMatchObject({ page: "home", view: "home", origin: "city", phase: "moving", viewReset: 2 });
+  });
   it("starts at the closed city and waits for the rendered pose", () => {
     const { result } = renderHook(() => useOfficeNavigation());
     expect(result.current).toMatchObject({ view: "city", phase: "loading", settled: false });

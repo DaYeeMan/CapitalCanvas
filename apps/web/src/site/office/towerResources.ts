@@ -1,33 +1,59 @@
-import { MeshStandardMaterial } from "three";
+import { DataTexture, LinearFilter, MeshStandardMaterial, RGBAFormat, SRGBColorSpace, type MeshStandardMaterialParameters } from "three";
+
+import { isolateExteriorLighting } from "./officeLightIsolation";
+
+const exterior = (parameters: MeshStandardMaterialParameters) => isolateExteriorLighting(new MeshStandardMaterial(parameters));
+
+// A shared, authored interior finish gives lit bays an uninterrupted ivory
+// gradient and darker edge reveals, without silhouettes in the lower corners.
+const pixels = new Uint8Array(64 * 64 * 4);
+for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+  const u = x / 63, v = y / 63;
+  const glow = Math.exp(-((u - 0.45) ** 2 * 5 + (v - 0.78) ** 2 * 3));
+  const reveal = Math.min(1, Math.min(u, 1 - u) * 13);
+  const shade = (0.48 + glow * 0.5) * (0.62 + reveal * 0.38);
+  const i = (y * 64 + x) * 4;
+  pixels[i] = Math.round(255 * shade);
+  pixels[i + 1] = Math.round(246 * shade);
+  pixels[i + 2] = Math.round(226 * shade);
+  pixels[i + 3] = 255;
+}
+const interior = new DataTexture(pixels, 64, 64, RGBAFormat);
+interior.colorSpace = SRGBColorSpace;
+interior.magFilter = interior.minFilter = LinearFilter;
+interior.needsUpdate = true;
 
 // Every connected street shares one asphalt finish; atmosphere owns distance fading.
-const asphalt = new MeshStandardMaterial({ color: "#bec5cd", roughness: 1 });
+const asphalt = exterior({ color: "#596573", roughness: 1 });
 
 // Shared for the lifetime of the preview, like the existing office finishes.
 export const towerMaterials = {
-  glass: new MeshStandardMaterial({ color: "#3e82a7", roughness: 0.28, metalness: 0.22 }),
-  glassLight: new MeshStandardMaterial({ color: "#84bbd0", roughness: 0.3, metalness: 0.15 }),
-  glassShade: new MeshStandardMaterial({ color: "#286483", roughness: 0.32, metalness: 0.18 }),
-  mullion: new MeshStandardMaterial({ color: "#31566b", roughness: 0.55 }),
-  stone: new MeshStandardMaterial({ color: "#eee8dc", roughness: 0.88 }),
-  roof: new MeshStandardMaterial({ color: "#dedbd3", roughness: 0.95 }),
-  equipment: new MeshStandardMaterial({ color: "#c1c8cb", roughness: 0.7 }),
-  vent: new MeshStandardMaterial({ color: "#697981", roughness: 0.8 }),
-  ground: new MeshStandardMaterial({ color: "#f4f2ed", roughness: 1 }),
+  wall: exterior({ color: "#e9e5e2", roughness: 0.85 }),
+  glass: exterior({ color: "#244b62", roughness: 0.28, metalness: 0.22 }),
+  glassLight: exterior({ color: "#3a5e73", roughness: 0.3, metalness: 0.15 }),
+  glassShade: exterior({ color: "#203849", roughness: 0.32, metalness: 0.18 }),
+  litWindow: exterior({ color: "#c6b395", map: interior, emissive: "#ffe0ac", emissiveMap: interior, emissiveIntensity: 1.5, roughness: 0.65 }),
+  mullion: exterior({ color: "#31566b", roughness: 0.55 }),
+  stone: exterior({ color: "#eee8dc", roughness: 0.88 }),
+  roof: exterior({ color: "#7c858a", roughness: 0.95 }),
+  equipment: exterior({ color: "#c1c8cb", roughness: 0.7 }),
+  vent: exterior({ color: "#697981", roughness: 0.8 }),
+  ground: exterior({ color: "#435260", roughness: 1 }),
   road: asphalt,
   roadFar: asphalt,
-  distant: new MeshStandardMaterial({ color: "#eef0f0", roughness: 1 }),
-  paving: new MeshStandardMaterial({ color: "#fdfaf3", roughness: 1 }),
-  leaf: new MeshStandardMaterial({ color: "#6c8b37", roughness: 0.95, flatShading: true }),
-  leafLight: new MeshStandardMaterial({ color: "#9ab54f", roughness: 0.95, flatShading: true }),
-  leafDark: new MeshStandardMaterial({ color: "#537733", roughness: 0.95, flatShading: true }),
-  soil: new MeshStandardMaterial({ color: "#718051", roughness: 1 }),
-  bark: new MeshStandardMaterial({ color: "#8a7355", roughness: 1 }),
+  distant: exterior({ color: "#596b7c", roughness: 1 }),
+  paving: exterior({ color: "#7b8289", roughness: 1 }),
+  leaf: exterior({ color: "#4f6a45", roughness: 0.95, flatShading: true }),
+  leafLight: exterior({ color: "#718449", roughness: 0.95, flatShading: true }),
+  leafDark: exterior({ color: "#3e583d", roughness: 0.95, flatShading: true }),
+  soil: exterior({ color: "#718051", roughness: 1 }),
+  bark: exterior({ color: "#8a7355", roughness: 1 }),
 };
 
-// Related cream masonry and blue glazing, with a distinct finish per neighbour.
+// Detailed neighbours share the office's cream masonry while keeping their
+// individual glazing finishes and existing facade rhythms.
 export const districtFinishes = {
-  limestone: { wall: new MeshStandardMaterial({ color: "#e4d9c4", roughness: 0.9 }), glass: new MeshStandardMaterial({ color: "#347da1", roughness: 0.3, metalness: 0.18 }) },
-  ivory: { wall: new MeshStandardMaterial({ color: "#f2e9d8", roughness: 0.88 }), glass: new MeshStandardMaterial({ color: "#478eaf", roughness: 0.3, metalness: 0.18 }) },
-  chalk: { wall: new MeshStandardMaterial({ color: "#e8e4da", roughness: 0.92 }), glass: new MeshStandardMaterial({ color: "#306f92", roughness: 0.32, metalness: 0.18 }) },
+  limestone: { wall: towerMaterials.wall, glass: exterior({ color: "#274a60", roughness: 0.3, metalness: 0.18 }) },
+  ivory: { wall: towerMaterials.wall, glass: exterior({ color: "#365b70", roughness: 0.3, metalness: 0.18 }) },
+  chalk: { wall: towerMaterials.wall, glass: exterior({ color: "#29475c", roughness: 0.32, metalness: 0.18 }) },
 };
