@@ -17,6 +17,7 @@ from app.execution import ExecutionControl, ExecutionStopped, bind_execution, re
 from app.runner import run_bounded
 from app.delphi.router import router as delphi_router
 from app.models import MethodResult, SolveRequest, SolveResponse
+from app.request_body import BoundedSolveRoute
 from app.solvers.black_scholes import MarketInputs, solve_surface
 from app.solvers.american import (
     solve_american_binomial,
@@ -171,9 +172,14 @@ def solve_sync(request: SolveRequest, control: ExecutionControl) -> SolveRespons
         reset_execution(token)
 
 
-@app.post("/v1/solve", response_model=SolveResponse)
 async def solve(http_request: Request, request: SolveRequest) -> SolveResponse:
     return await run_bounded(http_request, lambda control: solve_sync(request, control), REQUEST_TIMEOUT_SECONDS)
+
+
+app.router.add_api_route(
+    "/v1/solve", solve, methods=["POST"], response_model=SolveResponse,
+    route_class_override=BoundedSolveRoute,
+)
 
 
 def _solve(request: SolveRequest) -> SolveResponse:
