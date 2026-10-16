@@ -1,0 +1,109 @@
+.office-preview { --city-presence: 0; --city-copy-reveal: 0; position: fixed; inset: 0; overflow: hidden; }
+.office-preview a:focus-visible, .office-preview button:focus-visible { outline: 2px solid #9ad9e6; outline-offset: 5px; }
+.office-stage { position: absolute; inset: 0; outline: none; overflow: clip; overscroll-behavior: contain; }
+.office-stage:focus-visible { outline: 1px solid #9ad9e6; outline-offset: -3px; }
+.office-stage canvas { display: block; }
+.office-scene { position: absolute; inset: 0; overflow: clip; }
+.office-preview[data-view="home"] .office-scene,
+.office-preview[data-view="resources"] .office-scene { touch-action: none; }
+.office-scene:has(canvas) { cursor: grab; user-select: none; }
+.office-scene[data-dragging="true"], .office-scene[data-dragging="true"] * { cursor: grabbing; }
+.office-preview[data-view="city"] .office-scene { cursor: default; }
+.office-preview[data-traveling="true"] .office-scene { pointer-events: none; }
+.office-tool { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.office-tool[data-open="true"] { z-index: 2; }
+.office-desk-hit { position: absolute; inset: 0; visibility: hidden; cursor: grab; }
+.office-location-anchor { position: absolute; top: 0; left: 0; visibility: hidden; width: 44px; height: 44px; }
+.office-location { position: relative; display: block; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: #f0e6d1; pointer-events: auto; cursor: pointer; }
+.office-scene[data-inspecting="true"] .office-tool { display: none; }
+.office-location { animation: office-marker-in 260ms ease-out 100ms both; }
+.office-location svg { display: block; width: 40px; height: 40px; margin: 2px; overflow: visible; transition: transform 200ms ease; }
+.office-location path { fill: #18252d85; stroke: currentColor; stroke-width: 1.25; transition: fill 200ms ease, stroke-width 200ms ease; }
+.office-tool[data-open="true"] .office-location path { fill: #cbb9962b; stroke-width: 1.6; }
+.office-location circle { fill: currentColor; opacity: 0; transition: opacity 180ms ease; }
+.office-tool[data-open="true"] .office-location svg { transform: scale(1.12); }
+.office-tool[data-open="true"] .office-location circle { opacity: 1; }
+.office-tool-panel { position: absolute; left: var(--panel-left, 92px); top: var(--panel-top, -28px); width: 224px; padding: 19px 20px 0; box-sizing: border-box; border: 1px solid #cbb99666; border-radius: 7px; background: #182229; box-shadow: 0 12px 32px #0c151a38; pointer-events: auto; cursor: auto; user-select: text; display: block; opacity: 0; transform: translateY(6px); transition: opacity 180ms ease, transform 220ms cubic-bezier(.2,.7,.2,1), display 180ms allow-discrete; transform-origin: left center; }
+.office-tool-panel[hidden] { display: none; pointer-events: none; }
+.office-tool[data-open="true"] .office-tool-panel { opacity: 1; transform: translateY(0); }
+@starting-style { .office-tool[data-open="true"] .office-tool-panel { opacity: 0; transform: translateY(6px); } }
+.office-tool-panel::before { content: ""; position: absolute; top: calc(22px - var(--panel-top, -28px)); right: 100%; width: var(--panel-gap, 48px); height: 1px; background: #cbb99680; }
+.office-tool-panel::after { content: ""; position: absolute; top: calc(22px - var(--panel-top, -28px)); right: 100%; width: var(--panel-gap, 48px); height: 44px; transform: translateY(-50%); }
+.office-tool-panel h2 { margin: 0 0 7px; font: 550 18px/1.2 "Office Geist", "Segoe UI", sans-serif; letter-spacing: -.025em; }
+.office-tool-close { display: none; }
+.office-tool-panel p { margin: 0 0 18px; color: var(--office-muted); font-size: 13px; line-height: 1.5; text-wrap: pretty; }
+.office-tool-panel a, .office-tool-action { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 47px; color: var(--office-ink); text-decoration: none; font: 500 12px/1.5 "Office Geist", "Segoe UI", sans-serif; border: 0; border-top: 1px solid #bac0bd33; transition: color 180ms ease; }
+.office-tool-action { width: 100%; padding: 0; background: transparent; cursor: pointer; text-align: left; }
+.office-tool-panel a span, .office-tool-action span { color: #dfc69e; font-size: 22px; transition: transform 180ms ease; }
+.office-tool-panel a:hover span, .office-tool-action:hover span { transform: translateX(3px); }
+.office-location-anchor[data-side="left"] .office-tool-panel { transform-origin: right center; }
+.office-location-anchor[data-side="left"] .office-tool-panel::before, .office-location-anchor[data-side="left"] .office-tool-panel::after { right: auto; left: 100%; }
+@keyframes office-marker-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.office-city-copy { --office-city-headline-size: clamp(48px, 6vw, 88px); position: absolute; left: 4.3%; bottom: calc(21% - var(--office-city-headline-size)); z-index: 2; pointer-events: none; color: var(--office-ink); opacity: var(--city-copy-reveal); transform: translateY(calc((1 - var(--city-copy-reveal)) * 8px)); transition: opacity 220ms ease-out, transform 300ms cubic-bezier(.2,.7,.2,1); }
+.office-city-copy h1 { margin: 0 0 16px; font-size: var(--office-city-headline-size); font-weight: 550; line-height: 1; letter-spacing: -.065em; }
+.office-landing-content { opacity: calc(1 - var(--office-about-blend, 0)); }
+.office-about-content, .office-about-footer-content { opacity: var(--office-about-blend, 0); }
+.office-about-copy { --office-about-heading-size: clamp(44px, 4.4vw, 64px); position: absolute; bottom: clamp(144px, 20vh, 180px); left: 4.3%; width: min(40vw, 500px); z-index: 2; pointer-events: none; color: var(--office-ink); }
+.office-about-copy h1 { margin: 0 0 clamp(22px, 3vh, 32px); font-size: var(--office-about-heading-size); font-weight: 550; line-height: 1.03; letter-spacing: -.065em; }
+.office-about-copy p { margin: 0; color: #c4cacc; font-size: clamp(18px, 1.5vw, 20px); line-height: 1.5; font-weight: 400; letter-spacing: -.025em; }
+.office-about-copy, .office-about-footer { opacity: var(--city-copy-reveal); transform: translateY(calc((1 - var(--city-copy-reveal)) * 8px)); transition: opacity 220ms ease-out, transform 300ms cubic-bezier(.2,.7,.2,1); }
+.office-preview[data-phase="moving"]:not([data-view="city"]) .office-about-copy, .office-preview[data-phase="moving"]:not([data-view="city"]) .office-about-footer { opacity: 0; transform: translateY(-8px); }
+.office-preview[data-phase="moving"][data-view="city"] .office-about-copy, .office-preview[data-phase="moving"][data-view="city"] .office-about-footer, .office-preview[data-phase="loading"] .office-about-copy, .office-preview[data-phase="loading"] .office-about-footer { transition: none; }
+.office-preview[data-renderer="static"] .office-city-fallback::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, #101c26b8 0%, #101c26b8 46%, #101c2600 62%); opacity: var(--office-about-blend, 0); }
+.office-preview[data-page="about"] .office-city-fallback .office-fallback-notice { bottom: 114px; }
+.office-city-copy p { margin: 0 0 31px; color: #c4cacc; font-size: clamp(18px, 2vw, 28px); line-height: 1.45; font-weight: 400; letter-spacing: -.035em; }
+.office-enter { display: inline-flex; align-items: center; justify-content: space-between; gap: 32px; min-height: 52px; padding: 0 22px; border: 1px solid #fff7e9; border-radius: 5px; background: #f2eadb; color: #18262e; font: 500 15px/1.4 "Office Geist", "Segoe UI", sans-serif; letter-spacing: -.02em; cursor: pointer; pointer-events: auto; transition: background 180ms ease, transform 180ms ease; }
+.office-enter span { font-size: 24px; line-height: 1; transition: transform 180ms ease; }
+.office-enter:hover { background: #fff8eb; }
+.office-enter:hover span { transform: translateX(3px); }
+.office-enter:active { transform: translateY(1px); }
+.office-preview[data-phase="moving"]:not([data-view="city"]) .office-city-copy { opacity: 0; transform: translateY(-8px); }
+.office-preview[data-phase="moving"][data-view="city"] .office-city-copy, .office-preview[data-phase="loading"] .office-city-copy { transition: none; }
+.office-back, .office-skip-animation { display: inline-flex; align-items: center; gap: 13px; min-height: 44px; padding: 8px 0; border: 0; color: var(--office-ink); background: transparent; font: 450 13px/1.4 "Office Geist", "Segoe UI", sans-serif; text-decoration: none; cursor: pointer; transition: color 180ms ease; }
+.office-back { position: absolute; z-index: 4; bottom: 24px; left: 4.3%; }
+.office-back { opacity: 1; transform: translateY(0); transition: opacity 220ms ease, transform 280ms cubic-bezier(.2,.7,.2,1); }
+.office-preview[data-traveling="true"] .office-back { opacity: 0; transform: translateY(6px); pointer-events: none; }
+.office-back span { font-size: 24px; }
+.office-back:hover { color: #dfc69e; }
+.office-back:hover span { transform: translateX(-3px); }
+.office-back span { transition: transform 180ms ease; }
+.office-skip-animation { position: absolute; z-index: 5; right: 4.3%; bottom: 24px; color: var(--office-muted); }
+.office-loading { position: absolute; inset: 45% 0 auto; text-align: center; color: var(--office-muted); font-size: 13px; letter-spacing: .02em; }
+.office-skip { position: absolute; z-index: 10; top: -80px; left: 20px; padding: 12px; background: var(--office-surface); color: var(--office-ink); }
+.office-skip:focus { top: 12px; }
+.office-fallback { position: absolute; inset: 0; }
+.office-fallback > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.office-fallback-notice { position: absolute; bottom: 80px; left: 4.3%; max-width: min(620px, 80vw); padding: 12px 15px; border: 1px solid var(--office-line); border-radius: 6px; background: #182229f5; color: var(--office-muted); font-size: 12px; }
+.office-fallback p { margin: 0; line-height: 1.5; }
+.office-fallback ul { display: flex; gap: 24px; list-style: none; padding: 0; margin: 10px 0 0; }
+.office-fallback li a { color: var(--office-ink); text-decoration: none; }
+.office-fallback li button { min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--office-ink); font: inherit; cursor: pointer; }
+.office-city-fallback .office-fallback-notice { left: auto; right: 4.3%; bottom: 24px; max-width: 320px; }
+.office-preview[data-phase="loading"] .office-scene { visibility: hidden; }
+.office-scene[data-warming="true"] canvas { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .office-preview *, .office-preview *::before, .office-preview *::after { animation: none !important; transition: none !important; } }
+@media (max-width: 700px) { .office-city-copy { --office-city-headline-size: 46px; bottom: calc(15% - var(--office-city-headline-size)); left: 5%; } .office-city-copy p { font-size: 18px; } .office-back { bottom: 14px; } }
+@media (max-width: 700px) and (orientation: portrait), (max-width: 950px) and (max-height: 500px) {
+  .office-preview::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #101c26b8; opacity: calc(var(--office-about-blend, 0) * var(--city-copy-reveal, 0)); }
+  .office-about-copy { overflow-y: auto; overscroll-behavior: contain; pointer-events: auto; }
+  .office-tool-close { position: absolute; top: 7px; right: 7px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--office-ink); font: 300 25px/1 "Office Geist", sans-serif; cursor: pointer; }
+  .office-tool-panel h2 { padding-right: 30px; }
+  .office-tool-panel::before, .office-tool-panel::after { display: none; }
+}
+@media (max-width: 700px) and (orientation: portrait) {
+  .office-city-copy { --office-city-headline-size: clamp(38px, 5.5dvh, 46px); bottom: clamp(20px, calc(35dvh - 210px), 80px); }
+  .office-city-copy p { font-size: clamp(16px, 2.15dvh, 18px); margin-bottom: clamp(22px, 3.7dvh, 31px); }
+  .office-tool-panel::before, .office-tool-panel::after { display: none; }
+  .office-about-copy { top: 136px; bottom: 190px; left: 5%; right: 5%; width: auto; }
+  .office-about-copy h1 { font-size: 42px; margin-bottom: 22px; }
+  .office-about-copy p { font-size: 17px; line-height: 1.55; }
+}
+@media (max-width: 950px) and (max-height: 500px) and (orientation: landscape) {
+  .office-tool-panel { width: clamp(184px, 28vw, 224px); }
+  .office-city-copy { --office-city-headline-size: 40px; bottom: 16px; }
+  .office-city-copy p { font-size: 16px; margin-bottom: 20px; }
+  .office-enter { min-height: 48px; }
+  .office-about-copy { top: 88px; bottom: 118px; width: 54%; }
+  .office-about-copy h1 { font-size: 34px; margin-bottom: 16px; }
+  .office-about-copy p { font-size: 16px; }
+}

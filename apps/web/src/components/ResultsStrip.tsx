@@ -33,7 +33,7 @@ export function ResultsStrip({
 
   return (
     <section className="results-strip" aria-label="Results" aria-live="polite" aria-atomic="true">
-      <div className="results-heading">{resultLabel}</div>
+      <div className="results-heading"><span>Method</span><strong>{resultLabel}</strong></div>
       <div className="metric primary-metric">
         <span>Price</span>
         <strong>{result ? result.price.toFixed(4) : "—"}</strong>

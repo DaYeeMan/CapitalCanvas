@@ -6,7 +6,8 @@ from PIL import Image
 
 root = Path(__file__).resolve().parents[3]
 media = root / 'apps/web/public/media/field'
-out = Path(__file__).parent / 'asset-checks'
+out = root / '.tools/field-render/asset-checks'
+out.mkdir(parents=True, exist_ok=True)
 process = subprocess.Popen([os.environ['FIELD_FFMPEG'], '-v', 'error', '-i', str(media / 'field-loop.mp4'), '-vf', 'scale=320:180', '-f', 'rawvideo', '-pix_fmt', 'rgb24', 'pipe:1'], stdout=subprocess.PIPE)
 frames = []
 while True:

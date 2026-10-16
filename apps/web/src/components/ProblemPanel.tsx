@@ -13,7 +13,7 @@ interface ProblemPanelProps {
 
 function ControlSection({ title, numerical = false, children }: { title: string; numerical?: boolean; children: ReactNode }) {
   return (
-    <details className={`control-section${numerical ? " numerical-section" : ""}`} open>
+    <details className={`control-section${numerical ? " numerical-section" : ""}`} open={!numerical}>
       <summary>
         <span>{title}</span>
         <ChevronDown aria-hidden="true" size={15} />

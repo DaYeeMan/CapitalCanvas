@@ -46,7 +46,7 @@ function enter() {
 }
 function PreferencesExample() {
   const restricted = useFieldMotionRestricted();
-  return <><span>{restricted ? "Static" : "Motion"}</span><FieldBackground enabled={!restricted} /></>;
+  return <><span>{restricted ? "Static" : "Motion"}</span><FieldBackground variant="ithaca" enabled={!restricted} /></>;
 }
 
 describe("Field background lifecycle", () => {
@@ -61,13 +61,13 @@ describe("Field background lifecycle", () => {
   });
 
   it("paints the poster before attaching a source and waits for actual visibility to play", async () => {
-    const { container } = render(<FieldBackground enabled />);
+    const { container } = render(<FieldBackground variant="ithaca" enabled />);
     expect(container.querySelector("img")).toHaveAttribute("alt", "");
     expect(container.querySelector("video")).toBeNull();
     act(() => observers[0].emit(true)); paint();
     expect(container.querySelector("video")).toBeNull();
     paint();
-    expect(container.querySelector("video")).toHaveAttribute("src", "/media/field/field-loop.mp4");
+    expect(container.querySelector("video")).toHaveAttribute("src", "/media/field/ithaca-loop.mp4");
     expect(play).not.toHaveBeenCalled();
     act(() => observers[1].emit(true));
     await waitFor(() => expect(container.querySelector("video")).toHaveClass("is-ready"));
@@ -75,7 +75,7 @@ describe("Field background lifecycle", () => {
   });
 
   it("pauses offscreen and while the document is hidden, then resumes", async () => {
-    const { container } = render(<FieldBackground enabled />); enter();
+    const { container } = render(<FieldBackground variant="ithaca" enabled />); enter();
     await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
     act(() => observers[1].emit(false));
     expect(pause).toHaveBeenCalled();
@@ -88,7 +88,7 @@ describe("Field background lifecycle", () => {
   });
 
   it("honors the shared pause flag for multiple surfaces without loading a paused source", async () => {
-    const surfaces = (enabled: boolean) => <><FieldBackground enabled={enabled} /><FieldBackground enabled={enabled} /></>;
+    const surfaces = (enabled: boolean) => <><FieldBackground variant="ithaca" enabled={enabled} /><FieldBackground variant="ithaca" enabled={enabled} /></>;
     const { container, rerender } = render(surfaces(false)); enter();
     expect(container.querySelectorAll("video")).toHaveLength(0);
     rerender(surfaces(true)); await waitFor(() => expect(play).toHaveBeenCalledTimes(2));
@@ -112,26 +112,26 @@ describe("Field background lifecycle", () => {
 
   it("keeps the poster when autoplay is rejected and can retry after an explicit resume", async () => {
     play.mockRejectedValueOnce(new DOMException("Autoplay denied", "NotAllowedError"));
-    const { container, rerender } = render(<FieldBackground enabled />); enter();
+    const { container, rerender } = render(<FieldBackground variant="ithaca" enabled />); enter();
     await act(async () => {});
     expect(container.querySelector("video")).not.toHaveClass("is-ready");
     expect(container.querySelector("img")).toBeInTheDocument();
-    rerender(<FieldBackground enabled={false} />); rerender(<FieldBackground enabled />);
+    rerender(<FieldBackground variant="ithaca" enabled={false} />); rerender(<FieldBackground variant="ithaca" enabled />);
     await waitFor(() => expect(container.querySelector("video")).toHaveClass("is-ready"));
   });
 
   it("falls back to the poster for a failed media file without retrying in a loop", async () => {
-    const { container, rerender } = render(<FieldBackground enabled />); enter();
+    const { container, rerender } = render(<FieldBackground variant="ithaca" enabled />); enter();
     await waitFor(() => expect(play).toHaveBeenCalled());
     fireEvent.error(container.querySelector("video")!);
     expect(container.querySelector("video")).toBeNull();
     expect(container.querySelector("img")).toBeInTheDocument();
-    rerender(<FieldBackground enabled={false} />); rerender(<FieldBackground enabled />);
+    rerender(<FieldBackground variant="ithaca" enabled={false} />); rerender(<FieldBackground variant="ithaca" enabled />);
     expect(container.querySelector("video")).toBeNull();
   });
 
   it("disconnects observers, cancels scheduled work, and pauses on unmount", async () => {
-    const { unmount } = render(<FieldBackground enabled />); enter();
+    const { unmount } = render(<FieldBackground variant="ithaca" enabled />); enter();
     await waitFor(() => expect(play).toHaveBeenCalled());
     unmount();
     expect(observers.every(observer => observer.disconnect.mock.calls.length > 0)).toBe(true);

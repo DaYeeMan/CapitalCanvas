@@ -1,5 +1,3 @@
-import { research } from "../site/research";
-import { ResearchContent, AsianLatticeContent } from "../site/ResearchContent";
 import { BlockMath, InlineMath } from "./Math";
 import type { OptionFamily, OptionSide, SolverMethod } from "../types";
 
@@ -21,12 +19,6 @@ export function EquationPanel({ family, side, method, barrierDirection, barrierS
   asianObservations: number;
   asianAverageState: number;
 }) {
-  const reference = method === "binomial" ? "crr"
-    : family === "asian" ? method === "finite_difference" ? "asian-lattice" : "asian-control-variate"
-    : method === "finite_difference" ? family === "american" ? "psor" : "crank-nicolson"
-    : method === "monte_carlo" ? family === "american" ? "longstaff-schwartz" : family === "barrier" ? "brownian-bridge" : "monte-carlo"
-    : family === "barrier" ? "reiner-rubinstein" : "black-scholes";
-  const entry = research.find(item => item.id === reference);
   const payoff = side === "call" ? "\\max(S-K,0)" : "\\max(K-S,0)";
   const methodName = method === "binomial"
     ? "Cox–Ross–Rubinstein"
@@ -87,13 +79,7 @@ export function EquationPanel({ family, side, method, barrierDirection, barrierS
 
   return (
     <div className="equation-content">
-      <h2>{methodName === "Black–Scholes closed form" ? <>Black–Scholes<span className="method-title-break"> </span>closed form</> : methodName}</h2>
-      <details className="method-reference" key={reference}>
-        <summary>Method reference</summary>
-        <div className="method-reference-content">
-          {entry ? <ResearchContent entry={entry} /> : <AsianLatticeContent />}
-        </div>
-      </details>
+      <h2>{methodName === "Black–Scholes closed form" ? <>Black–Scholes<span className="method-title-break"> closed form</span></> : methodName}</h2>
       <section>
         <h3>Method equation</h3>
         {methodEquation}

@@ -4,14 +4,16 @@ const {chromium}=require(process.env.FIELD_PLAYWRIGHT || 'playwright');
 const fs=require('fs');const path=require('path');const {spawn}=require('child_process');const {once}=require('events');
 const root=path.resolve(__dirname,'../../..');
 const output=path.join(root,'apps/web/public/media/field');
+const previews=path.join(root,'.tools/field-render/previews');
 fs.mkdirSync(output,{recursive:true});
+fs.mkdirSync(previews,{recursive:true});
 (async()=>{
  const browser=await chromium.launch({channel:process.env.FIELD_BROWSER_CHANNEL || 'msedge',headless:true,args:['--enable-unsafe-swiftshader']});
  const page=await browser.newPage({viewport:{width:1920,height:1080},deviceScaleFactor:1});
  page.on('pageerror',e=>{throw e;});
  await page.goto('file:///'+path.join(__dirname,'render-surface.html').replaceAll('\\','/'));
  await page.evaluate(()=>renderFrame(0));
- await page.screenshot({path:path.join(__dirname,'field-frame.png')});
+ await page.screenshot({path:path.join(previews,'field-frame.png')});
  if(process.argv.includes('--preview')){await browser.close();return;}
  if(!process.env.FIELD_FFMPEG)throw new Error('Set FIELD_FFMPEG to the encoder executable');
  const encoder=spawn(process.env.FIELD_FFMPEG,['-y','-f','image2pipe','-vcodec','png','-framerate','24','-i','pipe:0','-an','-c:v','libx264','-preset','slow','-crf','24','-pix_fmt','yuv420p','-movflags','+faststart',path.join(output,'field-loop.mp4')],{stdio:['pipe','ignore','pipe']});

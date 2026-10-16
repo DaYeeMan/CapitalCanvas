@@ -1,11 +1,11 @@
 import { Component, lazy, Suspense, useEffect, type ReactNode } from "react";
-import HomePage from "./site/HomePage";
-import InformationPage from "./site/InformationPage";
-import "./site/site.css";
+
+const InformationPage = lazy(() => import("./site/InformationPage"));
 
 const IthacaWorkbench = lazy(() => import("./IthacaWorkbench"));
 const TroyWorkbench = lazy(() => import("./troy/TroyWorkbench"));
 const DelphiWorkbench = lazy(() => import("./delphi/DelphiWorkbench"));
+const OfficeSite = lazy(() => import("./site/office/OfficeSite"));
 const titles: Record<string, string> = {
   "/": "CapitalCanvas",
   "/tools/ithaca": "Ithaca — CapitalCanvas",
@@ -28,9 +28,12 @@ class WorkbenchBoundary extends Component<{ children: ReactNode }, { failed: boo
 }
 
 export default function App() {
-  // Cross-page links use browser navigation. Hash links keep HomePage mounted.
-  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  // Hash navigation keeps the office scene mounted. Retired preview URLs use
+  // the same page and replace their history entry without losing query/hash.
+  const requestedPath = window.location.pathname.replace(/\/+$/, "") || "/";
+  const path = requestedPath === "/preview/office" ? "/" : requestedPath;
   useEffect(() => {
+    if (requestedPath === "/preview/office") window.history.replaceState(window.history.state, "", `/${window.location.search}${window.location.hash}`);
     document.title = titles[path] ?? "Page not found — CapitalCanvas";
     const description = document.querySelector('meta[name="description"]');
     description?.setAttribute("content", path === "/tools/ithaca"
@@ -41,7 +44,7 @@ export default function App() {
     let robots = document.querySelector('meta[name="robots"]');
     if (!robots) { robots = document.createElement("meta"); robots.setAttribute("name", "robots"); document.head.appendChild(robots); }
     robots.setAttribute("content", path === "/" || path === "/tools/ithaca" || path === "/tools/troy" || path === "/tools/delphi" ? "index,follow" : "noindex,follow");
-  }, [path]);
+  }, [path, requestedPath]);
 
   if (path === "/tools/delphi") return <WorkbenchBoundary><Suspense fallback={<main className="route-message" aria-busy="true"><p role="status">Loading Delphi…</p><a href="/#home">Return to CapitalCanvas</a></main>}><DelphiWorkbench /></Suspense></WorkbenchBoundary>;
   if (path === "/tools/troy") return <WorkbenchBoundary>
@@ -54,5 +57,7 @@ export default function App() {
       <div className="ithaca-workbench"><IthacaWorkbench /></div>
     </Suspense>
   </WorkbenchBoundary>;
-  return path === "/" ? <HomePage /> : <InformationPage path={path} />;
+  return <Suspense fallback={<main className="route-message" aria-busy="true"><p role="status">{path === "/" ? "Loading office…" : "Loading page…"}</p></main>}>
+    {path === "/" ? <OfficeSite /> : <InformationPage path={path} />}
+  </Suspense>;
 }
