@@ -70,12 +70,10 @@ describe("workbench panels", () => {
     expect(panel.queryByText("Black–Scholes PDE")).not.toBeInTheDocument();
     expect(panel.queryByRole("link", { name: "Disclaimer" })).not.toBeInTheDocument();
     expect(panel.queryByRole("link", { name: "Method reference" })).not.toBeInTheDocument();
-    const reference = panel.getByText("Method reference").closest("details");
-    expect(reference).not.toHaveAttribute("open");
-    fireEvent.click(panel.getByText("Method reference"));
-    expect(reference).toHaveAttribute("open");
-    expect(panel.getByRole("link", { name: /Option pricing: A simplified approach/ })).toBeVisible();
-    expect(panel.getByText(/A discrete tree makes option valuation/)).toBeVisible();
+    expect(panel.queryByText("Method reference")).not.toBeInTheDocument();
+    expect(panel.getByRole("heading", { name: "Method equation" })).toBeInTheDocument();
+    expect(panel.getByRole("heading", { name: "Terminal condition" })).toBeInTheDocument();
+    expect(panel.getByRole("heading", { name: "Boundary conditions" })).toBeInTheDocument();
     expect(panel.queryByText("Implementation")).not.toBeInTheDocument();
   });
 });

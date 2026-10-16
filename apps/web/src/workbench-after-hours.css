@@ -1,0 +1,90 @@
+@font-face {
+  font-family: "Workbench Geist";
+  src: url("/office/fonts/geist-latin.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* Ithaca's After Hours visual language, retaining each tool's own layout. */
+:is(.troy-workbench, .delphi-workbench).tool-workbench.after-hours {
+  --sans: "Workbench Geist", "Segoe UI", sans-serif;
+  --serif: var(--sans);
+  --bg: #101c26;
+  --surface: #18252e;
+  --surface-raised: #20313c;
+  --text: #f4f0e8;
+  --muted: #b2bbc0;
+  --line: #cbb99642;
+  --line-soft: #cbb99626;
+  --cyan: #dfbf89;
+  --cyan-soft: #f2eadb;
+  --amber: #e7bd7f;
+  --green: #a2d7a8;
+  --danger: #e89989;
+  --tool-panel: #18252e;
+  --tool-panel-strong: #12202a;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+
+  :is(h1, h2, h3) { font-family: var(--sans); font-weight: 550; letter-spacing: -.025em; }
+  :is(.wordmark, .delphi-topbar h1) { font: 550 32px/1 var(--sans); letter-spacing: -.045em; }
+  :is(.topbar, .delphi-topbar) { background: #12202a; }
+  :is(.back-home, .delphi-back) { width: 44px; height: 38px; border: 1px solid var(--line); border-radius: 5px; }
+  :is(.back-home, .delphi-back) svg { width: 20px; stroke-width: 1.3; }
+  :is(.back-home, .delphi-back):hover { color: var(--text); background: #23343e; }
+  :is(.secondary-button, .solve-button, .delphi-actions button) { border-radius: 5px; font-weight: 500; }
+  :is(button, a) { transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease; }
+  :is(.secondary-button, .delphi-actions button) { border-color: #cbb99699; }
+  :is(.secondary-button, .delphi-actions button):hover:not(:disabled) { color: var(--text); background: #22313a; }
+  :is(.solve-button, .delphi-primary) { background: #f2eadb; border-color: #f2eadb; color: #18262e; font-weight: 500; }
+  :is(.solve-button, .delphi-primary):hover:not(:disabled) { color: #18262e; background: #fff5e5; border-color: #fff5e5; }
+  :is(a, button, input, select, summary):focus-visible { outline-color: #e8d5b2; }
+  :is(.troy-parameters, .delphi-rail) { background: #16242d; scrollbar-color: #465661 transparent; }
+  :is(.troy-main, .delphi-main) { background: radial-gradient(ellipse at 62% 43%, #344854 0%, #243641 47%, #1b2b36 100%); scrollbar-color: #465661 transparent; }
+  :is(.control-section, .delphi-control-section) { margin-top: 10px; padding: 13px 12px; border: 1px solid var(--line-soft); border-radius: 5px; background: #14212a66; }
+  :is(.control-section, .delphi-control-section) > summary { color: var(--text); font-weight: 550; }
+  :is(.number-control, input:not([type=checkbox]):not([type=range]), select, select option) { background-color: #12202a; border-color: #61717c; font-variant-numeric: tabular-nums; }
+  :is(.select-field, .number-field, .delphi-number, .delphi-select) { color: #c2cbd0; }
+  :is(.number-control, .number-control input, .delphi-number-input input) { font-variant-numeric: tabular-nums; }
+  :is(.troy-metric strong, table) { font-variant-numeric: tabular-nums; }
+  :is(.troy-chart-card, .delphi-surface-panel, .delphi-empty-surface, .troy-metrics) { background: #182a35; }
+  .troy-chart-card { background: #1b2d38; }
+  .troy-model-badges > span { background: #18252e; }
+  .troy-model-badges > span + span strong { color: #8fbcc6; }
+  .troy-concept.maker { color: #8fbcc6; }
+  .troy-equation { font-style: normal; }
+  .troy-chart-heading h2 { font-weight: 550; }
+  .troy-tabs button[aria-selected=true] { color: var(--text); font-weight: 550; }
+  .troy-warning { color: #eed4a7; }
+  .delphi-topbar .delphi-primary { background: #f2eadb; border-color: #f2eadb; color: #18262e; }
+  .delphi-topbar .delphi-primary:hover:not(:disabled) { background: #fff5e5; border-color: #fff5e5; color: #18262e; }
+  .delphi-rail { padding-inline: 12px; }
+  .delphi-rail-heading { font-weight: 550; }
+  .delphi-control-section > summary { font-size: 13px; }
+  .delphi-number, .delphi-select { font-size: 12px; }
+  .delphi-number-input > span { background: #12202a; border-color: #61717c; }
+  .delphi-target button[aria-pressed=true] { background: #dfbf89; border-color: #dfbf89; color: #18262e; }
+  .delphi-tabs button[aria-selected=true] { color: var(--text); font-weight: 550; }
+  .delphi-segments button[aria-selected=true] { background: #dfbf891a; color: #f2eadb; box-shadow: inset 0 0 0 1px #dfbf89; }
+  .delphi-method-details { background: #16242d; }
+  .delphi-method-details > p:not(.delphi-caption):not(.delphi-notice) { font: 14px/1.6 var(--sans); }
+  tr.selected { background: #dfbf891a; color: #f2eadb; }
+  .delphi-table-scroll { background: #16242d; }
+  .delphi-sheet { background: #18252e; scrollbar-color: #465661 transparent; }
+  .delphi-sheet-top { background: #13212a; }
+  .delphi-alert { background: #30242a; color: #f0b7aa; }
+  .js-plotly-plot .plotly .modebar-group { background: #1b2c36 !important; border: 1px solid var(--line-soft); border-radius: 4px; }
+  .js-plotly-plot .plotly .modebar-btn path { fill: #b2bbc0; }
+  .js-plotly-plot .plotly .modebar-btn:hover path, .js-plotly-plot .plotly .modebar-btn.active path { fill: #f2eadb; }
+
+  @media (max-width: 700px) {
+    :is(.wordmark, .delphi-topbar h1) { font-size: 28px; }
+    .delphi-back { width: 32px; height: 36px; }
+    .delphi-actions { gap: 6px; }
+    .delphi-actions button { padding-inline: 8px; }
+    .delphi-sheet .delphi-control-section { margin-inline: 14px; }
+  }
+}

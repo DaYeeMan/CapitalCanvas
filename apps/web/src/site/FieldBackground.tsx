@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-type FieldVariant = "field" | "ithaca" | "troy" | "delphi";
+type FieldVariant = "ithaca" | "troy" | "delphi";
 
 /** Decorative media only. The caller owns the device motion preferences. */
-export function FieldBackground({ enabled, variant = "field" }: { enabled: boolean; variant?: FieldVariant }) {
+export function FieldBackground({ enabled, variant }: { enabled: boolean; variant: FieldVariant }) {
   const region = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false);

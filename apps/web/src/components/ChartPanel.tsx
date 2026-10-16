@@ -2,8 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Plotly from "plotly.js-dist-min";
 import type { Data, Layout } from "plotly.js";
 import type { MethodResult, OptionFamily, SolveResponse, SolverMethod } from "../types";
+import { spaceSurfaceAxisLabels, type SurfaceScene } from "./surface-axis-labels";
 
 type ChartTab = "surface" | "slice" | "convergence" | "paths";
+type SurfacePlotNode = HTMLDivElement & {
+  _fullLayout?: { scene?: { _scene?: SurfaceScene } };
+};
 
 const plotConfig = {
   displaylogo: false,
@@ -12,7 +16,7 @@ const plotConfig = {
   modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "lasso2d", "select2d"] as never[],
 };
 
-export function ScientificPlot({ data, layout, label, preserveCamera = false }: { data: Data[]; layout: Partial<Layout>; label: string; preserveCamera?: boolean }) {
+export function ScientificPlot({ data, layout, label, preserveCamera = false, resetCameraToView = false, spaceAxisLabels = false }: { data: Data[]; layout: Partial<Layout>; label: string; preserveCamera?: boolean; resetCameraToView?: boolean; spaceAxisLabels?: boolean }) {
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,6 +43,11 @@ export function ScientificPlot({ data, layout, label, preserveCamera = false }: 
     const node = container.current;
     if (!node) return;
     const plotLayout = JSON.parse(JSON.stringify(layout)) as Partial<Layout>;
+    let disposed = false;
+    let restoreLabels: (() => void) | undefined;
+    const resetCamera = resetCameraToView && plotLayout.scene?.camera
+      ? JSON.parse(JSON.stringify(plotLayout.scene.camera))
+      : null;
     const styles = getComputedStyle(node);
     const fontFamily = styles.fontFamily;
     plotLayout.hoverlabel = {
@@ -57,8 +66,24 @@ export function ScientificPlot({ data, layout, label, preserveCamera = false }: 
     }
     // Resolve the shared CSS font stack for Plotly SVG and WebGL labels.
     plotLayout.font = { ...plotLayout.font, family: fontFamily };
-    void Plotly.react(node, data, plotLayout, plotConfig);
-  }, [data, layout, preserveCamera]);
+    const config = resetCamera ? {
+      ...plotConfig,
+      modeBarButtonsToRemove: [...plotConfig.modeBarButtonsToRemove, "resetCameraDefault3d", "resetCameraLastSave3d"] as never[],
+      modeBarButtonsToAdd: [{
+        name: "resetIthacaCamera",
+        title: "Reset view",
+        icon: Plotly.Icons.home,
+        click: (graph: HTMLElement) => { void Plotly.relayout(graph, { "scene.camera": JSON.parse(JSON.stringify(resetCamera)) }); },
+      }],
+    } : plotConfig;
+    void Promise.resolve(Plotly.react(node, data, plotLayout, config)).then(() => {
+      if (disposed || !spaceAxisLabels || !node.isConnected) return;
+      const scene = (node as SurfacePlotNode)._fullLayout?.scene?._scene;
+      if (!scene) return;
+      restoreLabels = spaceSurfaceAxisLabels(scene);
+    });
+    return () => { disposed = true; restoreLabels?.(); };
+  }, [data, layout, preserveCamera, resetCameraToView, spaceAxisLabels]);
 
   return <div ref={container} role="img" aria-label={label} style={{ width: "100%", height: "100%" }} />;
 }
@@ -71,10 +96,10 @@ const methodLabels: Record<SolverMethod, string> = {
 };
 
 const methodColors: Record<SolverMethod, string> = {
-  closed_form: "#86d849",
-  binomial: "#86d849",
-  finite_difference: "#24d5e7",
-  monte_carlo: "#ffb000",
+  closed_form: "#f2eadb",
+  binomial: "#f2eadb",
+  finite_difference: "#8fbcc6",
+  monte_carlo: "#dfbf89",
 };
 
 function resultLabel(result: MethodResult): string {
@@ -90,7 +115,14 @@ function legendLabel(result: MethodResult): string {
   return methodLabels[result.method];
 }
 
-const baseFont = { color: "#dfe8ef", size: 12 };
+const baseFont = { color: "#c5cfd5", size: 12 };
+const surfaceMargins = { l: 0, r: 0, t: 0, b: 0, pad: 0, autoexpand: false };
+const defaultSurfaceCamera = {
+  eye: { x: 0.44, y: -1.36, z: 0.92 },
+  center: { x: 0, y: 0, z: -0.05 },
+  up: { x: 0, y: 0, z: 1 },
+  projection: { type: "orthographic" },
+};
 
 function resultFor(response: SolveResponse | null, method: SolverMethod): MethodResult | null {
   return response?.results.find((result) => result.method === method) ?? response?.results[0] ?? null;
@@ -115,6 +147,19 @@ export function ChartPanel({
 }) {
   const [tab, setTab] = useState<ChartTab>("surface");
   const [sliceIndex, setSliceIndex] = useState<number | null>(null);
+  const chartContainer = useRef<HTMLDivElement>(null);
+  const [compactSurface, setCompactSurface] = useState(false);
+  const [shortSurface, setShortSurface] = useState(false);
+  useEffect(() => {
+    const node = chartContainer.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setCompactSurface(entry.contentRect.width < 520);
+      setShortSurface(entry.contentRect.height < 600);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
   const activeResult = resultFor(response, activeMethod);
   const monteCarlo = response?.results.find((result) => result.method === "monte_carlo") ?? null;
   const reference = response?.results.find((result) => result.method === "closed_form" || result.method === "binomial") ?? null;
@@ -152,15 +197,36 @@ export function ChartPanel({
       z: prices,
       name: resultLabel(activeResult),
       colorscale: [
-        [0, "#171a57"],
-        [0.28, "#075b93"],
-        [0.56, "#07a88f"],
-        [0.78, "#8bcf43"],
-        [1, "#ffcb2c"],
+        [0, "#172f45"],
+        [0.25, "#365e79"],
+        [0.5, "#7199aa"],
+        [0.75, "#bacdc6"],
+        [1, "#f3e4be"],
       ],
-      contours: { x: { show: true, color: "rgba(255,255,255,.28)", width: 1 }, y: { show: true, color: "rgba(255,255,255,.28)", width: 1 } },
+      contours: {
+        x: { show: true, start: spots[0], end: spots.at(-1), size: (spots.at(-1)! - spots[0]) / 20, color: "#648195", width: 1, highlight: false, project: { x: false, y: false, z: false } },
+        y: { show: true, start: times[0], end: times.at(-1), size: (times.at(-1)! - times[0]) * 0.06, color: "#648195", width: 1, highlight: false, project: { x: false, y: false, z: false } },
+        z: { show: false, highlight: false },
+      },
+      lighting: { ambient: 0.85, diffuse: 0.6, specular: 0.08, roughness: 0.95, fresnel: 0.1 },
+      lightposition: { x: -300, y: -500, z: 1000 },
       hovertemplate: `Spot %{x:.2f}<br>τ %{y:.3f} yr<br>Price %{z:.4f}<extra></extra>`,
-      showscale: false,
+      showscale: true,
+      colorbar: {
+        title: { text: "Price", side: "top", font: baseFont },
+        thickness: 12,
+        len: 0.72,
+        x: compactSurface ? 0.86 : 0.91,
+        xanchor: "left",
+        y: 0.5,
+        outlinewidth: 1,
+        outlinecolor: "#899aa566",
+        tickfont: { ...baseFont, size: 11 },
+        tickcolor: "#899aa5",
+        ticklen: 3,
+        nticks: 7,
+        bgcolor: "rgba(0,0,0,0)",
+      },
     } as Data];
 
     for (const result of response?.results ?? []) {
@@ -171,7 +237,7 @@ export function ChartPanel({
         y: result.surface.spots.map(() => result.surface.times_to_maturity[selectedIndex]),
         z: result.surface.prices[selectedIndex],
         name: legendLabel(result),
-        line: { color: methodColors[result.method], width: result.method === activeResult.method ? 6 : 3 },
+        line: { color: methodColors[result.method], width: result.method === activeResult.method ? 3.5 : 2 },
         hovertemplate: `Spot %{x:.2f}<br>Price %{z:.4f}<extra></extra>`,
         showlegend: true,
       } as Data);
@@ -216,7 +282,7 @@ export function ChartPanel({
       } as unknown as Data);
     }
     return traces;
-  }, [activeResult, barrierLevel, response, selectedIndex]);
+  }, [activeResult, barrierLevel, response, selectedIndex, compactSurface]);
 
   const sliceData = useMemo<Data[]>(() => {
     if (!response) return [];
@@ -239,7 +305,7 @@ export function ChartPanel({
           y: result.surface.confidence_upper[selectedIndex],
           line: { width: 0 },
           fill: "tonexty",
-          fillcolor: "rgba(255,176,0,.16)",
+          fillcolor: "rgba(223,191,137,.16)",
           name: "Monte Carlo confidence band",
           hoverinfo: "skip",
         } as Data);
@@ -340,7 +406,7 @@ export function ChartPanel({
       x: path.times,
       y: path.spots,
       name: `Path ${index + 1}`,
-      line: { color: `hsla(${185 + index * 12}, 75%, 60%, .62)`, width: 1.5 },
+      line: { color: `hsla(${175 + index * 9}, 26%, ${58 + index % 4 * 7}%, .7)`, width: 1.5 },
       hovertemplate: "Time %{x:.3f}<br>Spot %{y:.2f}<extra></extra>",
       showlegend: false,
     } as Data));
@@ -371,25 +437,25 @@ export function ChartPanel({
   };
 
   const surfaceSpotRange: [number, number] | undefined = activeResult
-    ? [activeResult.surface.spots[0], activeResult.surface.spots.at(-1)! * 1.06]
+    ? [activeResult.surface.spots[0], activeResult.surface.spots.at(-1)!]
     : undefined;
   const surfaceTimeRange: [number, number] | undefined = activeResult
-    ? [activeResult.surface.times_to_maturity[0], activeResult.surface.times_to_maturity.at(-1)! * 1.06]
+    ? [activeResult.surface.times_to_maturity[0], activeResult.surface.times_to_maturity.at(-1)!]
     : undefined;
-
   const surfaceLayout: Partial<Layout> = {
     ...commonLayout,
-    margin: { l: 0, r: 0, t: 0, b: 0 },
-    legend: { orientation: "h", x: 0.01, y: 0.99, font: { ...baseFont, size: 10 }, bgcolor: "rgba(3,16,29,.72)" },
+    margin: surfaceMargins,
+    legend: { orientation: "h", x: 0.025, y: compactSurface ? 0.86 : 0.97, yanchor: "top", font: { ...baseFont, size: 10 }, bgcolor: "rgba(0,0,0,0)" },
     uirevision: "price-surface",
     scene: {
       bgcolor: "rgba(0,0,0,0)",
-      camera: { eye: { x: 1.65, y: -1.78, z: 2.05 } },
-      xaxis: { title: { text: "Spot (S)" }, range: surfaceSpotRange, gridcolor: "#334454", zerolinecolor: "#536474", color: "#dfe8ef" },
-      yaxis: { title: { text: "τ (yr)" }, range: surfaceTimeRange, gridcolor: "#334454", zerolinecolor: "#536474", color: "#dfe8ef" },
-      zaxis: { title: { text: "Price" }, gridcolor: "#334454", zerolinecolor: "#536474", color: "#dfe8ef" },
+      domain: { x: [0, 1], y: [0, 1] },
+      camera: defaultSurfaceCamera,
+      xaxis: { title: { text: "Spot (S)" }, range: surfaceSpotRange, gridcolor: "#405560", zerolinecolor: "#7d8d97", color: "#c5cfd5", showbackground: false, showspikes: false, nticks: 7, ticks: "outside", ticklen: 3, tickangle: 0, linewidth: 1 },
+      yaxis: { title: { text: "τ (yr)" }, range: surfaceTimeRange, gridcolor: "#405560", zerolinecolor: "#7d8d97", color: "#c5cfd5", showbackground: false, showspikes: false, nticks: 6, ticks: "outside", ticklen: 3, tickangle: 0, linewidth: 1 },
+      zaxis: { title: { text: "Price" }, gridcolor: "#405560", zerolinecolor: "#7d8d97", color: "#c5cfd5", showbackground: false, showspikes: false, nticks: 7, ticks: "outside", ticklen: 3, tickangle: 0, linewidth: 1 },
       aspectmode: "manual",
-      aspectratio: { x: 1.35, y: 1, z: 0.8 },
+      aspectratio: compactSurface ? { x: 0.96, y: 0.64, z: 0.64 } : shortSurface ? { x: 1.35, y: 0.9, z: 0.9 } : { x: 1.725, y: 1.15, z: 1.15 },
     },
   };
 
@@ -419,7 +485,7 @@ export function ChartPanel({
   const plotLayout = visibleTab === "surface" ? surfaceLayout : visibleTab === "slice" ? sliceLayout : visibleTab === "convergence" ? convergenceLayout : pathsLayout;
 
   return (
-    <div className="chart-content">
+    <div className="chart-content" ref={chartContainer}>
       <div className="chart-heading-row">
         <div className="chart-title-group">
           <h2>Price surface</h2>
@@ -458,7 +524,7 @@ export function ChartPanel({
       <div id="chart-tabpanel" role="tabpanel" aria-labelledby={`chart-tab-${visibleTab}`} className={`chart-stage ${visibleTab === "surface" ? "surface-stage " : ""}${loading ? "loading" : ""}`} aria-busy={loading}>
         <p className="sr-only">{chartLabel}</p>
         {activeResult ? (
-          <ScientificPlot data={plotData} layout={plotLayout} label={chartLabel} />
+          <ScientificPlot data={plotData} layout={plotLayout} label={chartLabel} preserveCamera={visibleTab === "surface"} resetCameraToView={visibleTab === "surface"} spaceAxisLabels={visibleTab === "surface"} />
         ) : (
           <div className="chart-empty">
             <span className="status-spinner" />

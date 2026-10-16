@@ -9,7 +9,7 @@ const { once } = require('node:events');
 
 const root = path.resolve(__dirname, '../../..');
 const output = path.join(root, 'apps/web/public/media/field');
-const previews = path.join(__dirname, 'tool-backgrounds');
+const previews = path.join(root, '.tools/field-render/previews');
 const html = pathToFileURL(path.join(__dirname, 'render-tool-surfaces.html')).href;
 const tools = ['ithaca', 'troy', 'delphi'];
 const selected = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));

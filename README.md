@@ -44,4 +44,6 @@ Numerical reference cases and tolerances live in `services/solver-api/tests/` an
 
 [License sources](docs/licenses/README.md) describe third-party attribution maintenance.
 
+The [office site](docs/design/office-3d/README.md) is the homepage at `/`, with `#home`, `#resources`, and `#about` destinations. Retired `/preview/office` URLs replace their browser-history entry with `/` while preserving query parameters and hashes. Published research anchors open the corresponding Resources library and paper or implementation note. Its WebGL fallback uses stills captured from the current renderer; After Hours concept images remain documentation references.
+
 Delphi runs at `/tools/delphi` using `/v1/delphi/capabilities`, `/reference`, and `/experiment`. It compares cubic splines, exact Gaussian processes, MLPs, and residual MLPs on a shared seeded Monte Carlo reference. Comparison, data-budget, and extrapolation modes support European calls and puts under constant-volatility GBM. Results remain in memory. See the [Delphi maintenance notes](docs/DELPHI.md) for bounds, tests, and the flat-IV/residual-noise limitations.

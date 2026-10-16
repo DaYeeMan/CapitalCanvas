@@ -1,4 +1,4 @@
-/* Tool routes share the homepage field media while keeping their native workbench layout. */
+/* Troy and Delphi share the homepage field media; Ithaca uses its own After Hours canvas. */
 .tool-workbench {
   position: relative;
   isolation: isolate;
@@ -30,26 +30,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.ithaca-workbench .tool-workbench.app-shell {
-  background:
-    radial-gradient(circle at 53% 34%, rgb(12 60 88 / 24%), transparent 42%),
-    transparent;
-}
-
-.ithaca-workbench .tool-workbench.app-shell > .tool-background .field-background img,
-.ithaca-workbench .tool-workbench.app-shell > .tool-background .field-background video {
-  object-position: 50% 46%;
-}
-
-.ithaca-workbench .tool-workbench.app-shell > .tool-background .field-background::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgb(3 16 29 / 60%), rgb(3 16 29 / 38%) 46%, rgb(3 16 29 / 66%)),
-    radial-gradient(ellipse at 53% 36%, rgb(9 58 78 / 20%), transparent 58%);
 }
 
 .tool-workbench.app-shell .topbar {

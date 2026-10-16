@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { SiteLayout } from "./SiteLayout";
-import { contactEmail, contactHref } from "./siteInfo";
+import { OfficeHeader, OfficeFooter } from "./office/OfficeChrome";
+import "./information.css";
 import notices from "./notices.json";
 
 const pages: Record<string, { title: string; sections: [string, string][] }> = {
@@ -25,22 +25,25 @@ const pages: Record<string, { title: string; sections: [string, string][] }> = {
     ["Numerical uncertainty", "Tree and grid results depend on resolution and boundary choices. Monte Carlo results have sampling error; confidence intervals do not capture every source of model error. American exercise regression, barrier monitoring, and Asian running-average interpolation introduce additional approximations."],
     ["Independent verification", "Validate outputs independently before consequential use. Accuracy, profit, and avoidance of loss are not guaranteed. Review the selected method explanation and research notes. Use the contact below to report suspected errors."]
   ] },
-  "/notices": { title: "Attributions", sections: [["Materials", "Research is linked to its original authors and publishers. The homepage surface is generated from the Black–Scholes model within this repository. Notices below reproduce the licenses and attribution notices for frontend software and mathematical fonts used by this site."]] },
+  "/notices": { title: "Attributions", sections: [["Materials", "Research is linked to its original authors and publishers. The office scene uses project-authored geometry and locally bundled character assets. Tool background surfaces are generated within this repository. Notices below reproduce the licenses and attribution notices for frontend software, character assets, and fonts used by this site."]] },
 };
 
 export default function InformationPage({ path }: { path: string }) {
   const page = pages[path];
   useEffect(() => { document.getElementById("page-title")?.focus({ preventScroll: true }); }, [path]);
-  return <SiteLayout><section className="information-page">
-    <span className="section-index">{page ? (path === "/privacy" ? "Updated September 18, 2026" : "Updated September 8, 2026") : "404"}</span>
+  return <div className="office-theme information-site">
+    <a className="skip-link" href="#main-content">Skip to content</a>
+    <OfficeHeader />
+    <main id="main-content" tabIndex={-1} className="information-content"><section className="information-page">
+    <span className="policy-date">{page ? (path === "/privacy" ? "Updated September 18, 2026" : path === "/notices" ? "Updated October 16, 2026" : "Updated September 8, 2026") : "404"}</span>
     <h1 id="page-title" tabIndex={-1}>{page?.title ?? "Page not found"}</h1>
     {page ? <>
       {page.sections.map(([heading, body]) => <section key={heading}><h2>{heading}</h2><p>{body}</p></section>)}
       {path === "/privacy" && <p>Provider notices: <a href="https://vercel.com/legal/privacy-notice">Vercel</a> · <a href="https://policies.google.com/privacy">Google</a>.</p>}
-      {path === "/notices" && notices.map(notice => <details className="license-entry" key={notice.name}><summary>{notice.name} {notice.version}</summary><pre>{notice.text}</pre></details>)}
-      <p>Contact: <a href={contactHref}>{contactEmail}</a></p>
-      <p><a href="/#resources">Research and methods</a> · <a href="/disclaimer">Disclaimer</a> · <a href="/notices">Attributions</a></p>
+      {path === "/notices" && notices.map(notice => <details className="license-entry" key={`${notice.name}@${notice.version}`}><summary>{notice.name} {notice.version}</summary><pre>{notice.text}</pre></details>)}
     </> : <p>This page is not available. Return to CapitalCanvas to explore the tools and research.</p>}
-    <a href="/#home">Return home</a>
-  </section></SiteLayout>;
+    {!page && <a href="/#home">Return home</a>}
+    </section></main>
+    <OfficeFooter />
+  </div>;
 }

@@ -1,52 +1,43 @@
-# Field surface animation
+# Field background assets
 
-An original procedural 3D surface rendered offline into a text-free video. The render follows the selected Field concept's navy sheet, fixed camera, blue grazing light, and warm highlights. It is not a frame-for-frame recreation of the AI image. All website content remains separate HTML.
+The tool screens use project-authored procedural WebGL surfaces rendered offline into text-free video loops. Application content remains separate HTML. Keep the editable renderers and their verification tools; the website does not need WebGL to play the videos.
 
-## Runtime files
+## Runtime media
 
-| File | Properties |
-| --- | --- |
-| [field-loop.mp4](../../../apps/web/public/media/field/field-loop.mp4) | 1920 × 1080, 10 seconds, 240 frames, 24 fps; H.264 High, yuv420p, no audio; fast-start metadata; 416,138 bytes (406.4 KiB) |
-| [field-poster.webp](../../../apps/web/public/media/field/field-poster.webp) | 1920 × 1080, 26,162 bytes (25.5 KiB); generated from the first clean render |
+`apps/web/public/media/field/` contains three active H.264/yuv420p muted 10-second, 1920x1080 loops and their WebP fallback posters: `ithaca`, `troy`, and `delphi`. The old homepage `field` loop and poster were removed when the office became the homepage on October 16, 2026. The original homepage renderer and reproduction instructions below are retained as design history; running them can regenerate retired files that are not used by the app. The original field loop uses 240 frames at 24fps. Current rendering and encoding settings are defined by the scripts below.
 
-Use the poster for reduced-motion/data-saving settings and blocked playback. Recheck browser playback and file sizes when regenerating the media.
+`FieldBackground.tsx` and `ToolBackground.tsx` consume the media, defer video loading, pause it while unseen, and show posters for restricted motion or playback failure. Text contrast and framing belong to the application's CSS.
 
-## Editable source and provenance
+## Editable sources and regeneration
 
-- [render-surface.html](render-surface.html) defines a 240 × 240 cell mesh, periodic vertex displacement, normal-based lighting, material highlights, and navy blending. It uses native WebGL only, with no downloaded scene, texture, or image input. Changing time deforms the mesh; it does not pan a static picture.
-- [render-surface.cjs](render-surface.cjs) captures deterministic frames with Playwright and pipes them to FFmpeg. Only this offline tool needs WebGL; the production website does not.
-- [field-frame.png](field-frame.png) is the original first frame. Intermediate/proof imagery stays in this design directory, outside public media.
-- Original project-authored code and generated output; no third-party media attribution is introduced. Playwright, Edge, and FFmpeg are production tools, not bundled into the frontend. The locally downloaded imageio-ffmpeg encoder is excluded through `.gitignore`.
+- `render-surface.html` defines the homepage surface, with native WebGL geometry, lighting, and periodic deformation.
+- `render-surface.cjs` captures deterministic frames and pipes them to FFmpeg.
+- `render-tool-surfaces.html` defines the tool variants.
+- `render-tool-surfaces.cjs` renders the three tool loops, posters, and preview frames.
 
-The original render used Edge through Playwright and FFmpeg 7.1 supplied by imageio-ffmpeg 0.6.0.
-
-## Reproduction
-
-From the repository root, set `FIELD_PLAYWRIGHT` to an installed Playwright package and `FIELD_FFMPEG` to an FFmpeg executable with libx264 support. `FIELD_BROWSER_CHANNEL` defaults to `msedge`. Run:
+From the repository root, set `FIELD_PLAYWRIGHT` to an installed Playwright package and `FIELD_FFMPEG` to an FFmpeg executable with libx264. `FIELD_BROWSER_CHANNEL` defaults to `msedge`.
 
 ```powershell
 node docs/design/field/render-surface.cjs --preview
 node docs/design/field/render-surface.cjs
+node docs/design/field/render-tool-surfaces.cjs
 ```
 
-The encoder uses `libx264`, slow preset, CRF 24, yuv420p, no audio, and `+faststart`. Generate the poster using Python with Pillow installed:
+Tool rendering accepts `ithaca`, `troy`, or `delphi` to select one surface, and `--poster-only` to skip loop encoding. Preview PNGs go to the ignored `.tools/field-render/previews/` directory; only the active encoded loops and WebP posters go into public media. The renderer outputs use project-authored code, not third-party media inputs.
+
+To regenerate the homepage poster after rendering a preview, use Python with Pillow:
 
 ```powershell
-python -c "from PIL import Image; Image.open('docs/design/field/field-frame.png').save('apps/web/public/media/field/field-poster.webp', quality=88, method=6)"
+python -c "from PIL import Image; Image.open('.tools/field-render/previews/field-frame.png').save('apps/web/public/media/field/field-poster.webp', quality=88, method=6)"
 ```
 
-Use a Python environment with Pillow and NumPy for the verification script. This machine's bundled Python provides both. Installed tool paths are environment-specific; they are not runtime app configuration.
+## Verification
 
-## Preview and verification
+`preview.html` is a standalone crop/contrast test fixture, not the homepage. `verify-surface.cjs` uses it and the editable render surface to check browser decoding, looping, deformation, and desktop/mobile crops. Serve the repository with `python -m http.server 5180 --bind 127.0.0.1`, then run:
 
-[preview.html](preview.html) is an asset crop demonstration, not the current homepage. Serve the repository with `python -m http.server 5180 --bind 127.0.0.1`, open `/docs/design/field/preview.html`, and select **Play preview**.
+```powershell
+node docs/design/field/verify-surface.cjs
+python docs/design/field/verify-encoding.py
+```
 
-Run `node docs/design/field/verify-surface.cjs` against that server and `python docs/design/field/verify-encoding.py` with the tool environment configured. After regenerating the media, verify loop continuity, poster matching, browser decoding, and text contrast in the actual homepage. Historical screenshots and JSON results describe the versions tested when they were recorded.
-
-## Homepage integration
-
-The homepage uses one viewport-fixed video with `object-fit: cover`. The hero, tool cards, and About content scroll above the same surface; About no longer has a separate mirrored video. The poster remains fixed when motion is restricted or playback fails. Resources and the footer use solid navy across the full viewport width, including their gutters.
-
-Dark overlays scroll with the hero and About sections, preserving text contrast and the transitions into the reading area. Current colors, opacity, and framing are owned by `apps/web/src/site/site.css`; recheck contrast across the entire animation when changing them.
-
-`FieldBackground.tsx` handles deferred video loading, offscreen and document-visibility pausing, and poster fallback. `useFieldMotionRestricted.ts` honors reduced-motion and data-saving preferences. There is no on-page motion toggle. The surface source remains editable independently of page content.
+The encoding check requires NumPy, Pillow, and `FIELD_FFMPEG`. Reports and screenshots go to `.tools/field-render/asset-checks/`, which is ignored. Recheck the actual tools after regenerating active media. Offline browser and encoder dependencies are development tools rather than bundled frontend dependencies.
