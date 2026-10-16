@@ -1,14 +1,3 @@
-import type { ResearchEntry } from "./research";
-
-export function ResearchContent({ entry, headingId }: { entry: ResearchEntry; headingId?: string }) {
-  return <>
-            <h3 id={headingId}><a href={entry.source} rel="noreferrer">{entry.title}<span aria-hidden="true"> ↗</span></a></h3>
-            <p className="citation-meta">{entry.authors} · {entry.year}</p>
-            <p>{entry.summary}</p>
-            <div className="resource-meta"><span>{entry.access}</span></div>
-  </>;
-}
-
 export function AsianLatticeContent({ headingId, sourceTarget }: { headingId?: string; sourceTarget?: "_blank" }) {
   return <>
             <h3 id={headingId}>Asian options: a running-average state</h3>

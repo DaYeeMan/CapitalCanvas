@@ -1,0 +1,55 @@
+@font-face { font-family: "Office Geist"; src: url("/office/fonts/geist-latin.ttf") format("truetype"); font-style: normal; font-weight: 100 900; font-display: swap; }
+.office-header { position: absolute; inset: 0 0 auto; z-index: 4; height: 96px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 0 4.3%; pointer-events: none; box-sizing: border-box; }
+.office-header a, .office-header nav { pointer-events: auto; }
+.office-wordmark { display: inline-flex; align-items: center; gap: 11px; color: var(--office-ink); font-size: clamp(23px, 2.05vw, 31px); font-weight: 550; line-height: 1; text-decoration: none; letter-spacing: -.045em; white-space: nowrap; }
+.office-wordmark img { display: block; width: 48px; height: 48px; object-fit: contain; flex: none; }
+.office-header nav { display: flex; align-items: center; gap: clamp(26px, 3vw, 46px); }
+.office-header nav a, .office-header nav span, .office-about-footer a { color: #d0d5d6; font-size: 14px; font-weight: 450; line-height: 1.5; text-decoration: none; padding: 12px 0; position: relative; transition: color 180ms ease; }
+.office-header nav span { color: #929da4; cursor: default; }
+.office-header nav a::after { content: ""; position: absolute; inset: auto 0 0; height: 1px; background: #ece4d4; transform: scaleX(0); transform-origin: left; transition: transform 240ms cubic-bezier(.2,.7,.2,1); }
+.office-header nav a[aria-current] { color: var(--office-ink); }
+.office-header nav a[aria-current]::after { transform: scaleX(1); }
+.office-header nav a:hover, .office-about-footer a:hover { color: white; }
+.office-about-footer a { padding: 0; pointer-events: auto; }
+.office-about-footer { position: absolute; bottom: 0; left: 4.3%; right: 4.3%; z-index: 3; pointer-events: none; }
+.office-about-footer-content { display: grid; grid-template-columns: 1fr auto; gap: 14px 32px; padding: 21px 0 24px; border-top: 1px solid #c4cacc33; font-size: 13px; color: var(--office-muted); }
+.office-about-footer-contact { grid-row: span 2; }
+.office-about-footer-contact p { margin: 0 0 7px; color: var(--office-ink); font-size: 20px; font-weight: 550; line-height: 1.25; letter-spacing: -.04em; }
+.office-about-footer nav { display: flex; justify-content: flex-end; gap: 26px; }
+.office-about-copyright { margin: 0; font-size: 11px; text-align: right; }
+.office-theme { --office-ink: #f4f0e8; --office-muted: #b2bbc0; --office-line: #d7c4a642; --office-surface: #1b252c; color: var(--office-ink); background: #202a2d; font-family: "Office Geist", "Segoe UI Variable", "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+.office-theme a:focus-visible, .office-theme button:focus-visible, .office-theme summary:focus-visible { outline: 2px solid #9ad9e6; outline-offset: 5px; }
+@media (max-width: 700px) {
+  .office-header { height: 110px; align-content: center; flex-wrap: wrap; gap: 0; padding: 10px 5%; }
+  .office-wordmark { font-size: 24px; }
+  .office-wordmark img { width: 40px; height: 40px; }
+  .office-header nav { gap: 26px; }
+  .office-header nav a, .office-header nav span { font-size: 12px; }
+}
+@media (max-width: 700px) and (orientation: portrait), (max-width: 950px) and (max-height: 500px) {
+  .office-header { background: linear-gradient(180deg, #101c26eb 0%, #101c26d9 72%, #101c2600 100%); }
+  .office-header nav a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; box-sizing: border-box; }
+  .office-about-footer-contact > a { display: inline-flex; align-items: center; min-height: 44px; }
+}
+@media (max-width: 700px) and (orientation: portrait) {
+  .office-about-footer { left: 5%; right: 5%; }
+  .office-about-footer-content { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 12px 0 max(16px, env(safe-area-inset-bottom)); }
+  .office-about-footer-contact { grid-row: auto; }
+  .office-about-footer-contact p { font-size: 18px; margin-bottom: 4px; }
+  .office-about-footer nav { justify-content: flex-start; flex-wrap: wrap; gap: 0 20px; }
+  .office-about-footer nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 12px; }
+  .office-about-copyright { font-size: 10px; line-height: 1.5; text-align: left; }
+}
+@media (max-width: 950px) and (max-height: 500px) and (orientation: landscape) {
+  .office-header { height: 72px; flex-wrap: nowrap; padding: 0 4.3%; }
+  .office-wordmark { font-size: 20px; gap: 8px; }
+  .office-wordmark img { width: 36px; height: 36px; }
+  .office-header nav { gap: 20px; }
+  .office-header nav a { font-size: 12px; }
+  .office-about-footer-content { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 4px 16px; padding: 10px 0 12px; }
+  .office-about-footer-contact p { font-size: 18px; }
+  .office-about-footer nav { flex-wrap: wrap; gap: 0 16px; }
+  .office-about-footer nav a { min-height: 40px; display: inline-flex; align-items: center; font-size: 12px; }
+  .office-about-copyright { font-size: 10px; line-height: 1.5; }
+}
+@media (prefers-reduced-motion: reduce) { .office-theme a { transition: none; } }

@@ -8,12 +8,23 @@ import { troyResearch } from "../troyResearch";
 import { delphiResearch } from "../delphiResearch";
 
 beforeEach(() => {
+  Element.prototype.scrollIntoView = vi.fn();
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function (this: HTMLDialogElement) { this.open = true; } });
   Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value: function (this: HTMLDialogElement) { this.open = false; } });
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("office research library", () => {
+  it.each([["ithaca", "crr"], ["ithaca", "asian-lattice"], ["troy", "troy-market-making"], ["delphi", "delphi-methods"]] as const)("opens the linked %s research entry %s", (tool, initialEntry) => {
+    const { container } = render(<OfficeResearchDialog tool={tool} initialEntry={initialEntry} returnFocus={null} onClose={vi.fn()} />);
+    const opened = container.querySelectorAll<HTMLDetailsElement>("details[open]");
+    expect(opened).toHaveLength(1);
+    if (initialEntry !== "delphi-methods") {
+      expect(opened[0].dataset.researchId).toBe(initialEntry);
+      expect(opened[0].querySelector("summary")).toHaveFocus();
+      expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ block: "start" });
+    }
+  });
   it.each([
     ["ithaca", "Ithaca", research, 10], ["troy", "Troy", troyResearch, 7], ["delphi", "Delphi", delphiResearch, 6],
   ] as const)("preserves every %s reference and original source", (tool, name, entries, count) => {

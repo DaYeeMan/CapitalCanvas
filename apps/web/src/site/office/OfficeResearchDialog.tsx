@@ -5,7 +5,7 @@ import { officeResearch } from "./officeResearch";
 import type { ToolId } from "./layouts";
 import "./officeResearch.css";
 
-export function OfficeResearchDialog({ tool, onClose, returnFocus }: { tool: ToolId; onClose: () => void; returnFocus: HTMLElement | null }) {
+export function OfficeResearchDialog({ tool, onClose, returnFocus, initialEntry }: { tool: ToolId; onClose: () => void; returnFocus: HTMLElement | null; initialEntry?: string }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const outsidePress = useRef(false);
   const heading = useId();
@@ -14,11 +14,17 @@ export function OfficeResearchDialog({ tool, onClose, returnFocus }: { tool: Too
   useEffect(() => {
     const node = dialog.current!;
     node.showModal();
+    if (initialEntry) {
+      const entry = [...node.querySelectorAll<HTMLDetailsElement>("details[data-research-id]")].find(element => element.dataset.researchId === initialEntry);
+      entry?.scrollIntoView({ block: "start" });
+      entry?.querySelector("summary")?.focus({ preventScroll: true });
+    }
     return () => {
       node.close();
-      if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+      const target = returnFocus ?? document.getElementById("office-main");
+      if (target?.isConnected) target.focus({ preventScroll: true });
     };
-  }, [returnFocus]);
+  }, [returnFocus, initialEntry]);
   const outside = (x: number, y: number) => {
     const bounds = dialog.current!.getBoundingClientRect();
     return x < bounds.left || x > bounds.right || y < bounds.top || y > bounds.bottom;
@@ -43,7 +49,7 @@ export function OfficeResearchDialog({ tool, onClose, returnFocus }: { tool: Too
         <h3 className="office-research-group">{group.title}</h3>
         {group.entries.map(entry => {
           const number = ++index;
-          return <details className="office-research-entry" key={entry.id} open={number === 1 ? true : undefined}>
+          return <details className="office-research-entry" key={entry.id} data-research-id={entry.id} open={(initialEntry && initialEntry !== "delphi-methods" ? entry.id === initialEntry : number === 1) || undefined}>
             <summary><span className="office-research-index">{String(number).padStart(2, "0")}</span><span className="office-research-name">{entry.title}</span><span className="office-research-year">{entry.year}</span><span className="office-research-chevron" aria-hidden="true" /></summary>
             <div className="office-research-body"><p className="office-research-authors">{entry.authors} · {entry.year}</p><p>{entry.summary}</p>
               <div className="office-research-source"><span>{entry.method} · {entry.access}</span><a href={entry.source} target="_blank" rel="noreferrer">Read source <span aria-hidden="true">↗</span><span className="sr-only"> (opens in a new tab)</span></a></div>
@@ -52,7 +58,7 @@ export function OfficeResearchDialog({ tool, onClose, returnFocus }: { tool: Too
         })}
       </section>)}
       {content.note && <section aria-label="Implementation"><h3 className="office-research-group">Implementation</h3>
-        <details className="office-research-entry"><summary><span className="office-research-index">{String(content.count).padStart(2, "0")}</span><span className="office-research-name">{content.note === "asian" ? "Asian options: a running-average state" : "Quoting, order flow, and inventory"}</span><span className="office-research-year">Implementation note</span><span className="office-research-chevron" aria-hidden="true" /></summary>
+        <details className="office-research-entry" data-research-id={content.note === "asian" ? "asian-lattice" : "troy-market-making"} open={initialEntry === (content.note === "asian" ? "asian-lattice" : "troy-market-making") || undefined}><summary><span className="office-research-index">{String(content.count).padStart(2, "0")}</span><span className="office-research-name">{content.note === "asian" ? "Asian options: a running-average state" : "Quoting, order flow, and inventory"}</span><span className="office-research-year">Implementation note</span><span className="office-research-chevron" aria-hidden="true" /></summary>
           <div className="office-research-body office-research-note">{content.note === "asian" ? <AsianLatticeContent sourceTarget="_blank" /> : <TroyMarketMakingContent />}</div>
         </details>
       </section>}

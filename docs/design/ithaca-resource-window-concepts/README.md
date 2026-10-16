@@ -1,5 +1,7 @@
 # Ithaca resource window
 
+Historical design/preview record. The office was promoted to `/` on October 16, 2026; see [current office documentation](../office-3d/README.md). Earlier preview-only scope below records the original implementation phase.
+
 Selected floating library, revised October 16, 2026 using taste-skill:imagegen-frontend-web and the built-in image_gen tool.
 
 ![Selected floating library](floating-library.png)

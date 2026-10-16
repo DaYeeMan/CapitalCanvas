@@ -1,15 +1,11 @@
 // @vitest-environment jsdom
-
 import "@testing-library/jest-dom/vitest";
-import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
-const { loadWorkbench, loadOffice } = vi.hoisted(() => ({ loadWorkbench: vi.fn(), loadOffice: vi.fn() }));
-vi.mock("./site/office/OfficePreview", () => {
-  loadOffice();
-  return { default: () => <main><h1>Office preview test</h1></main> };
-});
+const { loadWorkbench } = vi.hoisted(() => ({ loadWorkbench: vi.fn() }));
+vi.mock("./site/office/OfficeSite", () => ({ default: () => <main><h1>Capital Canvas office</h1></main> }));
 vi.mock("./IthacaWorkbench", () => {
   loadWorkbench();
   return { default: () => <main><h1>Ithaca test workbench</h1></main> };
@@ -20,108 +16,60 @@ vi.mock("./delphi/DelphiWorkbench", () => ({ default: () => <main><h1>Delphi tes
 beforeEach(() => {
   window.history.replaceState(null, "", "/");
   vi.stubGlobal("fetch", vi.fn());
-  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false })));
-  Element.prototype.scrollIntoView = vi.fn();
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("CapitalCanvas route boundaries", () => {
-  it("keeps home sections in one document without importing the workbench or fetching", async () => {
-    const { container } = render(<App />);
-    const home = container.querySelector("#home");
-    const resources = container.querySelector("#resources");
-    const about = container.querySelector("#about");
-    expect(home).toBeInTheDocument();
-    expect(resources).toBeInTheDocument();
-    expect(about).toBeInTheDocument();
-    const navigation = screen.getByRole("navigation", { name: "Main" });
-    for (const name of ["Home", "Resources", "About"]) {
-      expect(within(navigation).getByRole("link", { name })).toHaveAttribute("href", `/#${name.toLowerCase()}`);
-    }
-    window.location.hash = "resources";
-    await waitFor(() => expect(document.activeElement).toBe(resources));
-    expect(container.querySelector("#home")).toBe(home);
+  it("promotes the office to the indexed homepage without loading a workbench or fetching", async () => {
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Capital Canvas office" })).toBeInTheDocument();
+    expect(document.title).toBe("CapitalCanvas");
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "index,follow");
     expect(loadWorkbench).not.toHaveBeenCalled();
-    expect(loadOffice).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
-    expect(screen.getByRole("link", { name: /Launch Ithaca/ })).toHaveAttribute("href", "/tools/ithaca");
-    expect(screen.getByRole("link", { name: /Launch Troy/ })).toHaveAttribute("href", "/tools/troy");
-    expect(screen.getByRole("link", { name: /Launch Delphi/ })).toHaveAttribute("href", "/tools/delphi");
   });
 
-  it.each(["/privacy", "/terms", "/disclaimer", "/notices"])("renders %s with a publication date and shared home anchors", (path) => {
+  it.each(["", "#home", "#resources", "#about", "#crr", "#delphi-methods"])("replaces the retired preview URL while retaining query and destination %s", async hash => {
+    window.history.replaceState({ retained: true }, "", `/preview/office/?source=bookmark${hash}`);
+    const length = window.history.length;
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Capital Canvas office" })).toBeInTheDocument();
+    expect(window.location.pathname + window.location.search + window.location.hash).toBe(`/?source=bookmark${hash}`);
+    expect(window.history.state).toEqual({ retained: true });
+    expect(window.history.length).toBe(length);
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "index,follow");
+  });
+
+  it.each(["/privacy", "/terms", "/disclaimer", "/notices"])("renders %s with the shared office header and About footer", async path => {
     window.history.replaceState(null, "", path);
-    render(<App />);
-    expect(screen.getByText(path === "/privacy" ? "Updated September 18, 2026" : "Updated September 8, 2026")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Resources" })).toHaveAttribute("href", "/#resources");
-    expect(fetch).not.toHaveBeenCalled();
-  });
-
-  it("keeps initial hash positioning scheduled when a scroll event arrives during mount", () => {
-    const frames = new Map<number, FrameRequestCallback>();
-    let nextFrame = 0;
-    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
-      frames.set(++nextFrame, callback);
-      return nextFrame;
-    });
-    vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
-    window.history.replaceState(null, "", "/#about");
-    render(<App />);
-    act(() => {
-      window.dispatchEvent(new Event("scroll"));
-      for (const callback of frames.values()) callback(0);
-    });
-    expect(document.activeElement).toBe(document.getElementById("about"));
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: "instant" });
-  });
-
-  it("opens the project dropdown for a direct paper reference", async () => {
-    window.history.replaceState(null, "", "/#crr");
     const { container } = render(<App />);
-    await waitFor(() => expect(document.activeElement).toBe(document.getElementById("crr")));
-    expect(container.querySelector("details.resource-project")).toHaveAttribute("open");
-    expect(screen.queryByText(/Used in Ithaca/)).not.toBeInTheDocument();
-    const reference = within(container.querySelector("#crr") as HTMLElement);
-    expect(reference.getByRole("link", { name: /Option pricing: A simplified approach/ })).toBeVisible();
-    expect(reference.getByText(/A discrete tree makes option valuation/)).toBeVisible();
-    expect(screen.queryByText("Implementation")).not.toBeInTheDocument();
-    expect(within(container.querySelector("#about") as HTMLElement).getByText("Emmanuel Zhang")).toBeInTheDocument();
-  });
-
-  it("loads the isolated office route with indexing disabled", async () => {
-    window.history.replaceState(null, "", "/preview/office#resources"); render(<App />);
-    expect(await screen.findByRole("heading", { name: "Office preview test" })).toBeInTheDocument();
-    expect(document.title).toBe("Office preview — CapitalCanvas");
-    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "noindex,follow");
+    expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(container.querySelector(".office-theme.information-site")).toBeInTheDocument();
+    const header = screen.getByRole("banner");
+    expect(within(header).getByRole("link", { name: "Capital Canvas city" })).toHaveAttribute("href", "/");
+    expect(within(header).getByRole("link", { name: "Resources" })).toHaveAttribute("href", "/#resources");
+    const footer = screen.getByRole("contentinfo");
+    expect(within(footer).getByText("Emmanuel Zhang")).toBeInTheDocument();
+    expect(within(footer).getByRole("navigation", { name: "Legal" })).toBeInTheDocument();
+    expect(within(footer).getByRole("link", { name: "dymteam23@gmail.com" })).toHaveAttribute("href", "mailto:dymteam23@gmail.com");
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("does not treat Resources or About as separate pages", () => {
-    window.history.replaceState(null, "", "/about");
+  it("keeps unknown paths in the office-styled 404 with working home links", async () => {
+    window.history.replaceState(null, "", "/not-a-page");
     render(<App />);
-    expect(screen.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Page not found" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Return home" })).toHaveAttribute("href", "/#home");
+    expect(document.title).toBe("Page not found — CapitalCanvas");
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "noindex,follow");
   });
 
-  it("loads the workbench only on its tool route", async () => {
-    window.history.replaceState(null, "", "/tools/ithaca");
+  it.each(["ithaca", "troy", "delphi"])("preserves the %s workbench route and title", async tool => {
+    window.history.replaceState(null, "", `/tools/${tool}`);
     render(<App />);
-    expect(await screen.findByRole("heading", { name: "Ithaca test workbench" })).toBeInTheDocument();
-    expect(loadWorkbench).toHaveBeenCalledTimes(1);
-    expect(document.title).toBe("Ithaca — CapitalCanvas");
-  });
-  it("loads Troy directly on its own route", async () => {
-    window.history.replaceState(null, "", "/tools/troy");
-    render(<App />);
-    expect(await screen.findByRole("heading", { name: "Troy test workbench" })).toBeInTheDocument();
-    expect(document.title).toBe("Troy — CapitalCanvas");
-    expect(fetch).not.toHaveBeenCalled();
-  });
-  it("loads Delphi directly on its own route", async () => {
-    window.history.replaceState(null, "", "/tools/delphi");
-    render(<App />);
-    expect(await screen.findByRole("heading", { name: "Delphi test workbench" })).toBeInTheDocument();
-    expect(document.title).toBe("Delphi — CapitalCanvas");
+    const name = tool[0].toUpperCase() + tool.slice(1);
+    expect(await screen.findByRole("heading", { name: `${name} test workbench` })).toBeInTheDocument();
+    expect(document.title).toBe(`${name} — CapitalCanvas`);
     expect(fetch).not.toHaveBeenCalled();
   });
 });

@@ -1,10 +1,10 @@
 # Field background assets
 
-The production homepage and tool screens use project-authored procedural WebGL surfaces rendered offline into text-free video loops. Application content remains separate HTML. Keep the editable renderers and their verification tools; the website does not need WebGL to play the videos.
+The tool screens use project-authored procedural WebGL surfaces rendered offline into text-free video loops. Application content remains separate HTML. Keep the editable renderers and their verification tools; the website does not need WebGL to play the videos.
 
 ## Runtime media
 
-`apps/web/public/media/field/` contains four active H.264/yuv420p muted 10-second, 1920x1080 loops and their WebP fallback posters: `field`, `ithaca`, `troy`, and `delphi`. The original field loop uses 240 frames at 24fps. Current rendering and encoding settings are defined by the scripts below.
+`apps/web/public/media/field/` contains three active H.264/yuv420p muted 10-second, 1920x1080 loops and their WebP fallback posters: `ithaca`, `troy`, and `delphi`. The old homepage `field` loop and poster were removed when the office became the homepage on October 16, 2026. The original homepage renderer and reproduction instructions below are retained as design history; running them can regenerate retired files that are not used by the app. The original field loop uses 240 frames at 24fps. Current rendering and encoding settings are defined by the scripts below.
 
 `FieldBackground.tsx` and `ToolBackground.tsx` consume the media, defer video loading, pause it while unseen, and show posters for restricted motion or playback failure. Text contrast and framing belong to the application's CSS.
 
@@ -40,4 +40,4 @@ node docs/design/field/verify-surface.cjs
 python docs/design/field/verify-encoding.py
 ```
 
-The encoding check requires NumPy, Pillow, and `FIELD_FFMPEG`. Reports and screenshots go to `.tools/field-render/asset-checks/`, which is ignored. Recheck the actual homepage and tools after regenerating active media. Offline browser and encoder dependencies are development tools rather than bundled frontend dependencies.
+The encoding check requires NumPy, Pillow, and `FIELD_FFMPEG`. Reports and screenshots go to `.tools/field-render/asset-checks/`, which is ignored. Recheck the actual tools after regenerating active media. Offline browser and encoder dependencies are development tools rather than bundled frontend dependencies.

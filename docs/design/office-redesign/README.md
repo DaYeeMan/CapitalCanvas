@@ -1,5 +1,7 @@
 # After Hours: office preview redesign
 
+Historical design/preview record. The office was promoted to `/` on October 16, 2026; see [current office documentation](../office-3d/README.md). Earlier preview-only scope below records the original implementation phase.
+
 Status: implemented in the isolated desktop preview, including lighting/atmosphere refinement and final interaction/motion polish.
 The tower now sits farther from the camera, with trimmed rear paving to preserve full sidewalk widths. Matching paving fills the rounded plot corners; all floor assemblies share the fixed placement and retain their existing choreography.
 Selected by the user on October 15, 2026. Implementation authorized and completed on October 15, 2026.

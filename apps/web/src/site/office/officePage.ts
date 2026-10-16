@@ -1,9 +1,10 @@
 import { useLayoutEffect, useRef, type RefObject } from "react";
 import { readPreviewView, type PreviewView } from "./towerStructure";
+import { readResearchTarget } from "./officeResearch";
 
 export type PreviewPage = PreviewView | "about";
 export const pageScene = (page: PreviewPage): PreviewView => page === "about" ? "city" : page;
-export const readPreviewPage = (hash = window.location.hash): PreviewPage => hash === "#about" ? "about" : readPreviewView(hash);
+export const readPreviewPage = (hash = window.location.hash): PreviewPage => readResearchTarget(hash) ? "resources" : hash === "#about" ? "about" : readPreviewView(hash);
 
 // One reversible clock feeds HTML and the compositor, without React rerenders
 // or changes to the physical scene command. Demand rendering wakes per sample.

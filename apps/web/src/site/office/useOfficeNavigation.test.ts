@@ -3,10 +3,31 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useOfficeNavigation } from "./useOfficeNavigation";
 
-beforeEach(() => window.history.replaceState(null, "", "/preview/office"));
+beforeEach(() => window.history.replaceState(null, "", "/"));
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-describe("motion preview navigation", () => {
+describe("office navigation", () => {
+  it.each([["#crr", "ithaca"], ["#asian-lattice", "ithaca"], ["#troy-market-making", "troy"], ["#delphi-methods", "delphi"]])("retains the published %s research link and opens the Resources floor", (hash, tool) => {
+    window.history.replaceState(null, "", hash);
+    const { result } = renderHook(() => useOfficeNavigation());
+    expect(result.current).toMatchObject({ page: "resources", view: "resources", research: { tool, entry: hash.slice(1) } });
+    expect(window.location.hash).toBe(hash);
+    act(() => result.current.presented("resources", 0));
+    act(() => result.current.dismissResearch());
+    expect(result.current.research).toBeNull();
+    expect(result.current.viewReset).toBe(0);
+    expect(window.location.hash).toBe("#resources");
+  });
+  it("follows research history on the same floor without moving or resetting the camera", () => {
+    window.history.replaceState(null, "", "#crr");
+    const { result } = renderHook(() => useOfficeNavigation());
+    act(() => result.current.presented("resources", 0));
+    act(() => { window.history.pushState(null, "", "#troy-market-making"); window.dispatchEvent(new PopStateEvent("popstate")); window.dispatchEvent(new HashChangeEvent("hashchange")); });
+    expect(result.current).toMatchObject({ page: "resources", phase: "idle", viewReset: 0, research: { tool: "troy", entry: "troy-market-making" } });
+    act(() => { window.history.replaceState(null, "", "#resources"); window.dispatchEvent(new PopStateEvent("popstate")); });
+    expect(result.current.research).toBeNull();
+    expect(result.current.viewReset).toBe(0);
+  });
   it("loads About over the city and changes city pages without issuing scene commands", () => {
     window.history.replaceState(null, "", "#about");
     const { result } = renderHook(() => useOfficeNavigation());

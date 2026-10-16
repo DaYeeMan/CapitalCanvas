@@ -4,27 +4,27 @@
 
 CapitalCanvas helps people understand quantitative finance through visualization and experimentation. It is a personal, noncommercial education and research project. Outputs are theoretical estimates, not investment advice, executable quotes, or promises of returns.
 
-The site name is CapitalCanvas; the displayed name is Capital Canvas. The homepage header uses the transparent interlocking CC mark beside the Capital Canvas wordmark; policy headers and the footer retain the text wordmark. The browser icon and social thumbnail use the mark on navy. The public About attribution is Emmanuel Zhang, with contact `dymteam23@gmail.com`.
+The site name is CapitalCanvas; the displayed name is Capital Canvas. The office and policy headers use the transparent interlocking CC mark beside the Capital Canvas wordmark; policy pages share the office About contact/legal footer. The browser icon and social thumbnail use the mark on navy. The public About attribution is Emmanuel Zhang, with contact `dymteam23@gmail.com`.
 
-Three tools exist: Ithaca, Troy, and Delphi. Delphi occupies the third home card with a launch link and surrogate-model features.
+Three tools exist: Ithaca, Troy, and Delphi. Each has a marked desk on the Home and Resources floors.
 
 The current product has no accounts, database, saved results, live market data, or trading execution. These describe the existing product rather than restrictions on future planning.
 
 ## Site and navigation
 
-- `/` contains Home, Research and methods, About, and the footer in one scrolling document.
-- `/#home`, `/#resources`, and `/#about` target sections of that document. Resources and About are not separate pages.
-- `/tools/ithaca`, `/tools/troy`, and `/tools/delphi` open independent workbenches with a return link to home.
-- `/privacy`, `/terms`, `/disclaimer`, and `/notices` contain policy and attribution content.
-- Unknown paths show a not-found view with a home link.
+- `/` starts at the city. `/#home` and `/#resources` open the office floors; `/#about` shows the introduction over the city.
+- `/preview/office` and its trailing-slash variant replace their current history entry with `/`, preserving query parameters and the destination hash.
+- `/tools/ithaca`, `/tools/troy`, and `/tools/delphi` open independent workbenches with a return link to `/#home`.
+- `/privacy`, `/terms`, `/disclaimer`, and `/notices` retain their content in an office-styled reading layout. These pages and the 404 share the office header and About footer.
+- Unknown paths show the not-found view. Unknown office hashes normalize to `#city`.
 
-Home says “Explore pricing and market dynamics” and “Visual tools for understanding financial models.” Four translucent navy cards follow the hero directly, without an “Explore the tools” line. Each available tool has a description, feature tags, and launch link. The fourth card says “Coming soon” and sits beneath Ithaca in the desktop grid; it has no launch link.
+City entry says “A Different Perspective” and “Visual tools for understanding financial models.” Enter Capital Canvas or the main tower opens Home. Three desk markers launch the tools. Resources uses the same desks to open centered research libraries containing all 10 Ithaca, 7 Troy, and 6 Delphi references and implementation notes.
 
-Research entries are grouped by tool in collapsible sections. They include source metadata, original summaries, and implementation notes that distinguish published models from project approximations. Stable paper anchors open the containing group. Ithaca also exposes method references within its sidebar.
+Published research anchors such as `/#crr`, `/#asian-lattice`, `/#troy-market-making`, and `/#delphi-methods` remain supported. They open Resources and the corresponding library; a paper or note anchor expands and focuses that entry. Dismissing a directly linked library replaces the hash with `#resources`. Desk-opened libraries leave the current route unchanged. Research content and source links remain shared data.
 
-The Field homepage uses a separate decorative surface behind Home and About. It is a locally hosted 10-second H.264 loop with a WebP poster, not real-time 3D or a baked page image. The About surface is horizontally mirrored to distinguish it from Home. There is no on-page motion button. Reduced-motion and data-saving preferences disable video; hidden/offscreen media pauses, and video is deferred until its section approaches the viewport. Failed or blocked playback leaves the poster visible. Text and controls remain ordinary HTML above the media.
+The persistent 3D district supports floor travel, history, keyboard/pointer/touch controls, reduced motion and static renderer stills when WebGL is unavailable. Research libraries and About scroll internally. Policy pages scroll as ordinary documents. Current architecture, motion and assets are documented in [the office documentation](design/office-3d/README.md).
 
-Resources and the footer use solid navy. All 10 Ithaca, 7 Troy, and 6 Delphi entries remain in native disclosures, collapsed initially, with two-column research rows that stack on mobile. About retains the full project explanation and contact details. Policy and tool routes have no decorative media. Media source and reproduction details live in [Field asset documentation](design/field/ASSET.md).
+The old scrolling Field homepage, its layout/navigation, page CSS, and homepage-only loop/poster have been removed. Each tool retains its own locally hosted video/poster and shared motion-preference handling. Editable media generators and approved design references remain documentation history.
 
 ## Ithaca: option pricing
 
@@ -72,11 +72,9 @@ Delphi uses bounded stateless `/v1/delphi` endpoints and the same execution capa
 
 ## Shared design and behavior
 
-The isolated `/preview/office` uses its own After Hours system: locally hosted Geist, graphite surfaces, the original CC mark, physical lamp fixtures and a persistent 3D district. Its desk panels launch tools or open the existing research anchors. This preview styling does not change the production pages or workbenches.
+The office uses its After Hours system: locally hosted Geist, graphite surfaces, the original CC mark, physical lamp fixtures and a persistent 3D district. `OfficeChrome.tsx` and `officeChrome.css` own the shared header/footer and typography. `information.css` provides the policy reading layout. The office scene and all workbenches remain lazy-loaded; policies do not load the 3D renderer or charts.
 
-Use the existing dark navy surfaces, cream serif display text, muted sans-serif body text, thin borders, and cyan accents. Typography uses shared `--serif` (Georgia with serif fallbacks) and `--sans` (system sans-serif) tokens across the site and all three tools. Plotly inherits the same computed sans-serif family as its container. Mathematical notation retains its specialized math fonts; license/code text retains monospace. Spectral colors support charts and preview art. Reuse existing controls and charts where their behavior fits.
-
-Home and policy pages use natural document scrolling. Tool viewport layouts remain scoped to their workbenches. Tool code and heavy chart dependencies are lazy-loaded; home should remain usable without the solver API or a background solve.
+Tool viewport layouts and styling remain scoped to their workbenches. Reuse existing controls and charts where their behavior fits. Mathematical notation retains its specialized math fonts; license/code text retains monospace. Home and research remain usable without the solver API or a background solve.
 
 Preserve keyboard access, visible focus, labelled controls, chart text alternatives, keyboard tabs, reduced-motion behavior, and mobile dialog focus management. Navigation supports direct links, refresh, anchors, and browser history.
 
@@ -85,7 +83,8 @@ Preserve keyboard access, visible focus, labelled controls, chart text alternati
 | Location | Responsibility |
 | --- | --- |
 | `apps/web/src/App.tsx` | Route selection and lazy tool loading |
-| `apps/web/src/site/` | Home, navigation, policies, research data, shared site styling |
+| `apps/web/src/site/` | Policy pages, research data, shared tool background lifecycle |
+| `apps/web/src/site/office/` | Office homepage, scene, navigation, research libraries, shared header/footer |
 | `apps/web/src/IthacaWorkbench.tsx` | Ithaca interface |
 | `apps/web/src/components/` | Existing numerical controls, chart and explanation components |
 | `apps/web/src/lib/` | Ithaca API client and input validation |

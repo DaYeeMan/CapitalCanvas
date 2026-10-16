@@ -1,5 +1,7 @@
 # About: editorial note implementation plan
 
+Historical design/preview record. The office was promoted to `/` on October 16, 2026; see [current office documentation](../../office-3d/README.md). Earlier preview-only scope below records the original implementation phase.
+
 Status: implemented and verified in the isolated office preview on October 15, 2026. This document retains the approved plan and records the resulting checks below.
 
 ## Approved reference
@@ -64,7 +66,7 @@ Below the links:
 
 Implementation should use the current year, matching the existing site footer. Reuse the existing legal destinations without redesigning those pages. Footer links share the top navigation's Geist font, 14px size, 450 weight, cool-grey colour and white hover state, with no permanent underline. Keep the footer visually compact, approximately 80–100px at desktop sizes, with enough clearance for the contact link. No full-width content band above it.
 
-The introduction above uses the user's revised copy and takes precedence over the older reference image. Contact and footer information come from the supplied screenshot and [HomePage.tsx](../../../../apps/web/src/site/HomePage.tsx), [siteInfo.ts](../../../../apps/web/src/site/siteInfo.ts) and [SiteLayout.tsx](../../../../apps/web/src/site/SiteLayout.tsx). Use their existing contact/legal data without modifying production pages.
+The introduction above uses the user's revised copy and takes precedence over the older reference image. Contact and footer information come from the supplied screenshot and [OfficeSite.tsx](../../../../apps/web/src/site/office/OfficeSite.tsx), [siteInfo.ts](../../../../apps/web/src/site/siteInfo.ts) and [OfficeChrome.tsx](../../../../apps/web/src/site/office/OfficeChrome.tsx). Use their existing contact/legal data without modifying production pages.
 
 ## Gradient treatment
 
@@ -104,7 +106,7 @@ Separate page/content transition state from the existing structural journey comm
 
 Likely ownership:
 - useOfficeNavigation.ts: page destination, history and scene mapping.
-- OfficePreview.tsx / office.css: active About navigation, editorial note, footer and content visibility/focus.
+- OfficeSite.tsx / office.css: active About navigation, editorial note, footer and content visibility/focus.
 - OfficeCanvas.tsx / CityAtmosphere.ts: About gradient blend and demand-frame invalidation.
 - OfficeFallback.tsx: city-backed About with usable live HTML content.
 - Existing navigation, preview and fallback tests: new About coverage.
