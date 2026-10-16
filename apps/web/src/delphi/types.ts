@@ -63,7 +63,7 @@ export interface BudgetPoint {
   result: ExperimentResult | null;
 }
 export const labels: Record<Method, string> = { cubic_spline: "Cubic spline", gaussian_process: "Gaussian process", mlp: "MLP", residual_mlp: "Residual MLP" };
-export const colors: Record<Method, string> = { cubic_spline: "#24d5e7", gaussian_process: "#c6a3ef", mlp: "#ffb000", residual_mlp: "#86d849" };
+export const colors: Record<Method, string> = { cubic_spline: "#f2eadb", gaussian_process: "#8fbcc6", mlp: "#dfbf89", residual_mlp: "#a2d7a8" };
 export const defaultReference: ReferenceRequest = { schema_version: 1, option_side: "call", market: { strike: 100, volatility: .2, rate: .05, dividend: 0 }, domain: { spot_min: 60, spot_max: 140, tau_min: 0, tau_max: 2, spot_nodes: 61, tau_nodes: 51 }, monte_carlo: { paths: 20000, seed: 42, antithetic: true } };
 export const defaultSettings: Settings = { gp: { length_scale: .35, noise_floor: .00001 }, mlp: { width: 32, epochs: 300, learning_rate: .01, regularization: .0001 }, residual_baseline: "black_scholes" };
 export function centralBounds(domain: Bounds): Bounds {
