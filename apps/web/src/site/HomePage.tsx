@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { SiteLayout } from "./SiteLayout";
 import type { HomeSection } from "./SiteNavigation";
-import { ResearchContent, AsianLatticeContent } from "./ResearchContent";
+import { ResearchContent, AsianLatticeContent, TroyMarketMakingContent } from "./ResearchContent";
 import { research } from "./research";
 import { troyResearch } from "./troyResearch";
 import { delphiResearch } from "./delphiResearch";
@@ -127,8 +127,7 @@ export default function HomePage() {
           <article id="troy-market-making" className="research-entry" tabIndex={-1} aria-labelledby="troy-market-making-title">
             <div className="research-category"><span className="section-index" aria-hidden="true">07</span><span>Implementation note</span></div>
             <div className="research-body">
-              <h3 id="troy-market-making-title">Quoting, order flow, and inventory</h3>
-              <p>Troy separates the simulated market from the maker’s pricing assumptions. The selected pricing model computes fair value and delta; its name does not indicate whether it matches the true dynamics.</p>
+              <TroyMarketMakingContent headingId="troy-market-making-title" />
             </div>
           </article>
         </div>

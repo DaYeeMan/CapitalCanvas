@@ -41,9 +41,10 @@
 .office-tool-panel::after { content: ""; position: absolute; top: calc(22px - var(--panel-top, -28px)); right: 100%; width: var(--panel-gap, 48px); height: 44px; transform: translateY(-50%); }
 .office-tool-panel h2 { margin: 0 0 7px; font: 550 18px/1.2 "Office Geist", "Segoe UI", sans-serif; letter-spacing: -.025em; }
 .office-tool-panel p { margin: 0 0 18px; color: var(--office-muted); font-size: 13px; line-height: 1.5; text-wrap: pretty; }
-.office-tool-panel a { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 47px; color: var(--office-ink); text-decoration: none; font-size: 12px; font-weight: 500; border-top: 1px solid #bac0bd33; transition: color 180ms ease; }
-.office-tool-panel a span { color: #dfc69e; font-size: 22px; transition: transform 180ms ease; }
-.office-tool-panel a:hover span { transform: translateX(3px); }
+.office-tool-panel a, .office-tool-action { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 47px; color: var(--office-ink); text-decoration: none; font: 500 12px/1.5 "Office Geist", "Segoe UI", sans-serif; border: 0; border-top: 1px solid #bac0bd33; transition: color 180ms ease; }
+.office-tool-action { width: 100%; padding: 0; background: transparent; cursor: pointer; text-align: left; }
+.office-tool-panel a span, .office-tool-action span { color: #dfc69e; font-size: 22px; transition: transform 180ms ease; }
+.office-tool-panel a:hover span, .office-tool-action:hover span { transform: translateX(3px); }
 .office-location-anchor[data-side="left"] .office-tool-panel { transform-origin: right center; }
 .office-location-anchor[data-side="left"] .office-tool-panel::before, .office-location-anchor[data-side="left"] .office-tool-panel::after { right: auto; left: 100%; }
 @keyframes office-marker-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
@@ -92,6 +93,7 @@
 .office-fallback p { margin: 0; line-height: 1.5; }
 .office-fallback ul { display: flex; gap: 24px; list-style: none; padding: 0; margin: 10px 0 0; }
 .office-fallback li a { color: var(--office-ink); text-decoration: none; }
+.office-fallback li button { min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--office-ink); font: inherit; cursor: pointer; }
 .office-city-fallback .office-fallback-notice { left: auto; right: 4.3%; bottom: 24px; max-width: 320px; }
 .office-preview[data-phase="loading"] .office-scene { visibility: hidden; }
 .office-scene[data-warming="true"] canvas { visibility: hidden; }

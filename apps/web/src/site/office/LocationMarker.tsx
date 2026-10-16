@@ -2,7 +2,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type Ref } from "r
 import type { FloorId, ToolId } from "./layouts";
 import { OFFICE_TOOLS, officeToolDestination } from "./officeTools";
 
-export function LocationMarker({ tool, label, floor = "home", active, anchorRef, hitRef }: { tool: ToolId; label: string; floor?: FloorId; active: boolean; anchorRef: Ref<HTMLDivElement>; hitRef: Ref<HTMLDivElement> }) {
+export function LocationMarker({ tool, label, floor = "home", active, anchorRef, hitRef, onReadResearch }: { tool: ToolId; label: string; floor?: FloorId; active: boolean; anchorRef: Ref<HTMLDivElement>; hitRef: Ref<HTMLDivElement>; onReadResearch?: (tool: ToolId, returnFocus: HTMLElement | null) => void }) {
   const id = useId();
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -62,7 +62,7 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
       <section id={id + "-panel"} className="office-tool-panel" aria-label={label + " details"} hidden={!open} inert={!open} aria-hidden={!open}>
         <h2>{label}</h2>
         <p>{OFFICE_TOOLS[tool].description}</p>
-        <a href={officeToolDestination(tool, floor)}>{floor === "resources" ? "Read research" : "Open tool"}<span aria-hidden="true">→</span></a>
+        {floor === "resources" && onReadResearch ? <button className="office-tool-action" type="button" onClick={() => onReadResearch(tool, trigger.current)}>Read research<span aria-hidden="true">→</span></button> : <a href={officeToolDestination(tool, floor)}>{floor === "resources" ? "Read research" : "Open tool"}<span aria-hidden="true">→</span></a>}
       </section>
     </div>
   </div>;

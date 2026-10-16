@@ -6,6 +6,15 @@ import { OfficeFallback } from "./OfficeFallback";
 
 afterEach(cleanup);
 describe("static preview alternatives", () => {
+  it("opens each library in place when the scene is unavailable", () => {
+    const read = vi.fn();
+    render(<OfficeFallback floor="resources" onReadResearch={read} />);
+    for (const name of ["Ithaca", "Troy", "Delphi"]) {
+      const button = screen.getByRole("button", { name: `${name} — Read research` });
+      fireEvent.click(button);
+      expect(read).toHaveBeenLastCalledWith(name.toLowerCase(), button);
+    }
+  });
   it("presents a current district still and reports actual unavailability", () => {
     const presented = vi.fn(), unavailable = vi.fn();
     render(<OfficeFallback floor="home" view="city" viewReset={4} onPresented={presented} onUnavailable={unavailable} />);

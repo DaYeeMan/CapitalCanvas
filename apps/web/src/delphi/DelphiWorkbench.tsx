@@ -23,7 +23,7 @@ export default function DelphiWorkbench() {
   useEffect(() => { if (experiment.errors.length) errorSummary.current?.focus(); }, [experiment.errors]);
   function selectMethod(next: Method) { setMethod(next); if (view === "uncertainty" && next !== "gaussian_process") setView("prediction"); }
   function selectView(next: View) { setSlice(false); setView(next); if (next === "uncertainty") setMethod("gaussian_process"); }
-  function changeMode(mode: Mode) { setInspectBudget(false); experiment.edit(old => ({ ...old, mode })); }
+  function changeMode(mode: Mode) { setInspectBudget(false); experiment.selectMode(mode); }
   function closeSheet() { sheet.current?.close(); controlsButton.current?.focus(); }
   const matchingInfo = referenceInfo && result?.reference_id === referenceInfo.id ? referenceInfo : null;
   const referenceMatches = result && referenceKey(config.reference) === referenceKey(result.configuration_snapshot.reference);

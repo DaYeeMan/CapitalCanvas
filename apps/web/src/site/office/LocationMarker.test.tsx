@@ -7,6 +7,17 @@ import { LocationMarker } from "./LocationMarker";
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 function marker(active = true) { return <LocationMarker tool="ithaca" label="Ithaca" active={active} anchorRef={null} hitRef={null} />; }
 describe("office tool disclosure", () => {
+  it("opens research from the existing preview without changing the route", () => {
+    const read = vi.fn();
+    render(<LocationMarker tool="ithaca" label="Ithaca" floor="resources" active anchorRef={null} hitRef={null} onReadResearch={read} />);
+    const pin = screen.getByRole("button", { name: "Ithaca" });
+    const before = window.location.href;
+    fireEvent.click(pin);
+    expect(read).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Read research" }));
+    expect(read).toHaveBeenCalledWith("ithaca", pin);
+    expect(window.location.href).toBe(before);
+  });
   it("shows only one desk panel when pointer and keyboard select different desks", () => {
     render(<div className="office-scene">{marker()}<LocationMarker tool="troy" label="Troy" active anchorRef={null} hitRef={null} /></div>);
     fireEvent.focus(screen.getByRole("button", { name: "Ithaca" }));

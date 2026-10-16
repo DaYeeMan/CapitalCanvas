@@ -45,3 +45,17 @@
 12:55:32 PM [vite] (client) hmr update /src/components/EquationPanel.tsx
 12:55:47 PM [vite] (client) hmr update /src/ithaca-after-hours.css
 12:55:47 PM [vite] (client) hmr update /src/workbench.css
+1:27:09 PM [vite] (client) hmr update /src/site/ResearchContent.tsx
+1:27:09 PM [vite] (client) hmr invalidate /src/site/ResearchContent.tsx Could not Fast Refresh (new export)
+1:27:09 PM [vite] (client) hmr update /src/site/HomePage.tsx
+1:27:09 PM [vite] (client) hmr update /src/site/HomePage.tsx
+1:27:37 PM [vite] (client) hmr update /src/site/office/LocationMarker.tsx
+1:27:37 PM [vite] (client) hmr update /src/site/office/OfficeFallback.tsx
+1:27:37 PM [vite] (client) hmr update /src/site/office/OfficePreview.tsx
+1:27:51 PM [vite] (client) hmr update /src/site/office/OfficeCanvas.tsx
+1:27:51 PM [vite] (client) hmr update /src/site/office/office.css
+1:31:38 PM [vite] (client) hmr update /src/site/office/OfficeResearchDialog.tsx
+1:31:39 PM [vite] (client) hmr update /src/site/ResearchContent.tsx
+1:41:30 PM [vite] (client) hmr update /src/delphi/DelphiWorkbench.tsx
+1:41:30 PM [vite] (client) hmr update /src/delphi/DelphiWorkbench.tsx
+1:42:07 PM [vite] (client) hmr update /src/delphi/DelphiWorkbench.tsx

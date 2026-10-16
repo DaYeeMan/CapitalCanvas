@@ -19,6 +19,73 @@ beforeEach(() => { vi.resetAllMocks(); vi.mocked(getCapabilities).mockResolvedVa
 afterEach(cleanup);
 
 describe("Delphi state and request ownership", () => {
+  it.each(["comparison", "budget", "extrapolation"] as const)("one run from %s populates all views and reuses the comparison fit in the sweep", async mode => {
+    const { result } = await ready();
+    act(() => result.current.selectMode(mode));
+    await act(() => result.current.run());
+    expect(result.current.config.mode).toBe(mode);
+    expect(getReference).toHaveBeenCalledTimes(1);
+    const requests = vi.mocked(fitExperiment).mock.calls.map(call => call[0]);
+    expect(requests.filter(request => !request.sampling.training_bounds).map(request => request.sampling.budget)).toEqual([128, 32, 64, 256]);
+    expect(requests.filter(request => request.sampling.training_bounds)).toHaveLength(1);
+    expect(requests.at(-1)?.sampling.training_bounds).toEqual(result.current.config.training_bounds);
+    expect(requests.every(request => request.reference === reference)).toBe(true);
+    expect(result.current.points.map(point => point.count)).toEqual([32, 64, 128, 256]);
+    act(() => result.current.selectMode("comparison"));
+    const comparison = result.current.result;
+    expect(comparison?.samples.count).toBe(128);
+    expect(comparison?.configuration_snapshot.sampling.training_bounds).toBeNull();
+    expect(result.current.points.find(point => point.count === 128)?.result).toBe(comparison);
+    act(() => result.current.selectMode("budget"));
+    act(() => result.current.selectResult(result.current.points[0].result!));
+    act(() => result.current.selectMode("extrapolation"));
+    expect(result.current.result?.configuration_snapshot.sampling.training_bounds).toEqual(result.current.config.training_bounds);
+    expect(result.current.result).not.toBe(comparison);
+    act(() => result.current.selectMode("comparison"));
+    expect(result.current.result).toBe(comparison);
+    expect(result.current.stale).toBe(false);
+    expect(result.current.status).toBe("Experiment complete · all 3 views");
+    expect(fitExperiment).toHaveBeenCalledTimes(5);
+  });
+  it("switches views during a run without aborting or marking results stale", async () => {
+    const first = deferred<ExperimentResult>(); vi.mocked(fitExperiment).mockImplementationOnce(() => first.promise);
+    const { result } = await ready(); let pending!: Promise<void>;
+    act(() => { pending = result.current.run(); });
+    await waitFor(() => expect(fitExperiment).toHaveBeenCalledTimes(1));
+    const [request, signal] = vi.mocked(fitExperiment).mock.calls[0];
+    act(() => result.current.selectMode("extrapolation"));
+    expect(signal.aborted).toBe(false); expect(result.current.busy).toBe(true);
+    await act(async () => { first.resolve(resultFor(request)); await pending; });
+    expect(result.current.config.mode).toBe("extrapolation");
+    expect(result.current.result?.configuration_snapshot.sampling.training_bounds).toEqual(result.current.config.training_bounds);
+    expect(result.current.stale).toBe(false); expect(result.current.busy).toBe(false);
+  });
+  it("validates the sweep and extrapolation inputs even when another view is selected", async () => {
+    const { result } = await ready();
+    act(() => result.current.edit(old => ({ ...old, budgets: [], training_bounds: { ...old.training_bounds, spot_max: old.training_bounds.spot_min } })));
+    await act(() => result.current.run());
+    expect(result.current.errors.join(" ")).toMatch(/Select 1.*budgets/);
+    expect(result.current.errors.join(" ")).toContain("Training spot bounds");
+    expect(getReference).not.toHaveBeenCalled(); expect(fitExperiment).not.toHaveBeenCalled();
+  });
+  it("retains each view's completed results and curves when cancelling before the next sweep starts", async () => {
+    const { result } = await ready();
+    await act(() => result.current.run());
+    const comparison = result.current.result, points = result.current.points;
+    act(() => result.current.selectMode("extrapolation"));
+    const extrapolation = result.current.result;
+    act(() => result.current.edit(old => ({ ...old, training_seed: 99 })));
+    const next = deferred<ExperimentResult>(); vi.mocked(fitExperiment).mockImplementationOnce(() => next.promise);
+    let pending!: Promise<void>; act(() => { pending = result.current.run(); });
+    await waitFor(() => expect(fitExperiment).toHaveBeenCalledTimes(6));
+    act(() => result.current.cancel());
+    await act(async () => { next.resolve(resultFor(vi.mocked(fitExperiment).mock.calls[5][0])); await pending; });
+    expect(result.current.result).toBe(extrapolation); expect(result.current.stale).toBe(true);
+    expect(result.current.points).toBe(points);
+    act(() => result.current.selectMode("comparison"));
+    expect(result.current.result).toBe(comparison); expect(result.current.stale).toBe(true);
+    expect(result.current.busy).toBe(false);
+  });
   it("does not auto-run; preserves results after edits and reuses references only for matching inputs", async () => {
     const { result } = await ready(); expect(getReference).not.toHaveBeenCalled();
     await act(() => result.current.run()); const first = result.current.result;
@@ -40,12 +107,12 @@ describe("Delphi state and request ownership", () => {
     expect(result.current.result).toBe(latest); expect(result.current.errors).toEqual([]); expect(result.current.busy).toBe(false);
   });
   it("runs budgets serially, reuses one reference, and retains only completed budgets on cancellation", async () => {
-    const second = deferred<ExperimentResult>(); vi.mocked(fitExperiment).mockImplementationOnce(async request => resultFor(request)).mockImplementationOnce(() => second.promise);
+    const second = deferred<ExperimentResult>(); vi.mocked(fitExperiment).mockImplementationOnce(async request => resultFor(request)).mockImplementationOnce(async request => resultFor(request)).mockImplementationOnce(() => second.promise);
     const { result } = await ready(); act(() => result.current.edit(old => ({ ...old, mode: "budget" })));
     let pending!: Promise<void>; act(() => { pending = result.current.run(); });
-    await waitFor(() => expect(fitExperiment).toHaveBeenCalledTimes(2)); expect(result.current.points.map(p => p.count)).toEqual([32]); expect(getReference).toHaveBeenCalledTimes(1);
-    act(() => result.current.cancel()); await act(async () => { second.resolve(resultFor(vi.mocked(fitExperiment).mock.calls[1][0])); await pending; });
-    expect(result.current.points.map(p => p.count)).toEqual([32]); expect(fitExperiment).toHaveBeenCalledTimes(2); expect(result.current.busy).toBe(false);
+    await waitFor(() => expect(fitExperiment).toHaveBeenCalledTimes(3)); expect(result.current.points.map(p => p.count)).toEqual([32]); expect(getReference).toHaveBeenCalledTimes(1);
+    act(() => result.current.cancel()); await act(async () => { second.resolve(resultFor(vi.mocked(fitExperiment).mock.calls[2][0])); await pending; });
+    expect(result.current.points.map(p => p.count)).toEqual([32]); expect(fitExperiment).toHaveBeenCalledTimes(3); expect(result.current.busy).toBe(false);
   });
   it.each(["reset", "unmount"])("aborts and prevents reference commits after %s", async action => {
     const pendingReference = deferred<PriceReference>(); vi.mocked(getReference).mockReturnValue(pendingReference.promise);
@@ -56,7 +123,7 @@ describe("Delphi state and request ownership", () => {
     expect(fitExperiment).not.toHaveBeenCalled(); expect(hook.result.current.result).toBeNull();
   });
   it("reports all-model failures and rejects mismatched result identities", async () => {
-    vi.mocked(fitExperiment).mockImplementationOnce(async request => ({ ...resultFor(request), methods: request.methods.map(method => ({ method, status: "failed", error: { code: "numerical", message: "failed" } })) } as ExperimentResult));
+    vi.mocked(fitExperiment).mockImplementation(async request => ({ ...resultFor(request), methods: request.methods.map(method => ({ method, status: "failed", error: { code: "numerical", message: "failed" } })) } as ExperimentResult));
     const { result } = await ready(); await act(() => result.current.run()); expect(result.current.status).toContain("all models failed"); expect(result.current.errors[0]).toContain("All models failed");
     vi.mocked(fitExperiment).mockImplementationOnce(async request => ({ ...resultFor(request), reference_id: "wrong" }));
     await act(() => result.current.run()); expect(result.current.errors[0]).toContain("does not match");
