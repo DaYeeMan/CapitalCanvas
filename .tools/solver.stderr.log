@@ -150,3 +150,8 @@ INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 {"event": "request_complete", "request_id": "bbc89f0b92a24d27ac07fd025e871add", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 130.25}
 {"event": "request_complete", "request_id": "844cedfae61a4a3c9fc275282aadf9d8", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 140.16}
 {"event": "request_complete", "request_id": "557a5ff16d9d479ab0ec206c55e18102", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 199.24}
+{"event": "request_complete", "request_id": "8b094794185b43e09d7caa5e4b368aff", "method": "POST", "path": "/v1/solve", "status": 200, "duration_ms": 498.32}
+{"event": "request_complete", "request_id": "5f974cd35ffa444285a15b581b2ec7a8", "method": "GET", "path": "/v1/delphi/capabilities", "status": 200, "duration_ms": 1.09}
+{"event": "request_complete", "request_id": "5e04ce4668af45c9b986ab9db76c3722", "method": "POST", "path": "/v1/solve", "status": 200, "duration_ms": 505.48}
+{"event": "request_complete", "request_id": "95cf1e5c7d1e4f849cf893cb94c31cdb", "method": "GET", "path": "/v1/delphi/capabilities", "status": 200, "duration_ms": 2.33}
+{"event": "request_complete", "request_id": "c3960b698e6c4739b2b08c61be9ea565", "method": "POST", "path": "/v1/solve", "status": 200, "duration_ms": 472.33}

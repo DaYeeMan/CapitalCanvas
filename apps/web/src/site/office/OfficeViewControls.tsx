@@ -1,12 +1,12 @@
-import { useLayoutEffect, useRef, type RefObject } from "react";
+import { useCallback, useLayoutEffect, useRef, type RefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrthographicCamera, Vector3 } from "three";
-import { BUILDING, CAMERA, TALL_WALL_TOP } from "./layouts";
+import { BUILDING, TALL_WALL_TOP } from "./layouts";
 import type { FloorId } from "./layouts";
 import { TOWER_SITE } from "./towerStructure";
 import { applyCamera, CAMERA_OFFSET, captureCamera, fittedCamera, inspectionCamera, inspectionEase } from "./cameraFit";
 import type { CameraPose } from "./towerMotion";
-import { clampPan, clampZoom, panLimits, resistPan, VIEW, wheelPixels, zoomAt, type OfficeView, type ViewMotion, type ViewPoint } from "./officeView";
+import { clampPan, clampZoom, officeZoomRange, panLimits, pinchAt, resistPan, VIEW, wheelPixels, zoomAt, type OfficeView, type ViewMotion, type ViewPoint } from "./officeView";
 
 interface Fit { left: number; right: number; top: number; bottom: number; width: number; height: number }
 interface ReturnMotion { from: OfficeView; to: OfficeView; began: number }
@@ -18,15 +18,25 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
   elevation?: number; floor: FloorId; overview: boolean;
 }) {
   const { camera, size, invalidate } = useThree();
-  const view = useRef<OfficeView>({ zoom: 1, pan: { x: 0, y: 0 } });
+  const view = useRef<OfficeView>({ zoom: officeZoomRange(size.width, size.height).defaultZoom, pan: { x: 0, y: 0 } });
   const fit = useRef<Fit>({ left: -1, right: 1, top: 1, bottom: -1, width: 1, height: 1 });
   const returning = useRef<ReturnMotion | null>(null);
   const drag = useRef<Drag | null>(null);
+  const touches = useRef(new Map<number, ViewPoint>());
+  const pinch = useRef<{ distance: number; midpoint: ViewPoint; view: OfficeView } | null>(null);
+  const zoomRange = useRef(officeZoomRange(size.width, size.height));
   const inspection = useRef<{ from: CameraPose; to: CameraPose; fromWide: number; toWide: number; began: number } | null>(null);
   const inspectionFit = useRef<CameraPose | null>(null);
   const lastOverview = useRef(overview);
   const options = useRef({ settled, reducedMotion, pageVisible, overview });
   useLayoutEffect(() => { options.current = { settled, reducedMotion, pageVisible, overview }; }, [settled, reducedMotion, pageVisible, overview]);
+  const stopInput = useCallback(() => {
+    const node = element.current;
+    const ids = new Set(touches.current.keys());
+    if (drag.current) ids.add(drag.current.id);
+    drag.current = null; touches.current.clear(); pinch.current = null;
+    for (const id of ids) if (node?.hasPointerCapture(id)) node.releasePointerCapture(id);
+  }, [element]);
 
   useLayoutEffect(() => {
     // Measure with an independent camera: resizing must not disturb a running
@@ -37,27 +47,37 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
     const xs = corners.map(p => p.x), ys = corners.map(p => p.y);
     const left = Math.min(...xs), right = Math.max(...xs), bottom = Math.min(...ys), top = Math.max(...ys);
     const aspect = size.width / Math.max(size.height, 1);
-    const height = Math.max(top - bottom, (right - left) / aspect) * CAMERA.padding;
-    const cx = (left + right) / 2, cy = (bottom + top) / 2;
+    // Settled controls must use the same responsive endpoint as floor travel.
+    const pose = fittedCamera(floor, size.width, size.height);
+    const range = officeZoomRange(size.width, size.height);
+    const changedRange = range !== zoomRange.current;
+    zoomRange.current = range;
+    const height = pose.height * zoomRange.current.defaultZoom, cx = pose.centerX, cy = pose.centerY;
     fit.current = { left: cx - height * aspect / 2, right: cx + height * aspect / 2, top: cy + height / 2, bottom: cy - height / 2, width: (right - left) / (height * aspect) * size.width, height: (top - bottom) / height * size.height };
-    view.current.pan = { x: 0, y: 0 };
+    // Keep a user's scale when phone browser chrome or orientation changes.
+    view.current = { zoom: changedRange ? range.defaultZoom : clampZoom(view.current.zoom, range), pan: { x: 0, y: 0 } };
     returning.current = null;
-    const node = element.current, id = drag.current?.id;
-    drag.current = null;
-    if (node && id !== undefined && node.hasPointerCapture(id)) node.releasePointerCapture(id);
+    stopInput();
     motion.current.busy = false;
     invalidate();
-  }, [camera, size.width, size.height, element, motion, invalidate, elevation]);
+  }, [camera, size.width, size.height, motion, invalidate, elevation, floor, stopInput]);
 
   useLayoutEffect(() => {
     const node = element.current;
     if (!node) return;
-    const limits = () => panLimits(view.current.zoom, fit.current.width, fit.current.height);
+    const limits = (zoom = view.current.zoom) => panLimits(zoom, fit.current.width, fit.current.height, zoomRange.current);
     const point = (event: PointerEvent) => ({ x: event.clientX, y: event.clientY });
-    const releaseCapture = () => {
-      const id = drag.current?.id;
-      drag.current = null;
-      if (id !== undefined && node.hasPointerCapture(id)) node.releasePointerCapture(id);
+    const localPoint = (p: ViewPoint) => {
+      const rect = node.getBoundingClientRect();
+      return { x: p.x - rect.left - rect.width / 2, y: p.y - rect.top - rect.height / 2 };
+    };
+    const touchPair = () => {
+      const [a, b] = [...touches.current.values()];
+      return { distance: Math.max(1, Math.hypot(b.x - a.x, b.y - a.y)), midpoint: localPoint({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }) };
+    };
+    const beginPinch = () => {
+      pinch.current = { ...touchPair(), view: { zoom: view.current.zoom, pan: { ...view.current.pan } } };
+      drag.current = null; motion.current.busy = true;
     };
     const returnTo = (to: OfficeView) => {
       const same = Math.abs(to.zoom - view.current.zoom) < 0.001 && Math.hypot(to.pan.x - view.current.pan.x, to.pan.y - view.current.pan.y) < 0.1;
@@ -70,14 +90,34 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
       invalidate();
     };
     const down = (event: PointerEvent) => {
-      if ((event.target as HTMLElement).closest(".office-tool-panel, .office-location")) return;
-      if (event.button !== 0 || !event.isPrimary || !options.current.settled || !options.current.pageVisible || options.current.overview || motion.current.inspecting || event.pointerType === "touch") return;
+      const target = event.target as HTMLElement;
+      if (target.closest(".office-tool-panel") || event.pointerType !== "touch" && target.closest(".office-location")) return;
+      if (event.button !== 0 || (!event.isPrimary && event.pointerType !== "touch") || !options.current.settled || !options.current.pageVisible || options.current.overview || motion.current.inspecting) return;
       returning.current = null;
-      motion.current.pointer = point(event);
+      motion.current.pointer = event.pointerType === "touch" ? null : point(event);
+      if (event.pointerType === "touch") {
+        touches.current.set(event.pointerId, point(event));
+        // Keep single marker taps targeted at the button. Once a gesture starts,
+        // capture both fingers on the scene so their release cannot click a desk.
+        if (touches.current.size >= 2) {
+          for (const id of touches.current.keys()) node.setPointerCapture(id);
+          beginPinch(); event.preventDefault(); invalidate(); return;
+        }
+        if (!target.closest(".office-location")) node.setPointerCapture(event.pointerId);
+      }
       drag.current = { id: event.pointerId, origin: point(event), pan: { ...view.current.pan }, started: false };
     };
     const move = (event: PointerEvent) => {
-      motion.current.pointer = point(event);
+      motion.current.pointer = event.pointerType === "touch" ? null : point(event);
+      if (event.pointerType === "touch" && touches.current.has(event.pointerId)) {
+        touches.current.set(event.pointerId, point(event));
+        if (pinch.current && touches.current.size >= 2) {
+          const pair = touchPair(), start = pinch.current;
+          const zoom = clampZoom(start.view.zoom * pair.distance / start.distance, zoomRange.current);
+          view.current = pinchAt(start.view, zoom, start.midpoint, pair.midpoint, limits(zoom), zoomRange.current);
+          motion.current.busy = true; event.preventDefault(); invalidate(); return;
+        }
+      }
       const active = drag.current;
       if (!active || active.id !== event.pointerId) return;
       const dx = event.clientX - active.origin.x, dy = event.clientY - active.origin.y;
@@ -88,37 +128,52 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
       event.preventDefault(); invalidate();
     };
     const up = (event: PointerEvent) => {
+      if (touches.current.delete(event.pointerId)) {
+        const manipulated = Boolean(pinch.current || drag.current?.started);
+        drag.current = null; pinch.current = null;
+        if (node.hasPointerCapture(event.pointerId)) node.releasePointerCapture(event.pointerId);
+        if (touches.current.size >= 2) beginPinch();
+        else if (touches.current.size === 1) {
+          const [id, origin] = [...touches.current][0];
+          drag.current = { id, origin, pan: { ...view.current.pan }, started: manipulated };
+        } else {
+          motion.current.pointer = null;
+          returnTo({ zoom: view.current.zoom, pan: clampPan(view.current.pan, limits()) });
+        }
+        invalidate(); return;
+      }
       if (drag.current?.id !== event.pointerId) return;
       const started = drag.current.started;
-      releaseCapture();
+      stopInput();
       const legal = clampPan(view.current.pan, limits());
       if (started || legal.x !== view.current.pan.x || legal.y !== view.current.pan.y) returnTo({ zoom: view.current.zoom, pan: legal });
       else { motion.current.busy = false; invalidate(); }
     };
-    const lost = () => {
-      if (!drag.current) return;
-      drag.current = null;
+    const lost = (event: PointerEvent) => {
+      if (event.type === "lostpointercapture" && node.hasPointerCapture(event.pointerId)) return;
+      if (!touches.current.has(event.pointerId) && drag.current?.id !== event.pointerId) return;
+      stopInput(); motion.current.pointer = null;
       returnTo({ zoom: view.current.zoom, pan: clampPan(view.current.pan, limits()) });
     };
     const wheel = (event: WheelEvent) => {
       if ((event.target as HTMLElement).closest(".office-tool-panel")) return;
       if (event.ctrlKey || event.metaKey || !options.current.settled || !options.current.pageVisible || options.current.overview || motion.current.inspecting) return;
-      event.preventDefault(); releaseCapture(); returning.current = null; motion.current.busy = false;
+      event.preventDefault(); stopInput(); returning.current = null; motion.current.busy = false;
       motion.current.pointer = { x: event.clientX, y: event.clientY };
       const rect = node.getBoundingClientRect();
       const cursor = { x: event.clientX - rect.left - rect.width / 2, y: event.clientY - rect.top - rect.height / 2 };
-      const zoom = clampZoom(view.current.zoom * Math.exp(-wheelPixels(event.deltaY, event.deltaMode, rect.height) * VIEW.wheelSensitivity));
-      view.current = zoomAt(view.current, zoom, cursor, panLimits(zoom, fit.current.width, fit.current.height));
+      const zoom = clampZoom(view.current.zoom * Math.exp(-wheelPixels(event.deltaY, event.deltaMode, rect.height) * VIEW.wheelSensitivity), zoomRange.current);
+      view.current = zoomAt(view.current, zoom, cursor, limits(zoom), zoomRange.current);
       invalidate();
     };
     const key = (event: KeyboardEvent) => {
       if (event.target !== node.parentElement || event.ctrlKey || event.metaKey || event.altKey || !options.current.settled || options.current.overview || motion.current.inspecting) return;
       if (!["+", "=", "-", "0", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
-      event.preventDefault(); releaseCapture(); returning.current = null; motion.current.busy = false;
-      if (event.key === "0") returnTo({ zoom: 1, pan: { x: 0, y: 0 } });
+      event.preventDefault(); stopInput(); returning.current = null; motion.current.busy = false;
+      if (event.key === "0") returnTo({ zoom: zoomRange.current.defaultZoom, pan: { x: 0, y: 0 } });
       else if (["+", "=", "-"].includes(event.key)) {
-        const zoom = clampZoom(view.current.zoom * (event.key === "-" ? 1 / 1.15 : 1.15));
-        view.current = zoomAt(view.current, zoom, { x: 0, y: 0 }, panLimits(zoom, fit.current.width, fit.current.height));
+        const zoom = clampZoom(view.current.zoom * (event.key === "-" ? 1 / 1.15 : 1.15), zoomRange.current);
+        view.current = zoomAt(view.current, zoom, { x: 0, y: 0 }, limits(zoom), zoomRange.current);
       } else {
         const pan = { ...view.current.pan };
         if (event.key === "ArrowLeft") pan.x += 48;
@@ -140,47 +195,41 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
       if (dx || dy) { returning.current = null; view.current.pan = clampPan({ x: view.current.pan.x + dx, y: view.current.pan.y + dy }, limits()); invalidate(); }
     };
     node.addEventListener("pointerdown", down, true); node.addEventListener("pointermove", move, true);
-    node.addEventListener("pointerup", up, true); node.addEventListener("pointercancel", up, true);
+    node.addEventListener("pointerup", up, true); node.addEventListener("pointercancel", lost, true);
     node.addEventListener("lostpointercapture", lost); node.addEventListener("wheel", wheel, { passive: false });
     node.addEventListener("focusin", focus); node.parentElement?.addEventListener("keydown", key);
     return () => {
-      releaseCapture();
+      stopInput();
       node.removeEventListener("pointerdown", down, true); node.removeEventListener("pointermove", move, true);
-      node.removeEventListener("pointerup", up, true); node.removeEventListener("pointercancel", up, true);
+      node.removeEventListener("pointerup", up, true); node.removeEventListener("pointercancel", lost, true);
       node.removeEventListener("lostpointercapture", lost); node.removeEventListener("wheel", wheel);
       node.removeEventListener("focusin", focus); node.parentElement?.removeEventListener("keydown", key);
     };
-  }, [element, motion, invalidate]);
+  }, [element, motion, invalidate, stopInput]);
 
   useLayoutEffect(() => {
-    const node = element.current, id = drag.current?.id;
-    drag.current = null;
-    if (node && id !== undefined && node.hasPointerCapture(id)) node.releasePointerCapture(id);
-    const to = { zoom: 1, pan: { x: 0, y: 0 } };
-    const same = view.current.zoom === 1 && view.current.pan.x === 0 && view.current.pan.y === 0;
+    stopInput();
+    const to = { zoom: zoomRange.current.defaultZoom, pan: { x: 0, y: 0 } };
+    const same = view.current.zoom === to.zoom && view.current.pan.x === 0 && view.current.pan.y === 0;
     if (instantReset || options.current.reducedMotion || !options.current.pageVisible || same) { view.current = to; returning.current = null; motion.current.busy = false; }
     else { returning.current = { from: { zoom: view.current.zoom, pan: { ...view.current.pan } }, to, began: performance.now() }; motion.current.busy = true; }
     invalidate();
-  }, [reset, instantReset, element, motion, invalidate]);
+  }, [reset, instantReset, motion, invalidate, stopInput]);
 
   useLayoutEffect(() => {
     if (settled) return;
-    const node = element.current, id = drag.current?.id;
-    drag.current = null; returning.current = null; motion.current.busy = false;
-    if (node && id !== undefined && node.hasPointerCapture(id)) node.releasePointerCapture(id);
+    stopInput(); returning.current = null; motion.current.busy = false;
     invalidate();
-  }, [settled, element, motion, invalidate]);
+  }, [settled, motion, invalidate, stopInput]);
 
   useLayoutEffect(() => {
     if (!pageVisible || reducedMotion) {
-      const node = element.current, id = drag.current?.id;
-      drag.current = null;
-      if (node && id !== undefined && node.hasPointerCapture(id)) node.releasePointerCapture(id);
-      view.current.pan = clampPan(view.current.pan, panLimits(view.current.zoom, fit.current.width, fit.current.height));
+      stopInput();
+      view.current.pan = clampPan(view.current.pan, panLimits(view.current.zoom, fit.current.width, fit.current.height, zoomRange.current));
       returning.current = null; motion.current.busy = false;
     }
     if (pageVisible) invalidate();
-  }, [pageVisible, reducedMotion, element, motion, invalidate]);
+  }, [pageVisible, reducedMotion, motion, invalidate, stopInput]);
 
   useLayoutEffect(() => {
     const cam = camera as OrthographicCamera, toWide = Number(overview);
@@ -192,7 +241,7 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
       const from = captureCamera(cam, motion.current.cameraTargetY ?? elevation);
       const fromWide = motion.current.inspectionWide ?? 0;
       inspection.current = reducedMotion || !pageVisible ? null : { from, to, fromWide, toWide, began: performance.now() };
-      returning.current = null; view.current = { zoom: 1, pan: { x: 0, y: 0 } };
+      stopInput(); returning.current = null; view.current = { zoom: zoomRange.current.defaultZoom, pan: { x: 0, y: 0 } };
       motion.current.inspectionWide = inspection.current ? fromWide : toWide;
       motion.current.inspecting = Boolean(inspection.current);
       motion.current.busy = overview || Boolean(inspection.current);
@@ -203,7 +252,7 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
     }
     element.current?.setAttribute("data-inspecting", String(Boolean(inspection.current)));
     invalidate();
-  }, [overview, floor, size.width, size.height, reducedMotion, pageVisible, camera, elevation, element, motion, invalidate]);
+  }, [overview, floor, size.width, size.height, reducedMotion, pageVisible, camera, elevation, element, motion, invalidate, stopInput]);
 
   useLayoutEffect(() => () => {
     motion.current.inspecting = false; motion.current.busy = false;
@@ -254,7 +303,7 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
       cam.left = base.left - dx; cam.right = base.right - dx; cam.top = base.top + dy; cam.bottom = base.bottom + dy; cam.zoom = current.zoom;
       cam.updateProjectionMatrix(); motion.current.revision++;
     }
-    const limits = panLimits(current.zoom, base.width, base.height);
+    const limits = panLimits(current.zoom, base.width, base.height, zoomRange.current);
     node.dataset.zoom = String(current.zoom);
     node.dataset.cameraHeight = String((cam.top - cam.bottom) / cam.zoom);
     node.dataset.panX = String(current.pan.x); node.dataset.panY = String(current.pan.y);

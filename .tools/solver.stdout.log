@@ -146,3 +146,8 @@ INFO:     127.0.0.1:62001 - "POST /v1/delphi/experiment HTTP/1.1" 200 OK
 INFO:     127.0.0.1:50559 - "POST /v1/delphi/experiment HTTP/1.1" 200 OK
 INFO:     127.0.0.1:52389 - "POST /v1/delphi/experiment HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55425 - "POST /v1/delphi/experiment HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62977 - "POST /v1/solve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54973 - "GET /v1/delphi/capabilities HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50455 - "POST /v1/solve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53186 - "GET /v1/delphi/capabilities HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54560 - "POST /v1/solve HTTP/1.1" 200 OK

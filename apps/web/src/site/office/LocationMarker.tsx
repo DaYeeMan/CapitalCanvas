@@ -44,6 +44,15 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
     return () => { scene?.removeEventListener("office-view-hover", refresh); scene?.removeEventListener("office-tool-intent", claim); };
   }, [tool]);
   const open = active && !viewBusy && !dismissed && (hovered || focused);
+  useEffect(() => {
+    if (!open) return;
+    const dismissOutside = (event: PointerEvent) => {
+      if (event.pointerType !== "touch" || root.current?.contains(event.target as Node)) return;
+      hoverState.current = false; setHovered(false); setFocused(false); setDismissed(true);
+    };
+    document.addEventListener("pointerdown", dismissOutside);
+    return () => document.removeEventListener("pointerdown", dismissOutside);
+  }, [open]);
   useLayoutEffect(() => {
     root.current?.closest(".office-scene")?.dispatchEvent(new Event("office-panel-layout"));
   }, [open]);
@@ -60,6 +69,7 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
         <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M20 8 32 20 20 32 8 20Z" /><circle cx="20" cy="20" r="3" /></svg>
       </button>
       <section id={id + "-panel"} className="office-tool-panel" aria-label={label + " details"} hidden={!open} inert={!open} aria-hidden={!open}>
+        <button className="office-tool-close" type="button" aria-label={`Close ${label} preview`} onClick={() => { trigger.current?.focus({ preventScroll: true }); hoverState.current = false; setHovered(false); setFocused(false); setDismissed(true); }}>×</button>
         <h2>{label}</h2>
         <p>{OFFICE_TOOLS[tool].description}</p>
         {floor === "resources" && onReadResearch ? <button className="office-tool-action" type="button" onClick={() => onReadResearch(tool, trigger.current)}>Read research<span aria-hidden="true">→</span></button> : <a href={officeToolDestination(tool, floor)}>{floor === "resources" ? "Read research" : "Open tool"}<span aria-hidden="true">→</span></a>}

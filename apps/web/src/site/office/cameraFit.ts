@@ -2,6 +2,7 @@ import { OrthographicCamera, Vector3 } from "three";
 import { BUILDING, CAMERA, TALL_WALL_TOP } from "./layouts";
 import { GROUND_Y, TOWER_SITE, towerPose, type PreviewView } from "./towerStructure";
 import type { CameraPose } from "./towerMotion";
+import { officeZoomRange } from "./officeView";
 
 // Same isometric basis for every scale. Orthographic distance changes no size.
 export const CAMERA_OFFSET = [112, 96, 112] as const;
@@ -19,14 +20,29 @@ export function fittedCamera(view: PreviewView, width: number, height: number, o
   const bottom = Math.min(...points.map(p => p.y)), top = Math.max(...points.map(p => p.y));
   const aspect = width / Math.max(1, height);
   const fittedHeight = wide ? Math.max((top - bottom) * (city ? 1.12 : 1.4), (right - left) / aspect * (city ? 1.5 : 1.2)) : Math.max(top - bottom, (right - left) / aspect) * CAMERA.padding;
-  // Reframe the district without moving the tower's physical footprint or
-  // changing either office endpoint. Positive camera offsets shift the scene
-  // left/down respectively, so lower centerY to raise the city on the page.
-  const heightInView = fittedHeight * (city ? 0.9 : 1);
+  // Preserve desktop framing. Phones use closer shared endpoints without
+  // moving the physical tower. Positive camera offsets move the scene left/down.
+  const portrait = width <= 700 && height > width;
+  const shortLandscape = width <= 950 && height <= 500 && width > height;
+  const mobile = portrait || shortLandscape;
+  // Browser chrome can change phone height while scrolling; avoid a zoom step.
+  const cityZoom = portrait ? 1.35 + Math.min(1, Math.max(0, (height - 667) / 177)) * 0.15 : 1.12;
+  const officeZoom = portrait ? 1.25 : 1.1;
+  const zoom = mobile && !overview ? city ? cityZoom : officeZoom : 1;
+  const baseHeightInView = fittedHeight * (city ? 0.9 : 1) / zoom;
+  const defaultZoom = !city && !overview ? officeZoomRange(width, height).defaultZoom : 1;
+  const heightInView = baseHeightInView / defaultZoom;
   const towerTop = city ? Math.max(...[-1, 1].flatMap(x => [-1, 1].map(z =>
     new Vector3(x * TOWER_HALF, pose.top, z * TOWER_HALF).applyMatrix4(camera.matrixWorldInverse).y))) : top;
+  if (mobile && city) {
+    const towerX = new Vector3(TOWER_SITE.x, targetY, TOWER_SITE.z).applyMatrix4(camera.matrixWorldInverse).x;
+    const roof = Math.max(...[-1, 1].flatMap(x => [-1, 1].map(z => new Vector3(TOWER_SITE.x + x * TOWER_HALF, pose.top, TOWER_SITE.z + z * TOWER_HALF).applyMatrix4(camera.matrixWorldInverse).y)));
+    const roofInset = portrait ? Math.max(124, height * 0.16) : 96;
+    return { targetY, centerX: towerX + heightInView * aspect * (0.5 - (portrait ? 0.58 : 0.72)),
+      centerY: roof + heightInView * (roofInset / height - 0.5), height: heightInView };
+  }
   return { targetY, centerX: (left + right) / 2 - (city ? heightInView * aspect * 0.16 : 0),
-    centerY: city ? towerTop - heightInView * 0.44 : (bottom + top) / 2, height: heightInView };
+    centerY: city ? towerTop - heightInView * 0.44 : (bottom + top) / 2 + (!overview && mobile ? baseHeightInView * (portrait ? 0.04 : -0.04) : 0), height: heightInView };
 }
 const TOWER_HALF = (BUILDING.width + BUILDING.wallThickness) / 2;
 

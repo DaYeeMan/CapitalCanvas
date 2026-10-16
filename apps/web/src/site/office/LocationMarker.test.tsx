@@ -7,6 +7,18 @@ import { LocationMarker } from "./LocationMarker";
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 function marker(active = true) { return <LocationMarker tool="ithaca" label="Ithaca" active={active} anchorRef={null} hitRef={null} />; }
 describe("office tool disclosure", () => {
+  it("allows a touch user to dismiss a preview with its close control or an outside tap", () => {
+    const { container } = render(marker());
+    const pin = screen.getByRole("button", { name: "Ithaca" });
+    fireEvent.click(pin);
+    fireEvent.click(screen.getByRole("button", { name: "Close Ithaca preview" }));
+    expect(container.querySelector(".office-tool-panel")).toHaveAttribute("hidden");
+    fireEvent.click(pin);
+    const outside = new Event("pointerdown", { bubbles: true });
+    Object.defineProperty(outside, "pointerType", { value: "touch" });
+    fireEvent(document.body, outside);
+    expect(container.querySelector(".office-tool-panel")).toHaveAttribute("hidden");
+  });
   it("opens research from the existing preview without changing the route", () => {
     const read = vi.fn();
     render(<LocationMarker tool="ithaca" label="Ithaca" floor="resources" active anchorRef={null} hitRef={null} onReadResearch={read} />);

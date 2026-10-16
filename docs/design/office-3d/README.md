@@ -22,4 +22,14 @@ The district stays present throughout travel. Visible task/lounge lamps explain 
 
 From the repository root, run `npm run test:web`, `npm run lint:web` and `npm run build:web`. Tests cover layouts, spatial/posed-character clearance, simulation, navigation, motion, wall/light continuity, markers, camera controls and fallback behavior.
 
-Desktop browser verification covers city, About, both floors, inspection, tool/research links, keyboard/pointer interactions, travel/history/interruption, resize, reduced motion and unavailable WebGL. Mobile/touch design and production integration remain separate work.
+Desktop browser verification covers city, About, both floors, inspection, tool/research links, keyboard/pointer interactions, travel/history/interruption, resize, reduced motion and unavailable WebGL.
+
+## Phone framing and layout
+
+Phone portrait city framing is 35–50% closer, varying smoothly with viewport height. Office floors start at 2× of the responsive base fit (25% closer in portrait, 10% in short landscape). This crops the raised upper tower out of the floor view while keeping all three desk markers reachable. Phones can pinch between 1× and 4× and pan with one finger; desktop keeps its 1× default and 1×–2× range. Floor entry, selecting the current floor, and keyboard 0 restore the default. Phone rotation and browser-height changes retain user zoom. Floor travel and settled controls share the same endpoint, preventing an arrival scale jump.
+
+Phone desk previews dock below the floor in portrait and at the right edge in short landscape, with a close button and outside-touch dismissal. Touch layouts omit the mouse hover connector that could obstruct neighboring markers. The mobile header has a reading shade and 44px navigation targets. About has a wider, internally scrollable reading area with a wrapping footer so headings and legal/contact links stay reachable on short screens.
+
+Edge touch emulation exercises 320×568, 375×667, 390×844, 430×932, 568×320 and 844×390: entry, all three desks on both floors, research dialogs, preview dismissal, About/footer bounds, animated return, resize during travel and desktop framing. The zoom pass additionally checks multitouch input, both zoom limits, one-finger pan, lifting one finger during a pinch, cancellation, default reset, and native research scrolling. Browser plugin unavailable; bundled Playwright is used. Temporary screenshots and scripts remain outside the repository. These are emulated checks, not physical-device or Safari verification. Production integration remains separate work.
+
+The mobile zoom pass has 243 passing web tests. The production build passes; lint has no errors and retains the existing DelphiSurface dependency warning.
