@@ -5,7 +5,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { updateExteriorLightView } from "./officeLightIsolation";
 import { TOWER_SITE } from "./towerStructure";
-import type { RenderQuality } from "./renderQuality";
+import { officeUsesMobileQuality, type RenderQuality } from "./renderQuality";
 
 // Reconstruct each visible surface from the depth buffer, so peripheral roads
 // and context recede softly while the central tower stays sharp. The blur
@@ -13,7 +13,7 @@ import type { RenderQuality } from "./renderQuality";
 const spatialUniforms = `
   uniform sampler2D tDepth;
   uniform mat4 projectionInverse, viewInverse;
-  uniform float presence, focusY, landing, about;
+  uniform float presence, focusY, landing, about, toolbarBlend;
   uniform float contactSamples, blurDiagonals;
   uniform vec3 ground, cityShadow, cityGlow;
   uniform vec2 texel, towerOrigin;
@@ -57,6 +57,7 @@ export class CityAtmosphere {
       cityShadow: { value: new Color("#101c26") }, cityGlow: { value: new Color("#3a4a57") },
       landing: { value: 0 },
       about: { value: 0 },
+      toolbarBlend: { value: Number(officeUsesMobileQuality()) },
       contactSamples: { value: 8 }, blurDiagonals: { value: 1 },
       texel: { value: new Vector2() },
       towerOrigin: { value: new Vector2(TOWER_SITE.x, TOWER_SITE.z) },
@@ -122,8 +123,11 @@ export class CityAtmosphere {
         // that distant geometry fades into. Office/inspection keep their grade.
         float landingWeight = smoothstep(0.0, 1.0, landing);
         vec2 cityOffset = (vUv - vec2(0.73, 0.43)) / vec2(0.52, 0.65);
+        // Meet the document's #101c26 backdrop at the bottom edge. Safari can
+        // expose that backdrop behind its toolbar rather than the WebGL canvas.
         float cityField = exp(-2.0 * dot(cityOffset, cityOffset))
-          * smoothstep(0.17, 0.60, vUv.x);
+          * smoothstep(0.17, 0.60, vUv.x)
+          * mix(1.0, smoothstep(0.0, 0.12, vUv.y), toolbarBlend);
         vec3 landingAtmosphere = mix(cityShadow, cityGlow, cityField);
         atmosphere = mix(atmosphere, landingAtmosphere, landingWeight);
         // Lift the city midtones locally without washing out deep glazing or
