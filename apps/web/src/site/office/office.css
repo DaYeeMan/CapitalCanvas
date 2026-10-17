@@ -1,6 +1,8 @@
 /* The office owns the viewport; only its About copy and research dialog scroll. */
-html:has(.office-preview), body:has(.office-preview), #root:has(> .office-preview) { height: 100%; min-height: 0; overflow: hidden; overscroll-behavior: none; }
-.office-preview { --city-presence: 0; --city-copy-reveal: 0; position: fixed; inset: 0; overflow: hidden; background: #101c26; }
+html:has(.office-preview), body:has(.office-preview), #root:has(> .office-preview) { height: 100%; min-height: 0; overflow: hidden; overscroll-behavior: none; background: #101c26; }
+/* Safari clips fixed shells above its bottom toolbar. Use the document viewport
+   so the scene can paint beneath it while controls retain their safe-area spacing. */
+.office-preview { --city-presence: 0; --city-copy-reveal: 0; position: absolute; inset: 0; overflow: hidden; background: #101c26; }
 .office-preview .office-header { top: env(safe-area-inset-top, 0px); left: env(safe-area-inset-left, 0px); right: env(safe-area-inset-right, 0px); }
 .office-preview .office-city-copy, .office-preview .office-about-copy { margin-bottom: env(safe-area-inset-bottom, 0px); margin-left: env(safe-area-inset-left, 0px); margin-right: env(safe-area-inset-right, 0px); }
 .office-preview .office-about-copy { margin-top: env(safe-area-inset-top, 0px); }
