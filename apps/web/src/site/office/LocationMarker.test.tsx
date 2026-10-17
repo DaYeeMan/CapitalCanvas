@@ -7,10 +7,37 @@ import { LocationMarker } from "./LocationMarker";
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 function marker(active = true) { return <LocationMarker tool="ithaca" label="Ithaca" active={active} anchorRef={null} hitRef={null} />; }
 describe("office tool disclosure", () => {
+  it("keeps a clicked desk preview open after the pointer leaves and the camera refreshes hover", () => {
+    vi.useFakeTimers();
+    const { container } = render(<div className="office-scene">{marker()}</div>);
+    const scene = container.querySelector(".office-scene")!;
+    const hit = container.querySelector(".office-desk-hit")!;
+    const pin = screen.getByRole("button", { name: "Ithaca" });
+    const before = window.location.href;
+    fireEvent.click(hit);
+    expect(pin).toHaveFocus();
+    fireEvent.pointerLeave(container.querySelector(".office-tool")!);
+    act(() => vi.advanceTimersByTime(200));
+    act(() => scene.dispatchEvent(new CustomEvent("office-view-hover", { detail: { busy: false } })));
+    expect(pin).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: "Open tool" })).toBeVisible();
+    expect(window.location.href).toBe(before);
+    fireEvent.keyDown(pin, { key: "Escape" });
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
+  });
+  it("ignores desk selection during camera manipulation or floor travel", () => {
+    const { container, rerender } = render(<div className="office-scene" data-view-busy="true">{marker()}</div>);
+    fireEvent.click(container.querySelector(".office-desk-hit")!);
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ithaca" })).not.toHaveFocus();
+    rerender(<div className="office-scene">{marker(false)}</div>);
+    fireEvent.click(container.querySelector(".office-desk-hit")!);
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
+  });
   it("allows a touch user to dismiss a preview with its close control or an outside tap", () => {
     const { container } = render(marker());
     const pin = screen.getByRole("button", { name: "Ithaca" });
-    fireEvent.click(pin);
+    fireEvent.click(container.querySelector(".office-desk-hit")!);
     fireEvent.click(screen.getByRole("button", { name: "Close Ithaca preview" }));
     expect(container.querySelector(".office-tool-panel")).toHaveAttribute("hidden");
     fireEvent.click(pin);

@@ -5,6 +5,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { updateExteriorLightView } from "./officeLightIsolation";
 import { TOWER_SITE } from "./towerStructure";
+import type { RenderQuality } from "./renderQuality";
 
 // Reconstruct each visible surface from the depth buffer, so peripheral roads
 // and context recede softly while the central tower stays sharp. The blur
@@ -13,6 +14,7 @@ const spatialUniforms = `
   uniform sampler2D tDepth;
   uniform mat4 projectionInverse, viewInverse;
   uniform float presence, focusY, landing, about;
+  uniform float contactSamples, blurDiagonals;
   uniform vec3 ground, cityShadow, cityGlow;
   uniform vec2 texel, towerOrigin;
   vec3 worldPosition(vec2 uv, float depth) {
@@ -43,6 +45,7 @@ export class CityAtmosphere {
   private width = 0;
   private height = 0;
   private ratio = 0;
+  private bloomScale = 1;
 
   constructor(private renderer: WebGLRenderer, scene: Scene, camera: Camera) {
     this.composer = new EffectComposer(renderer);
@@ -54,6 +57,7 @@ export class CityAtmosphere {
       cityShadow: { value: new Color("#101c26") }, cityGlow: { value: new Color("#3a4a57") },
       landing: { value: 0 },
       about: { value: 0 },
+      contactSamples: { value: 8 }, blurDiagonals: { value: 1 },
       texel: { value: new Vector2() },
       towerOrigin: { value: new Vector2(TOWER_SITE.x, TOWER_SITE.z) },
     });
@@ -75,8 +79,10 @@ export class CityAtmosphere {
           if (dot(normal, viewInverse[3].xyz - surfaceWorld) < 0.0) normal = -normal;
           float contact = 0.0;
           for (int i = 0; i < 8; i++) {
-            float angle = float(i) * 2.399963;
-            vec2 uv = vUv + vec2(cos(angle), sin(angle)) * texel * (4.0 + float(i) * 1.4);
+            if (float(i) >= contactSamples) break;
+            float sampleIndex = float(i) * 8.0 / contactSamples;
+            float angle = sampleIndex * 2.399963;
+            vec2 uv = vUv + vec2(cos(angle), sin(angle)) * texel * (4.0 + sampleIndex * 1.4);
             float depth = texture2D(tDepth, uv).x;
             vec3 delta = worldPosition(uv, depth) - surfaceWorld;
             float distance = length(delta);
@@ -85,7 +91,7 @@ export class CityAtmosphere {
                 * (1.0 - smoothstep(0.05, 1.0, distance));
             }
           }
-          gl_FragColor.rgb *= 1.0 - min(0.28, contact * 0.18);
+          gl_FragColor.rgb *= 1.0 - min(0.28, contact * 0.18 * 8.0 / contactSamples);
         }
         if (softness > 0.001) {
         vec2 spread = texel * 3.0 * softness;
@@ -94,11 +100,13 @@ export class CityAtmosphere {
         softened += citySample(vUv - vec2(spread.x, 0.0), center) * 2.0;
         softened += citySample(vUv + vec2(0.0, spread.y), center) * 2.0;
         softened += citySample(vUv - vec2(0.0, spread.y), center) * 2.0;
-        softened += citySample(vUv + spread, center);
-        softened += citySample(vUv - spread, center);
-        softened += citySample(vUv + vec2(spread.x, -spread.y), center);
-        softened += citySample(vUv + vec2(-spread.x, spread.y), center);
-        gl_FragColor = mix(center, softened / 16.0, softness);
+        if (blurDiagonals > 0.5) {
+          softened += citySample(vUv + spread, center);
+          softened += citySample(vUv - spread, center);
+          softened += citySample(vUv + vec2(spread.x, -spread.y), center);
+          softened += citySample(vUv + vec2(-spread.x, spread.y), center);
+        }
+        gl_FragColor = mix(center, softened / (12.0 + 4.0 * blurDiagonals), softness);
         }`)
       .replace("// color space", `
         float sceneDepth = texture2D(tDepth, vUv).x;
@@ -144,6 +152,22 @@ export class CityAtmosphere {
     this.composer.addPass(this.output);
   }
 
+  setQuality(quality: RenderQuality) {
+    this.output.uniforms.contactSamples.value = quality.contactSamples;
+    this.output.uniforms.blurDiagonals.value = Number(quality.blurDiagonals);
+    this.bloom.enabled = quality.bloomScale > 0;
+    if (this.bloomScale !== quality.bloomScale) {
+      this.bloomScale = quality.bloomScale;
+      this.width = 0; // Resize bloom once when the quality tier changes.
+    }
+    const samples = Math.min(quality.samples, this.renderer.capabilities.maxSamples);
+    for (const target of [this.composer.renderTarget1, this.composer.renderTarget2]) {
+      if (target.samples === samples) continue;
+      target.samples = samples;
+      target.dispose(); // Reallocate multisample attachments on the next render.
+    }
+  }
+
   prepare(camera: Camera) {
     // Surface programs must be compiled for the composer's linear render target,
     // rather than the canvas's tone-mapped output variant.
@@ -159,6 +183,7 @@ export class CityAtmosphere {
     if (width !== this.width || height !== this.height || ratio !== this.ratio) {
       this.composer.setPixelRatio(ratio);
       this.composer.setSize(width, height);
+      if (this.bloomScale > 0) this.bloom.setSize(Math.max(1, width * ratio * this.bloomScale), Math.max(1, height * ratio * this.bloomScale));
       this.width = width; this.height = height; this.ratio = ratio;
     }
     this.output.uniforms.tDepth.value = this.composer.readBuffer.depthTexture;

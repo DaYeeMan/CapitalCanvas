@@ -15,6 +15,13 @@ beforeEach(() => { sceneState.failed = false; window.history.replaceState(null, 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("office site shell", () => {
+  it("renders the office without a rendering comparison control", async () => {
+    render(<OfficeSite />);
+    await screen.findByTestId("office-scene");
+    expect(screen.queryByRole("button", { name: /rendering/i })).not.toBeInTheDocument();
+    expect(document.querySelector(".office-preview")).not.toHaveAttribute("data-optimized");
+    expect(window.location.hash).toBe("#home");
+  });
   it("selects a directly linked lower floor and offers About without activating tools", async () => {
     window.history.replaceState(null, "", "/#resources"); render(<OfficeSite />);
     expect(await screen.findByTestId("office-scene")).toHaveTextContent("resources");

@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type Ref } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent, type Ref } from "react";
 import type { FloorId, ToolId } from "./layouts";
 import { OFFICE_TOOLS, officeToolDestination } from "./officeTools";
 
@@ -14,6 +14,13 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
   const hoverState = useRef(false);
   const busyState = useRef(false);
   const claimPanel = () => root.current?.closest(".office-scene")?.dispatchEvent(new CustomEvent("office-tool-intent", { detail: tool }));
+  const selectDesk = (event: MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    if (!active || busyState.current || root.current?.closest<HTMLElement>(".office-scene")?.dataset.viewBusy === "true") return;
+    clearTimeout(closeTimer.current);
+    claimPanel(); setDismissed(false); setFocused(true);
+    trigger.current?.focus({ preventScroll: true });
+  };
   const changeHover = (next: boolean) => {
     if (hoverState.current === next) return;
     hoverState.current = next; setHovered(next);
@@ -62,10 +69,10 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
     onFocus={() => { claimPanel(); setFocused(true); setDismissed(false); }}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}
     onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); trigger.current?.focus(); setDismissed(true); } }}>
-    <div ref={hitRef} className="office-desk-hit" aria-hidden="true" style={{ pointerEvents: active ? "auto" : "none" }} />
+    <div ref={hitRef} className="office-desk-hit" aria-hidden="true" style={{ pointerEvents: active ? "auto" : "none" }} onClick={selectDesk} />
     <div ref={anchorRef} className="office-location-anchor">
       <button ref={trigger} className="office-location" type="button" aria-label={label} aria-expanded={open} aria-controls={id + "-panel"} disabled={!active}
-        onClick={event => { event.stopPropagation(); claimPanel(); setDismissed(false); setFocused(true); trigger.current?.focus(); }}>
+        onClick={selectDesk}>
         <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M20 8 32 20 20 32 8 20Z" /><circle cx="20" cy="20" r="3" /></svg>
       </button>
       <section id={id + "-panel"} className="office-tool-panel" aria-label={label + " details"} hidden={!open} inert={!open} aria-hidden={!open}>

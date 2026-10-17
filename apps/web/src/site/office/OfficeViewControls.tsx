@@ -97,13 +97,13 @@ export function OfficeViewControls({ element, motion, reset, instantReset, settl
       motion.current.pointer = event.pointerType === "touch" ? null : point(event);
       if (event.pointerType === "touch") {
         touches.current.set(event.pointerId, point(event));
-        // Keep single marker taps targeted at the button. Once a gesture starts,
-        // capture both fingers on the scene so their release cannot click a desk.
+        // Keep desk and marker taps on their original targets. Capture only
+        // once panning or pinching starts, so a gesture cannot select a desk.
         if (touches.current.size >= 2) {
           for (const id of touches.current.keys()) node.setPointerCapture(id);
           beginPinch(); event.preventDefault(); invalidate(); return;
         }
-        if (!target.closest(".office-location")) node.setPointerCapture(event.pointerId);
+        if (!target.closest(".office-location, .office-desk-hit")) node.setPointerCapture(event.pointerId);
       }
       drag.current = { id: event.pointerId, origin: point(event), pan: { ...view.current.pan }, started: false };
     };

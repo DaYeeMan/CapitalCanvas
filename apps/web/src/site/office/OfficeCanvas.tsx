@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Canvas, invalidate, useFrame } from "@react-three/fiber";
 import { OrthographicCamera } from "@react-three/drei";
 import { Vector3, Object3D, NeutralToneMapping, type Color, type Group, type DirectionalLight } from "three";
@@ -18,6 +18,8 @@ import { CityDistrict } from "./CityDistrict";
 import { CityAtmosphere } from "./CityAtmosphere";
 import { eveningEnvironment } from "./eveningEnvironment";
 import { TowerMotionDriver, type MotionRuntime, type OfficeGroups } from "./TowerMotionDriver";
+import { OfficeQuality } from "./OfficeQuality";
+import { initialOfficeTier, officeRenderQuality, officeUsesMobileQuality, type RenderQuality } from "./renderQuality";
 
 type MarkerElements = Record<ToolId, HTMLDivElement | null>;
 function MarkerProjection({ floor, offices, elements, hits, visible, settled, revision, motion, element }: { floor: FloorId; offices: RefObject<OfficeGroups>; elements: RefObject<MarkerElements>; hits: RefObject<MarkerElements>; visible: boolean; settled: boolean; revision: RefObject<number>; motion: RefObject<ViewMotion>; element: RefObject<HTMLDivElement | null> }) {
@@ -87,8 +89,8 @@ function OfficeBehavior({ session, reducedMotion, pageVisible, floor }: { sessio
   useFrame(() => { if (!session.advance(performance.now()) && pageVisible) invalidate(); }, -2);
   return null;
 }
-function Floors({ floor, session, groups, moving, pageVisible }: { floor: FloorId; session: PeopleSession; groups: RefObject<OfficeGroups>; moving: boolean; pageVisible: boolean }) {
-  return <>{(["home", "resources"] as const).map(id => <group key={id} ref={node => { groups.current[id] = node; }} visible={false} dispose={null}><OfficeFloor layout={FLOORS[id]} doors={session.floors[id].doors} /><OfficePeople simulation={session.floors[id]} session={session} visible={pageVisible && (moving || floor === id)} /></group>)}</>;
+function Floors({ floor, session, groups, moving, pageVisible, lighterShadows }: { floor: FloorId; session: PeopleSession; groups: RefObject<OfficeGroups>; moving: boolean; pageVisible: boolean; lighterShadows: boolean }) {
+  return <>{(["home", "resources"] as const).map(id => <group key={id} ref={node => { groups.current[id] = node; }} visible={false} dispose={null}><OfficeFloor layout={FLOORS[id]} doors={session.floors[id].doors} lighterShadows={lighterShadows} /><OfficePeople simulation={session.floors[id]} session={session} visible={pageVisible && (moving || floor === id)} /></group>)}</>;
 }
 
 function EveningLight({ light, fill, target }: { light: RefObject<DirectionalLight | null>; fill: RefObject<DirectionalLight | null>; target: Object3D }) {
@@ -102,7 +104,7 @@ function EveningLight({ light, fill, target }: { light: RefObject<DirectionalLig
   </>;
 }
 
-function OfficeRender({ view, aboutBlend, floor, phase, viewReset, onPresented, session, runtime, element, offices, motion }: { view: PreviewView; aboutBlend: RefObject<number>; floor: FloorId; phase: NavigationPhase; viewReset: number; onPresented: (floor: FloorId, reset: number) => void; session: PeopleSession; runtime: RefObject<MotionRuntime>; element: RefObject<HTMLDivElement | null>; offices: RefObject<OfficeGroups>; motion: RefObject<ViewMotion> }) {
+function OfficeRender({ view, aboutBlend, floor, phase, viewReset, onPresented, session, runtime, element, offices, motion, quality }: { view: PreviewView; aboutBlend: RefObject<number>; floor: FloorId; phase: NavigationPhase; viewReset: number; onPresented: (floor: FloorId, reset: number) => void; session: PeopleSession; runtime: RefObject<MotionRuntime>; element: RefObject<HTMLDivElement | null>; offices: RefObject<OfficeGroups>; motion: RefObject<ViewMotion>; quality: RenderQuality }) {
   const drawn = useRef("");
   const atmosphere = useRef<CityAtmosphere | null>(null);
   const warming = useRef(false), mounted = useRef(true);
@@ -115,6 +117,7 @@ function OfficeRender({ view, aboutBlend, floor, phase, viewReset, onPresented, 
   }, [element]);
   const samples = useRef<number[]>([]), lastFrame = useRef<number | null>(null);
   useLayoutEffect(() => { samples.current = []; lastFrame.current = null; invalidate(); }, [floor, phase, viewReset]);
+  useLayoutEffect(() => { atmosphere.current?.setQuality(quality); invalidate(); }, [quality]);
   // Present the office only after the logical simulation has caught up.
   useFrame(({ gl, scene, camera, size }) => {
     if (!session.ready) return;
@@ -125,6 +128,7 @@ function OfficeRender({ view, aboutBlend, floor, phase, viewReset, onPresented, 
       warming.current = true;
       element.current?.setAttribute("data-warming", "true");
       atmosphere.current ??= new CityAtmosphere(gl, scene, camera);
+      atmosphere.current.setQuality(quality);
       const effect = atmosphere.current;
       const withFloor = <T,>(selected: FloorId | null, work: () => T) => {
         const home = offices.current.home, resources = offices.current.resources;
@@ -162,6 +166,7 @@ function OfficeRender({ view, aboutBlend, floor, phase, viewReset, onPresented, 
     // definition as inspection pulls back. Both changes remain continuous.
     const presence = city * city * (3 - 2 * city) + (1 - city) * (motion.current.inspectionWide ?? 0) * 0.24;
     atmosphere.current ??= new CityAtmosphere(gl, scene, camera);
+    atmosphere.current.setQuality(quality);
     const about = aboutBlend.current * (view === "city" ? runtime.current.frame?.cityCopy ?? city : city);
     atmosphere.current.render(camera, size.width, size.height, presence, scene.background as Color, motion.current.cameraTargetY ?? runtime.current.frame?.camera.targetY ?? 0, city, about);
     if (element.current) element.current.dataset.aboutBlend = String(about);
@@ -170,7 +175,7 @@ function OfficeRender({ view, aboutBlend, floor, phase, viewReset, onPresented, 
       if (lastFrame.current !== null) samples.current.push(now - lastFrame.current);
       lastFrame.current = now;
     }
-    const signature = `${floor}-${phase}-${viewReset}`;
+    const signature = `${floor}-${phase}-${viewReset}-${quality.dpr}-${quality.shadowSize}`;
     if (runtime.current.complete && drawn.current !== signature) {
       if (node) {
         node.dataset.drawCalls = String(gl.info.render.calls); node.dataset.triangles = String(gl.info.render.triangles);
@@ -187,6 +192,9 @@ function OfficeRender({ view, aboutBlend, floor, phase, viewReset, onPresented, 
 }
 
 export default function OfficeCanvas({ view, origin, overview, floor, phase, settled, animate, pageVisible, reducedMotion, viewReset, instantReset, aboutBlend, onPresented, onUnavailable, onEnter, onReadResearch }: { view: PreviewView; origin: PreviewView; overview: boolean; floor: FloorId; phase: NavigationPhase; settled: boolean; animate: boolean; pageVisible: boolean; reducedMotion: boolean; viewReset: number; instantReset: boolean; aboutBlend: RefObject<number>; onPresented: (floor: FloorId, reset: number) => void; onUnavailable: () => void; onEnter: () => void; onReadResearch: (tool: ToolId, returnFocus: HTMLElement | null) => void }) {
+  const [tier, setTier] = useState(initialOfficeTier);
+  const [mobileQuality] = useState(officeUsesMobileQuality);
+  const quality = useMemo(() => officeRenderQuality(tier, phase === "moving", mobileQuality), [tier, phase, mobileQuality]);
   const [session] = useState(() => new PeopleSession(crypto.getRandomValues(new Uint32Array(1))[0], performance.now(), reducedMotion));
   const element = useRef<HTMLDivElement>(null);
   const motion = useRef<ViewMotion>({ revision: 0, busy: false, pointer: null });
@@ -201,7 +209,7 @@ export default function OfficeCanvas({ view, origin, overview, floor, phase, set
   const [lightTarget] = useState(() => new Object3D());
   const runtime = useRef<MotionRuntime>({ frame: null, complete: false, ready: false });
   const pins = view !== "city" && !overview && settled;
-  return <div ref={element} className="office-scene" data-framing={view === "city" || overview ? "tower" : "office"}><Canvas orthographic frameloop={pageVisible && (phase === "moving" || animate && settled) ? "always" : "demand"} dpr={[1, 1.5]} shadows="variance" camera={{ position: [...CAMERA.position], near: 0.1, far: 500 }} gl={{ antialias: true, alpha: true, toneMapping: NeutralToneMapping, toneMappingExposure: 1.1 }} fallback={<OfficeFallback floor={floor} view={view} viewReset={viewReset} onPresented={onPresented} onUnavailable={onUnavailable} onReadResearch={onReadResearch} />} aria-label={view === "city" ? "Grounded District: main tower and four supporting buildings" : overview ? `${FLOORS[floor].title}: opened floor in the whole tower` : `${FLOORS[floor].title}: isometric 3D floor with three marked tool desks`}>
+  return <div ref={element} className="office-scene" data-framing={view === "city" || overview ? "tower" : "office"}><Canvas orthographic frameloop={pageVisible && (phase === "moving" || animate && settled) ? "always" : "demand"} dpr={Math.min(window.devicePixelRatio || 1, quality.dpr)} shadows="variance" camera={{ position: [...CAMERA.position], near: 0.1, far: 500 }} gl={{ antialias: true, alpha: true, toneMapping: NeutralToneMapping, toneMappingExposure: 1.1 }} fallback={<OfficeFallback floor={floor} view={view} viewReset={viewReset} onPresented={onPresented} onUnavailable={onUnavailable} onReadResearch={onReadResearch} />} aria-label={view === "city" ? "Grounded District: main tower and four supporting buildings" : overview ? `${FLOORS[floor].title}: opened floor in the whole tower` : `${FLOORS[floor].title}: isometric 3D floor with three marked tool desks`}>
     <OrthographicCamera makeDefault manual position={[...CAMERA.position]} near={0.1} far={500} />
     <OfficeBehavior session={session} reducedMotion={reducedMotion} pageVisible={pageVisible} floor={floor} />
     {view !== "city" && settled && <OfficeViewControls element={element} motion={motion} reset={viewReset} instantReset={instantReset} settled={settled} reducedMotion={reducedMotion} pageVisible={pageVisible} elevation={towerPose(view).floorY} floor={floor} overview={overview} />}
@@ -210,11 +218,12 @@ export default function OfficeCanvas({ view, origin, overview, floor, phase, set
     <EveningLight light={light} fill={fill} target={lightTarget} />
     <group name="tower-site" position={[TOWER_SITE.x, 0, TOWER_SITE.z]}>
       <TowerAssembly groups={towers} canEnter={view === "city" && settled} onEnter={onEnter} />
-      <Floors floor={floor} session={session} groups={offices} moving={phase === "moving"} pageVisible={pageVisible} />
+      <Floors floor={floor} session={session} groups={offices} moving={phase === "moving"} pageVisible={pageVisible} lighterShadows={tier !== "high"} />
     </group>
     <TowerMotionDriver view={view} origin={origin} phase={phase} reset={viewReset} overview={overview} reducedMotion={reducedMotion} pageVisible={pageVisible} runtime={runtime} towers={towers} offices={offices} district={district} light={light} fill={fill} lightTarget={lightTarget} element={element} motion={motion} session={session} />
     <MarkerProjection floor={floor} offices={offices} elements={markers} hits={hits} visible={pins} settled={settled} revision={projectionRevision} motion={motion} element={element} />
-    <OfficeRender view={view} aboutBlend={aboutBlend} floor={floor} phase={phase} viewReset={viewReset} onPresented={onPresented} session={session} runtime={runtime} element={element} offices={offices} motion={motion} />
+    <OfficeQuality tier={tier} quality={quality} active={pageVisible && (phase === "moving" || animate && settled)} settled={settled} runtime={runtime} light={light} element={element} onTier={setTier} />
+    <OfficeRender view={view} aboutBlend={aboutBlend} floor={floor} phase={phase} viewReset={viewReset} onPresented={onPresented} session={session} runtime={runtime} element={element} offices={offices} motion={motion} quality={quality} />
   </Canvas>
     {pins && FLOORS[floor].pods.map(pod => <LocationMarker key={`${floor}-${pod.tool}`} tool={pod.tool} label={pod.label} floor={floor} active={settled} onReadResearch={onReadResearch} anchorRef={element => { markers.current[pod.tool] = element; if (element) { projectionRevision.current++; invalidate(); } }} hitRef={element => { hits.current[pod.tool] = element; if (element) { projectionRevision.current++; invalidate(); } }} />)}
   </div>;

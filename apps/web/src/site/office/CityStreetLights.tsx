@@ -7,7 +7,7 @@ const positions = [
   [TOWER_SITE.x + 13.6, TOWER_SITE.z - 8], [TOWER_SITE.x + 13.6, TOWER_SITE.z + 8],
   [-31.2, 12], [22.5, 34.8], [37.7, -1], [-28, -18],
   // Continue the reference's light rhythm around the blank context blocks.
-  [-61, 8], [-58.2, -22], [3.3, -22], [26.8, -22], [-74.4, -22],
+  [-61, 8], [-58.2, -22], [3.3, -22], [26.8, -22],
 ] as const;
 const post = new MeshStandardMaterial({ color: "#34434c", metalness: 0.5, roughness: 0.6 });
 const bulb = new MeshStandardMaterial({ color: "#fff0d1", emissive: "#ffdfaa", emissiveIntensity: 3 });
@@ -27,6 +27,6 @@ export function CityStreetLights() {
     <mesh geometry={geometry.cylinder} material={post} position={[0, 0.15, 0]} scale={[0.3, 0.3, 0.3]} />
     <mesh geometry={geometry.cylinder} material={bulb} position={[0, 3.2, 0]} scale={[0.3, 0.4, 0.3]} />
     <mesh geometry={geometry.pane} material={pool} position={[0, 0.232, 0]} rotation-x={-Math.PI / 2} scale={[9, 9, 1]} />
-    <pointLight color="#ffe1b2" position={[0, 3.1, 0]} intensity={19} distance={13} decay={1.8} />
+    {index < 4 && <pointLight color="#ffe1b2" position={[0, 3.1, 0]} intensity={19} distance={13} decay={1.8} />}
   </group>)}</group>;
 }

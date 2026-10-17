@@ -28,6 +28,10 @@ npm run dev:web -- --host 127.0.0.1
 
 Open `http://127.0.0.1:5173`. Vite proxies `/health` and `/v1` to the local API on port 8000, matching the same-origin production routes. Set `VITE_SOLVER_API_URL` only when deliberately using an external API host.
 
+For phone testing on the same Wi-Fi, run `npm run dev:web:lan`, then open `http://<computer-Wi-Fi-IP>:5174` on the phone. For realistic rendering performance without development overhead, run `npm run build:web` followed by `npm run preview:web:lan` instead. Both LAN commands bind to `0.0.0.0` on port 5174. The solver API can remain bound to loopback behind the proxy.
+
+The office uses adaptive rendering with static furniture batching and simpler distant lighting. Desktop retains its full resolution (up to DPR 1.5) and four-sample anti-aliasing whenever settled, even if adaptive effects downgrade; transitions temporarily use DPR 1. Touch-capable desktops with a fine pointer keep this desktop policy. Touch-only devices start conservatively with DPR 1 and lighter atmosphere/shadows, with one full-quality probe after consistently fast settled frames. Sustained slow frame times lower the effects tier for the visit without repeated oscillation. Character behavior and animation update rates are unchanged.
+
 ## Checks
 
 ```powershell
