@@ -2,6 +2,8 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent, t
 import type { FloorId, ToolId } from "./layouts";
 import { OFFICE_TOOLS, officeToolDestination } from "./officeTools";
 
+const canHover = () => window.matchMedia?.("(hover: hover) and (pointer: fine)").matches ?? true;
+
 export function LocationMarker({ tool, label, floor = "home", active, anchorRef, hitRef, onReadResearch }: { tool: ToolId; label: string; floor?: FloorId; active: boolean; anchorRef: Ref<HTMLDivElement>; hitRef: Ref<HTMLDivElement>; onReadResearch?: (tool: ToolId, returnFocus: HTMLElement | null) => void }) {
   const id = useId();
   const [hovered, setHovered] = useState(false);
@@ -40,7 +42,7 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
         busyState.current = busy; setViewBusy(busy);
         if (busy) { setFocused(false); setDismissed(true); }
       }
-      const next = !busy && hoveredTool === tool;
+      const next = canHover() && !busy && hoveredTool === tool;
       if (hoverState.current !== next) {
         hoverState.current = next; setHovered(next);
         if (next) { scene?.dispatchEvent(new CustomEvent("office-tool-intent", { detail: tool })); setDismissed(false); }
@@ -64,8 +66,8 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
     root.current?.closest(".office-scene")?.dispatchEvent(new Event("office-panel-layout"));
   }, [open]);
   return <div ref={root} className="office-tool" data-tool={tool} data-open={open}
-    onPointerEnter={() => { clearTimeout(closeTimer.current); if (root.current?.closest<HTMLElement>(".office-scene")?.dataset.viewBusy !== "true") changeHover(true); }}
-    onPointerLeave={() => { closeTimer.current = setTimeout(() => changeHover(false), 160); }}
+    onPointerEnter={event => { if (event.pointerType === "touch" || !canHover()) return; clearTimeout(closeTimer.current); if (root.current?.closest<HTMLElement>(".office-scene")?.dataset.viewBusy !== "true") changeHover(true); }}
+    onPointerLeave={event => { if (event.pointerType === "touch" || !canHover()) return; closeTimer.current = setTimeout(() => changeHover(false), 160); }}
     onFocus={() => { claimPanel(); setFocused(true); setDismissed(false); }}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}
     onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); trigger.current?.focus(); setDismissed(true); } }}>

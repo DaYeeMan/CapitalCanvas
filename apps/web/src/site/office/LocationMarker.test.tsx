@@ -4,9 +4,31 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LocationMarker } from "./LocationMarker";
 
-afterEach(() => { cleanup(); vi.useRealTimers(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 function marker(active = true) { return <LocationMarker tool="ithaca" label="Ithaca" active={active} anchorRef={null} hitRef={null} />; }
 describe("office tool disclosure", () => {
+  it("ignores touch pointer entry until the desk is tapped", () => {
+    const { container } = render(marker());
+    const hit = container.querySelector(".office-desk-hit")!;
+    const enter = new Event("pointerover", { bubbles: true });
+    Object.defineProperty(enter, "pointerType", { value: "touch" });
+    fireEvent(hit, enter);
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
+    fireEvent.click(hit);
+    expect(screen.getByRole("region", { name: "Ithaca details" })).toBeVisible();
+  });
+  it("ignores pointer and camera hover on touch screens while retaining tap selection", () => {
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false })));
+    const { container } = render(<div className="office-scene">{marker()}</div>);
+    const scene = container.querySelector(".office-scene")!;
+    const hit = container.querySelector(".office-desk-hit")!;
+    fireEvent.pointerEnter(hit);
+    act(() => scene.dispatchEvent(new CustomEvent("office-view-hover", { detail: { tool: "ithaca", busy: false } })));
+    expect(screen.queryByRole("region")).not.toBeInTheDocument();
+    fireEvent.click(hit);
+    act(() => scene.dispatchEvent(new CustomEvent("office-view-hover", { detail: { busy: false } })));
+    expect(screen.getByRole("region", { name: "Ithaca details" })).toBeVisible();
+  });
   it("keeps a clicked desk preview open after the pointer leaves and the camera refreshes hover", () => {
     vi.useFakeTimers();
     const { container } = render(<div className="office-scene">{marker()}</div>);

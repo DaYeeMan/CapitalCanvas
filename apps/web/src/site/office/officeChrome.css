@@ -33,7 +33,7 @@
 }
 @media (max-width: 700px) and (orientation: portrait) {
   .office-about-footer { left: 5%; right: 5%; }
-  .office-about-footer-content { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 12px 0 max(16px, env(safe-area-inset-bottom)); }
+  .office-about-footer-content { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 12px 0 16px; }
   .office-about-footer-contact { grid-row: auto; }
   .office-about-footer-contact p { font-size: 18px; margin-bottom: 4px; }
   .office-about-footer nav { justify-content: flex-start; flex-wrap: wrap; gap: 0 20px; }
