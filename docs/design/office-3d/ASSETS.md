@@ -20,7 +20,7 @@ These dependencies are isolated in the lazy office scene. No remote HDR, texture
 | office-man.glb | [Business Man by Quaternius](https://poly.pizza/m/JFrLIKqvCH), [publisher pack](https://quaternius.com/packs/ultimatemodularcharacters.html) | CC0 1.0 |
 | office-woman.glb | [Suit by Quaternius](https://poly.pizza/m/sOUciDsoVV), [publisher pack](https://quaternius.com/packs/ultimatemodularwomen.html) | CC BY 3.0, as listed by the selected distribution |
 
-The local models live in `apps/web/public/office/people/`. `manifest.json` records source and shipped SHA-256 hashes, sizes, scales, triangle/bone counts, clips, and preparation parameters. Both rigs have 62 bones and retain local Idle, Walk, and DeskIdle clips. The project preparation applies office colors and documented proportions, and authors DeskIdle. Measured standing heights are about 1.84m.
+The local models live in `apps/web/public/office/people/`. `manifest.json` records source and shipped SHA-256 hashes, sizes, scales, triangle/bone counts, clips, and preparation parameters. The preparation script also writes identical metadata to `apps/web/src/site/office/characterManifest.json` for JavaScript imports; the public manifest remains available at `/office/people/manifest.json`. Both rigs have 62 bones and retain local Idle, Walk, and DeskIdle clips. The project preparation applies office colors and documented proportions, and authors DeskIdle. Measured standing heights are about 1.84m.
 
 `CREDITS.md` contains attribution and modifications. Full license texts remain in [docs/licenses](../../licenses/README.md), and `scripts/generate_notices.py` includes character and dependency notices in the application's attribution page.
 

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { AnimationMixer, Box3, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3, type SkinnedMesh } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import manifest from "../../../public/office/people/manifest.json";
+import manifest from "./characterManifest.json";
 import { DESK, FLOORS } from "./layouts";
 import { WALKER_DEPTH, WALKER_RADIUS } from "./peoplePaths";
 import { characterGeometry } from "./characterAppearance";
@@ -11,6 +11,11 @@ import { seatedClips, SEATED_CLIP, WALK_CYCLE_DISTANCE } from "./characterPoses"
 import { WALK_SPEED } from "./peopleSimulation";
 import { createOfficeSpace, seatedPosition, transform } from "./officeSpatial";
 import { furnitureGeometry, roundedBox } from "./sceneResources";
+
+it("keeps bundled character metadata in sync with the public manifest", async () => {
+  const published = JSON.parse(await readFile(new URL("../../../public/office/people/manifest.json", import.meta.url), "utf8"));
+  expect(manifest).toEqual(published);
+});
 
 async function load(file: string) {
   const bytes = await readFile(new URL(`../../../public/office/people/${file}`, import.meta.url));

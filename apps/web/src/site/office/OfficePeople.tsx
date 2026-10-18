@@ -3,7 +3,7 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 import { AnimationMixer, type Group, type Mesh, type SkinnedMesh } from "three";
-import characterManifest from "../../../public/office/people/manifest.json";
+import characterManifest from "./characterManifest.json";
 import { characterGeometry } from "./characterAppearance";
 import { seatedClips, SEATED_CLIP, WALK_CYCLE_DISTANCE } from "./characterPoses";
 import { personSeat, STEP, WALK_SPEED, type FloorSimulation, type PeopleSession, type Person } from "./peopleSimulation";

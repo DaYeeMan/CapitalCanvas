@@ -13,6 +13,7 @@ globalThis.FileReader = class {
   readAsArrayBuffer(blob) { blob.arrayBuffer().then(result => { this.result = result; this.onloadend?.(); }); }
 };
 const output = fileURLToPath(new URL("../apps/web/public/office/people/", import.meta.url));
+const bundledManifest = fileURLToPath(new URL("../apps/web/src/site/office/characterManifest.json", import.meta.url));
 if (process.argv.length !== 4) throw new Error("Pass exactly two source GLBs: man, then woman");
 await fs.mkdir(output, { recursive: true });
 const manifest = [];
@@ -113,4 +114,6 @@ for (const [index, source] of process.argv.slice(2).entries()) {
   manifest.push(record);
   console.log(JSON.stringify(record));
 }
-await fs.writeFile(path.join(output, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
+const manifestJson = JSON.stringify(manifest, null, 2) + "\n";
+await fs.writeFile(path.join(output, "manifest.json"), manifestJson);
+await fs.writeFile(bundledManifest, manifestJson);

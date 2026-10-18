@@ -8,6 +8,7 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
   const id = useId();
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [selected, setSelected] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [viewBusy, setViewBusy] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -20,7 +21,8 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
     event.stopPropagation();
     if (!active || busyState.current || root.current?.closest<HTMLElement>(".office-scene")?.dataset.viewBusy === "true") return;
     clearTimeout(closeTimer.current);
-    claimPanel(); setDismissed(false); setFocused(true);
+    // Touch selection must survive Safari clearing focus before an action click.
+    claimPanel(); setDismissed(false); setFocused(true); setSelected(!canHover());
     trigger.current?.focus({ preventScroll: true });
   };
   const changeHover = (next: boolean) => {
@@ -33,14 +35,14 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
     const scene = root.current?.closest(".office-scene");
     const claim = (event: Event) => {
       if ((event as CustomEvent<string>).detail === tool) return;
-      hoverState.current = false; setHovered(false); setFocused(false); setDismissed(true);
+      hoverState.current = false; setHovered(false); setFocused(false); setSelected(false); setDismissed(true);
     };
     const refresh = (event: Event) => {
       const { tool: hoveredTool, busy } = (event as CustomEvent<{ tool?: string; busy: boolean }>).detail;
       clearTimeout(closeTimer.current);
       if (busyState.current !== busy) {
         busyState.current = busy; setViewBusy(busy);
-        if (busy) { setFocused(false); setDismissed(true); }
+        if (busy) { setFocused(false); setSelected(false); setDismissed(true); }
       }
       const next = canHover() && !busy && hoveredTool === tool;
       if (hoverState.current !== next) {
@@ -52,12 +54,12 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
     scene?.addEventListener("office-tool-intent", claim);
     return () => { scene?.removeEventListener("office-view-hover", refresh); scene?.removeEventListener("office-tool-intent", claim); };
   }, [tool]);
-  const open = active && !viewBusy && !dismissed && (hovered || focused);
+  const open = active && !viewBusy && !dismissed && (hovered || focused || selected);
   useEffect(() => {
     if (!open) return;
     const dismissOutside = (event: PointerEvent) => {
       if (event.pointerType !== "touch" || root.current?.contains(event.target as Node)) return;
-      hoverState.current = false; setHovered(false); setFocused(false); setDismissed(true);
+      hoverState.current = false; setHovered(false); setFocused(false); setSelected(false); setDismissed(true);
     };
     document.addEventListener("pointerdown", dismissOutside);
     return () => document.removeEventListener("pointerdown", dismissOutside);
@@ -70,7 +72,7 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
     onPointerLeave={event => { if (event.pointerType === "touch" || !canHover()) return; closeTimer.current = setTimeout(() => changeHover(false), 160); }}
     onFocus={() => { claimPanel(); setFocused(true); setDismissed(false); }}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}
-    onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); trigger.current?.focus(); setDismissed(true); } }}>
+    onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); trigger.current?.focus(); setSelected(false); setDismissed(true); } }}>
     <div ref={hitRef} className="office-desk-hit" aria-hidden="true" style={{ pointerEvents: active ? "auto" : "none" }} onClick={selectDesk} />
     <div ref={anchorRef} className="office-location-anchor">
       <button ref={trigger} className="office-location" type="button" aria-label={label} aria-expanded={open} aria-controls={id + "-panel"} disabled={!active}
@@ -78,7 +80,7 @@ export function LocationMarker({ tool, label, floor = "home", active, anchorRef,
         <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M20 8 32 20 20 32 8 20Z" /><circle cx="20" cy="20" r="3" /></svg>
       </button>
       <section id={id + "-panel"} className="office-tool-panel" aria-label={label + " details"} hidden={!open} inert={!open} aria-hidden={!open}>
-        <button className="office-tool-close" type="button" aria-label={`Close ${label} preview`} onClick={() => { trigger.current?.focus({ preventScroll: true }); hoverState.current = false; setHovered(false); setFocused(false); setDismissed(true); }}>×</button>
+        <button className="office-tool-close" type="button" aria-label={`Close ${label} preview`} onClick={() => { trigger.current?.focus({ preventScroll: true }); hoverState.current = false; setHovered(false); setFocused(false); setSelected(false); setDismissed(true); }}>×</button>
         <h2>{label}</h2>
         <p>{OFFICE_TOOLS[tool].description}</p>
         {floor === "resources" && onReadResearch ? <button className="office-tool-action" type="button" onClick={() => onReadResearch(tool, trigger.current)}>Read research<span aria-hidden="true">→</span></button> : <a href={officeToolDestination(tool, floor)}>{floor === "resources" ? "Read research" : "Open tool"}<span aria-hidden="true">→</span></a>}

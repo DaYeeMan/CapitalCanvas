@@ -7,6 +7,23 @@ import { LocationMarker } from "./LocationMarker";
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 function marker(active = true) { return <LocationMarker tool="ithaca" label="Ithaca" active={active} anchorRef={null} hitRef={null} />; }
 describe("office tool disclosure", () => {
+  it.each(["home", "resources"] as const)("keeps a tapped %s desk open when Safari blurs the marker before activating its action", floor => {
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false })));
+    const read = vi.fn();
+    const { container } = render(<LocationMarker tool="ithaca" label="Ithaca" floor={floor} active anchorRef={null} hitRef={null} onReadResearch={read} />);
+    const pin = screen.getByRole("button", { name: "Ithaca" });
+    fireEvent.click(container.querySelector(".office-desk-hit")!);
+    const action = floor === "home" ? screen.getByRole("link", { name: "Open tool" }) : screen.getByRole("button", { name: "Read research" });
+    fireEvent.pointerDown(action, { pointerType: "touch" });
+    // Safari may clear focus without focusing the tapped button/link, before click.
+    act(() => pin.blur());
+    expect(action).toBeVisible();
+    expect(action.closest("section")).not.toHaveAttribute("inert");
+    if (floor === "home") action.addEventListener("click", event => event.preventDefault()); // jsdom cannot navigate; browser QA covers the destination.
+    fireEvent.click(action);
+    if (floor === "resources") expect(read).toHaveBeenCalledWith("ithaca", pin);
+    else expect(action).toHaveAttribute("href", "/tools/ithaca");
+  });
   it("ignores touch pointer entry until the desk is tapped", () => {
     const { container } = render(marker());
     const hit = container.querySelector(".office-desk-hit")!;
@@ -57,6 +74,7 @@ describe("office tool disclosure", () => {
     expect(screen.queryByRole("region")).not.toBeInTheDocument();
   });
   it("allows a touch user to dismiss a preview with its close control or an outside tap", () => {
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false })));
     const { container } = render(marker());
     const pin = screen.getByRole("button", { name: "Ithaca" });
     fireEvent.click(container.querySelector(".office-desk-hit")!);

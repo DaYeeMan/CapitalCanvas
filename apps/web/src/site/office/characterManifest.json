@@ -1,0 +1,58 @@
+[
+  {
+    "file": "office-man.glb",
+    "source": "https://poly.pizza/m/JFrLIKqvCH",
+    "license": "CC0-1.0",
+    "sourceSha256": "82b81257c1e94cd9ee48cb1dcbe5ff506e81c9ce67cd0c5af542d8712dca546e",
+    "sha256": "f81dab51500e5fa21d15c4fd57ba33b452afd638de9bc9e9a65afa1e8f9cac1a",
+    "bytes": 1051488,
+    "sourceHeight": 1.8490809649869233,
+    "scale": 0.9734565625214414,
+    "proportions": {
+      "bodyWidth": 1.18,
+      "bodyDepth": 1.12,
+      "head": 1.16,
+      "baseHeight": 1.8
+    },
+    "pose": {
+      "hipHeight": 0.65,
+      "wristHeight": 0.88,
+      "wristReach": 0.37
+    },
+    "triangles": 6634,
+    "bones": 62,
+    "clips": {
+      "Idle": 1.6666666269302368,
+      "Walk": 1.3333333730697632,
+      "DeskIdle": 4
+    }
+  },
+  {
+    "file": "office-woman.glb",
+    "source": "https://poly.pizza/m/sOUciDsoVV",
+    "license": "CC-BY-3.0",
+    "sourceSha256": "12aece21fecd08fb079d2fa390faa40c705e26ea8f779b5005b8bf6cbe501837",
+    "sha256": "ce4c13ceebc676e975da4bfafbeb552a757d5dea29a139f2bb61d1c58a322332",
+    "bytes": 999384,
+    "sourceHeight": 1.8382535812056473,
+    "scale": 0.9791902588430927,
+    "proportions": {
+      "bodyWidth": 1.18,
+      "bodyDepth": 1.12,
+      "head": 1.16,
+      "baseHeight": 1.8
+    },
+    "pose": {
+      "hipHeight": 0.65,
+      "wristHeight": 0.88,
+      "wristReach": 0.37
+    },
+    "triangles": 6482,
+    "bones": 62,
+    "clips": {
+      "Idle": 2.0833332538604736,
+      "Walk": 1.6666666269302368,
+      "DeskIdle": 4
+    }
+  }
+]
