@@ -1,8 +1,23 @@
-"""One deterministic Cartesian sample set shared by every surrogate."""
+"""Nested Cartesian subsets of one reference grid, shared by every surrogate."""
 import numpy as np
 
 from app.execution import check_execution
 from app.delphi.models import BUDGET_SHAPES, SAMPLER_VERSION, Bounds, NumericalError, SampleSet, SamplingRequest, TargetSurface, content_id
+
+
+def _nested_axis(eligible: np.ndarray, count: int) -> np.ndarray:
+    """Keep four evenly spread anchors, then bisect the largest remaining gap.
+
+    The same refinement order is used for every budget. Ties choose the leftmost
+    gap and midpoints round down, so adding nodes never relocates earlier ones.
+    """
+    selected = np.rint(np.linspace(0, len(eligible) - 1, 4)).astype(int).tolist()
+    while len(selected) < count:
+        check_execution()
+        left, right = max(zip(selected, selected[1:]), key=lambda pair: pair[1] - pair[0])
+        selected.append((left + right) // 2)
+        selected.sort()
+    return eligible[selected]
 
 
 def sample_training(target: TargetSurface, request: SamplingRequest) -> SampleSet:
@@ -20,9 +35,8 @@ def sample_training(target: TargetSurface, request: SamplingRequest) -> SampleSe
     n_rows, n_columns = BUDGET_SHAPES[request.budget]
     if len(eligible_rows) < n_rows or len(eligible_columns) < n_columns:
         raise NumericalError("insufficient_training_nodes", "Training region has too few grid nodes for this budget; widen the region or reduce samples")
-    # np.rint uses nearest-even ties. Version the sampler if this convention changes.
-    rows = eligible_rows[np.rint(np.linspace(0, len(eligible_rows) - 1, n_rows)).astype(int)]
-    columns = eligible_columns[np.rint(np.linspace(0, len(eligible_columns) - 1, n_columns)).astype(int)]
+    rows = _nested_axis(eligible_rows, n_rows)
+    columns = _nested_axis(eligible_columns, n_columns)
     pairs = [(int(row), int(column)) for row in rows for column in columns]
     invalid = [(row, column) for row, column in pairs if not target.valid_mask[row][column]]
     if invalid:

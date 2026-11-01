@@ -26,6 +26,12 @@ class DelphiAPITests(unittest.TestCase):
         result = self.client.post("/v1/delphi/experiment", json={"reference": reference.json(), "settings": {"mlp": {"epochs": 20}}})
         self.assertEqual(result.status_code, 200, result.text)
         self.assertTrue(all(m["status"] == "complete" for m in result.json()["methods"]))
+        gp = next(m for m in result.json()["methods"] if m["method"] == "gaussian_process")
+        self.assertEqual(len(gp["diagnostics"]["gp_length_scales"]), 2)
+        self.assertGreater(gp["diagnostics"]["gp_regularization"], 0)
+        self.assertIsInstance(gp["diagnostics"]["gp_fit_converged"], bool)
+        self.assertEqual(gp["diagnostics"]["gp_fit_objective"], "spatial_cross_validation")
+        self.assertEqual(len(gp["diagnostics"]["gp_validation_rmse_by_axis"]), 2)
 
     def test_iv_and_extrapolation_api_flow(self):
         request = default_reference_request("implied_volatility").model_dump(mode="json")

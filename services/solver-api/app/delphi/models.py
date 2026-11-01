@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 ALGORITHM_VERSION = "delphi-gbm-v1"
 TARGET_VERSION = "delphi-target-v1"
-SAMPLER_VERSION = "uniform-tensor-v1"
+SAMPLER_VERSION = "nested-tensor-v2"
 MAX_OPERATIONS = 120_000_000
 MAX_AXIS = 81
 BUDGET_SHAPES = {16: (4, 4), 32: (4, 8), 64: (8, 8), 128: (8, 16), 256: (16, 16)}
@@ -264,7 +264,7 @@ class SamplingRequest(Contract):
 
 
 class SampleSet(Contract):
-    version: Literal["uniform-tensor-v1"] = SAMPLER_VERSION
+    version: Literal["nested-tensor-v2"] = SAMPLER_VERSION
     target_id: ContentID
     reference_id: ContentID
     sample_set_id: ContentID

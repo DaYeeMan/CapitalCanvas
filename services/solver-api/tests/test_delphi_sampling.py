@@ -6,8 +6,9 @@ from pydantic import ValidationError
 
 from app.execution import ExecutionControl, ExecutionStopped, bind_execution, reset_execution
 from app.delphi.implied_volatility import build_target
-from app.delphi.models import BUDGET_SHAPES, Bounds, SampleSet, SamplingRequest, content_id
+from app.delphi.models import BUDGET_SHAPES, SAMPLER_VERSION, Bounds, ReferenceRequest, SampleSet, SamplingRequest, content_id
 from app.delphi.preprocessing import training_transform
+from app.delphi.reference import generate_reference
 from app.delphi.sampling import sample_training, validate_samples
 from delphi_fixtures import small_reference, with_target_data
 
@@ -36,6 +37,38 @@ class DelphiSamplingTests(unittest.TestCase):
         self.assertLessEqual(samples.bounds.spot_max, 115)
         self.assertEqual(samples.bounds.tau_min, self.target.axes.times_to_maturity[samples.row_indices[0]])
         validate_samples(self.target, samples)
+
+    def test_larger_budgets_retain_all_earlier_training_points(self):
+        regions = (None, Bounds(spot_min=82.0, spot_max=118.0, tau_min=.1, tau_max=1.9))
+        for region in regions:
+            previous = set()
+            for budget in sorted(BUDGET_SHAPES):
+                with self.subTest(region=region, budget=budget):
+                    samples = sample_training(self.target, SamplingRequest(budget=budget, training_bounds=region))
+                    current = set(samples.flat_indices)
+                    self.assertTrue(previous <= current, "Increasing the budget must not move earlier points")
+                    previous = current
+                    validate_samples(self.target, samples)
+
+    def test_domain_changes_rebuild_nested_subsets_on_the_new_reference(self):
+        reference = generate_reference(ReferenceRequest(
+            domain={"spot_min": 90.0, "spot_max": 170.0, "spot_nodes": 31,
+                    "tau_min": .25, "tau_max": 3.0, "tau_nodes": 41},
+            monte_carlo={"paths": 1000, "seed": 42, "antithetic": True},
+        ))
+        target = build_target(reference, "price")
+        previous = set()
+        for budget in sorted(BUDGET_SHAPES):
+            samples = sample_training(target, SamplingRequest(budget=budget))
+            self.assertEqual(samples.version, SAMPLER_VERSION)
+            self.assertEqual(samples.reference_id, reference.reference_id)
+            self.assertTrue(previous <= set(samples.coordinates))
+            self.assertEqual(samples.bounds, Bounds(spot_min=90.0, spot_max=170.0, tau_min=.25, tau_max=3.0))
+            previous = set(samples.coordinates)
+            validate_samples(target, samples)
+        old_samples = sample_training(self.target, SamplingRequest())
+        with self.assertRaisesRegex(ValueError, "different reference"):
+            validate_samples(target, old_samples)
 
     def test_bad_budget_and_regions_fail_without_silent_adjustment(self):
         for budget in (0, 127, 512, True, 128.0):

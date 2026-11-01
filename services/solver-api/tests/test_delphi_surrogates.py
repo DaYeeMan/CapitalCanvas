@@ -6,15 +6,15 @@ import numpy as np
 from pydantic import ValidationError
 
 from app.execution import ExecutionControl, ExecutionStopped, bind_execution, reset_execution
-from app.delphi.contracts import ExperimentRequest, GPSettings, MLPSettings
+from app.delphi.contracts import ExperimentRequest, GP_MAX_FIT_EVALUATIONS, GPSettings, MLPSettings
 from app.delphi.experiment import run_experiment
 from app.delphi.implied_volatility import build_target
 from app.delphi.mlp import adam_step, initialize, loss_gradient, predict, train
 from app.delphi.models import NumericalError, SamplingRequest
 from app.delphi.preprocessing import training_transform
 from app.delphi.sampling import sample_training
-from app.delphi.surrogates import fit_gp, fit_spline, rbf
-from delphi_fixtures import small_reference
+from app.delphi.surrogates import _gp_validation_folds, _gp_validation_objective, fit_gp, fit_spline, rbf
+from delphi_fixtures import small_reference, with_target_data
 
 
 class DelphiSurrogateTests(unittest.TestCase):
@@ -36,9 +36,9 @@ class DelphiSurrogateTests(unittest.TestCase):
         gp = fit_gp(self.samples, self.transform, GPSettings())
         query = np.array([[.2, .4], [.8, .6]])
         x = self.transform.coordinates(self.samples.coordinates)
-        noise = np.maximum(np.asarray(self.samples.standard_errors) / self.transform.scale, 1e-5)
-        covariance = rbf(x, x, .35) + np.diag(noise**2 + gp.jitter)
-        cross = rbf(query, x, .35)
+        noise = np.asarray(self.samples.standard_errors) / self.transform.scale
+        covariance = rbf(x, x, gp.length_scale) + np.diag(noise**2 + gp.regularization**2 + gp.jitter)
+        cross = rbf(query, x, gp.length_scale)
         expected = cross @ np.linalg.solve(covariance, self.transform.targets(self.samples.values))
         variance = 1 - np.diag(cross @ np.linalg.solve(covariance, cross.T))
         actual, deviation = gp.predict(query)
@@ -46,6 +46,108 @@ class DelphiSurrogateTests(unittest.TestCase):
         np.testing.assert_allclose(deviation**2, variance, atol=1e-8)
         whole = gp.predict(np.tile(query, (150, 1)))[0]
         np.testing.assert_allclose(whole, np.tile(actual, 150), atol=1e-12)
+
+    def test_gp_spatial_validation_gradient_matches_finite_differences(self):
+        folds = _gp_validation_folds(self.samples, self.transform)
+        parameters = np.log([.4, .8, .07])
+        _, gradient, _ = _gp_validation_objective(parameters, folds)
+        for index in range(3):
+            step = np.eye(3)[index] * 1e-5
+            upper = _gp_validation_objective(parameters + step, folds)[0]
+            lower = _gp_validation_objective(parameters - step, folds)[0]
+            self.assertAlmostEqual(gradient[index], (upper - lower) / 2e-5, delta=1e-5)
+
+    def test_gp_spatial_folds_hold_out_whole_levels_without_normalization_leakage(self):
+        folds = _gp_validation_folds(self.samples, self.transform)
+        self.assertEqual([fold.axis for fold in folds], [0, 0, 1, 1])
+        x = np.asarray(self.samples.coordinates)
+        for index, fold in enumerate(folds):
+            train, held = fold.training_indices, fold.validation_indices
+            self.assertEqual(len(set(train) & set(held)), 0)
+            self.assertEqual(len(train) + len(held), self.samples.count)
+            self.assertEqual(len(set(x[train, fold.axis]) & set(x[held, fold.axis])), 0)
+            np.testing.assert_array_equal(x[train].min(axis=0), x.min(axis=0))
+            np.testing.assert_array_equal(x[train].max(axis=0), x.max(axis=0))
+            values = np.asarray(self.samples.values).copy()
+            values[held] += 100
+            altered = self.samples.model_copy(update={"values": tuple(values.tolist())})
+            counterpart = _gp_validation_folds(altered, training_transform(altered))[index]
+            np.testing.assert_array_equal(counterpart.training_targets, fold.training_targets)
+            np.testing.assert_array_equal(counterpart.observation_variances, fold.observation_variances)
+        for axis in (0, 1):
+            axis_folds = [fold for fold in folds if fold.axis == axis]
+            held = np.concatenate([fold.validation_indices for fold in axis_folds])
+            expected = np.flatnonzero((x[:, axis] > x[:, axis].min()) & (x[:, axis] < x[:, axis].max()))
+            np.testing.assert_array_equal(np.sort(held), expected)
+
+    def test_gp_validation_score_matches_independent_fold_solves_and_balances_axes(self):
+        folds = _gp_validation_folds(self.samples, self.transform)
+        parameters = np.log([.4, .8, .07])
+        score, _, axis_scores = _gp_validation_objective(parameters, folds)
+        x = self.transform.coordinates(self.samples.coordinates)
+        values = np.asarray(self.samples.values)
+        errors = np.asarray(self.samples.standard_errors)
+        independent = [[], []]
+        for fold in folds:
+            train, held = fold.training_indices, fold.validation_indices
+            mean, scale = float(np.mean(values[train])), float(np.std(values[train]))
+            covariance = rbf(x[train], x[train], (.4, .8)) + np.diag((errors[train] / scale)**2 + .07**2 + 1e-10)
+            weights = np.linalg.solve(covariance, (values[train] - mean) / scale)
+            prediction = mean + scale * (rbf(x[held], x[train], (.4, .8)) @ weights)
+            independent[fold.axis].append(np.mean((prediction - values[held])**2) / self.transform.scale**2)
+        expected = np.array([np.mean(scores) for scores in independent])
+        np.testing.assert_allclose(axis_scores, expected, atol=1e-10)
+        self.assertAlmostEqual(score, float(np.mean(expected)), delta=1e-10)
+
+    def test_gp_fits_bounded_parameters_and_improves_spatial_validation(self):
+        settings = GPSettings(noise_floor=.01)
+        gp = fit_gp(self.samples, self.transform, settings)
+        self.assertTrue(all(.05 - 1e-12 <= value <= 2 + 1e-12 for value in gp.length_scale))
+        self.assertTrue(.01 - 1e-12 <= gp.regularization <= .5 + 1e-12)
+        self.assertLess(gp.validation_rmse, gp.initial_validation_rmse)
+        self.assertAlmostEqual(gp.validation_rmse**2, np.mean(np.square(gp.validation_rmse_by_axis)))
+        self.assertFalse(np.allclose(gp.length_scale, settings.length_scale))
+        self.assertLessEqual(gp.fit_evaluations, GP_MAX_FIT_EVALUATIONS)
+
+    def test_gp_fit_is_reproducible_and_ignores_unsampled_targets(self):
+        values = np.asarray(self.target.values).copy()
+        unused = np.ones(values.size, dtype=bool)
+        unused[list(self.samples.flat_indices)] = False
+        values.ravel()[unused] += 100
+        altered = with_target_data(self.target, values=values.tolist())
+        samples = sample_training(altered, SamplingRequest(budget=32))
+        first = fit_gp(self.samples, self.transform, GPSettings())
+        second = fit_gp(samples, training_transform(samples), GPSettings())
+        self.assertEqual(first.length_scale, second.length_scale)
+        self.assertEqual(first.regularization, second.regularization)
+        np.testing.assert_array_equal(first.weights, second.weights)
+
+    def test_gp_fit_budget_retains_best_candidate_with_warning(self):
+        def exhaust(objective, parameters, **kwargs):
+            for _ in range(GP_MAX_FIT_EVALUATIONS + 1):
+                objective(parameters)
+            self.fail("GP fit did not enforce its evaluation budget")
+        with patch("app.delphi.surrogates.minimize", side_effect=exhaust):
+            result = run_experiment(ExperimentRequest(reference=self.reference, sampling={"budget": 32}, methods=("gaussian_process",)))
+        model = result.methods[0]
+        self.assertEqual(model.status, "complete")
+        self.assertEqual(model.diagnostics.gp_fit_evaluations, GP_MAX_FIT_EVALUATIONS)
+        self.assertFalse(model.diagnostics.gp_fit_converged)
+        self.assertIn("gp_fit_budget", [warning.code for warning in model.warnings])
+
+    def test_gp_fit_checks_cancellation_between_validation_evaluations(self):
+        control = ExecutionControl(monotonic() + 10)
+        def stop_after_first(*args):
+            result = _gp_validation_objective(*args)
+            control.stop("cancelled during GP fitting")
+            return result
+        token = bind_execution(control)
+        try:
+            with patch("app.delphi.surrogates._gp_validation_objective", side_effect=stop_after_first):
+                with self.assertRaisesRegex(ExecutionStopped, "during GP fitting"):
+                    fit_gp(self.samples, self.transform, GPSettings())
+        finally:
+            reset_execution(token)
 
     def test_gp_jitter_retries_are_bounded(self):
         with patch("app.delphi.surrogates.cholesky", side_effect=np.linalg.LinAlgError("singular")) as factor:
@@ -115,3 +217,6 @@ class DelphiSurrogateTests(unittest.TestCase):
             ExperimentRequest(reference=self.reference, methods=("mlp", "mlp"))
         with self.assertRaisesRegex(ValidationError, "work budget"):
             ExperimentRequest(reference=self.reference, sampling={"budget": 256}, settings={"mlp": {"width": 64, "epochs": 1000}})
+        ExperimentRequest(reference=self.reference, sampling={"budget": 256}, methods=("mlp",), settings={"mlp": {"width": 64, "epochs": 1000}})
+        with self.assertRaisesRegex(ValidationError, "work budget"):
+            ExperimentRequest(reference=self.reference, sampling={"budget": 256}, methods=("mlp", "gaussian_process"), settings={"mlp": {"width": 64, "epochs": 1000}})

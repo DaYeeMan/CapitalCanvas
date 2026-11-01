@@ -1,0 +1,14 @@
+
+  VITE v8.2.2  ready in 229 ms
+
+  ➜  Local:   http://127.0.0.1:5173/
+  ➜  press h + enter to show help
+10:11:42 PM [vite] (client) hmr update /src/delphi/DelphiParameters.tsx
+10:14:23 PM [vite] (client) hmr update /src/delphi/DelphiParameters.tsx
+10:26:32 PM [vite] (client) hmr update /src/delphi/DelphiWorkbench.tsx, /src/delphi/DelphiSurface.tsx, /src/delphi/DelphiParameters.tsx, /src/delphi/DelphiBudget.tsx, /src/delphi/DelphiComparison.tsx, /src/delphi/DelphiMethodDetails.tsx
+10:26:32 PM [vite] (client) hmr update /src/delphi/DelphiParameters.tsx
+10:26:32 PM [vite] (client) hmr update /src/delphi/DelphiMethodDetails.tsx
+10:27:39 PM [vite] (client) hmr update /src/delphi/DelphiWorkbench.tsx
+10:40:57 PM [vite] (client) hmr update /src/delphi/DelphiWorkbench.tsx, /src/delphi/DelphiSurface.tsx, /src/delphi/DelphiParameters.tsx, /src/delphi/DelphiBudget.tsx, /src/delphi/DelphiComparison.tsx, /src/delphi/DelphiMethodDetails.tsx
+10:40:57 PM [vite] (client) hmr update /src/delphi/DelphiMethodDetails.tsx
+10:40:57 PM [vite] (client) hmr update /src/delphi/DelphiParameters.tsx

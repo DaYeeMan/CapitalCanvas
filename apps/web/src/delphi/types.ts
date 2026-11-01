@@ -40,7 +40,7 @@ export interface ModelResult {
   method: Method; status: "complete" | "failed"; training_count: number; predictions: Matrix | null;
   predictive_stddev: Matrix | null; evaluation: Evaluation | null;
   timing: { fit_ms: number; inference_ms: number; prediction_count: number } | null;
-  diagnostics: { model: string; target_scale_floored: boolean; extrapolated_nodes: number; bounds_violations: number; jitter?: number | null; epochs?: number | null; initial_loss?: number | null; final_loss?: number | null; baseline?: string | null } | null;
+  diagnostics: { model: string; target_scale_floored: boolean; extrapolated_nodes: number; bounds_violations: number; jitter?: number | null; gp_length_scales?: [number, number] | null; gp_regularization?: number | null; gp_fit_objective?: "spatial_cross_validation" | null; gp_validation_rmse?: number | null; gp_initial_validation_rmse?: number | null; gp_validation_rmse_by_axis?: [number, number] | null; gp_fit_evaluations?: number | null; gp_fit_converged?: boolean | null; epochs?: number | null; initial_loss?: number | null; final_loss?: number | null; baseline?: string | null } | null;
   baseline_metrics: Evaluation | null; warnings: Notice[]; error: Notice | null;
 }
 export interface ExperimentResult {

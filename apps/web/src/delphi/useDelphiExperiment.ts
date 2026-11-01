@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { fitExperiment, getCapabilities, getReference } from "./api";
-import { initialConfig, type Bounds, type BudgetPoint, type Capabilities, type Config, type ExperimentResult, type Mode, type PriceReference } from "./types";
+import { initialConfig, type Bounds, type BudgetPoint, type Capabilities, type Config, type ExperimentResult, type Mode } from "./types";
 import { validateConfig } from "./validation";
+import { freshSeed } from "../troy/experimentSeed";
 
 const bytes = (value: unknown) => JSON.stringify(value).length * 2;
 // Tabs select a saved view; they are not inputs to the computation.
@@ -18,8 +19,7 @@ export function useDelphiExperiment() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("Ready to configure");
   const [errors, setErrors] = useState<string[]>([]);
-  const [referenceInfo, setReferenceInfo] = useState<{ id: string; ms: number; reused: boolean } | null>(null);
-  const references = useRef(new Map<string, PriceReference>());
+  const [referenceInfo, setReferenceInfo] = useState<{ id: string; ms: number } | null>(null);
   const sequence = useRef(0), active = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function useDelphiExperiment() {
   }
   function selectMode(mode: Mode) { setConfig(previous => ({ ...previous, mode })); }
   function reset() {
-    cancel(); references.current.clear(); setResults(emptyResults()); setPoints([]); setCommittedKeys({});
+    cancel(); setResults(emptyResults()); setPoints([]); setCommittedKeys({});
     setReferenceInfo(null); setErrors([]); setStatus("Ready to configure"); setConfig(initialConfig(capabilities ?? undefined));
   }
   async function run() {
@@ -52,22 +52,19 @@ export function useDelphiExperiment() {
     active.current?.abort();
     const id = ++sequence.current, controller = new AbortController(); active.current = controller;
     const current = () => sequence.current === id && !controller.signal.aborted;
-    const snapshot = structuredClone(config), key = experimentKey(snapshot);
+    const snapshot = structuredClone(config);
+    snapshot.reference.monte_carlo.seed = freshSeed(config.reference.monte_carlo.seed);
+    snapshot.training_seed = freshSeed(config.training_seed);
+    const key = experimentKey(snapshot);
+    setConfig(previous => ({ ...previous, reference: snapshot.reference, training_seed: snapshot.training_seed }));
     const timeout = (capabilities.execution.timeout_seconds + 10) * 1000;
     setBusy(true); setStatus("Preparing experiment");
     try {
-      const referenceKey = `${capabilities.algorithm_version}:${JSON.stringify(snapshot.reference)}`;
-      let reference = references.current.get(referenceKey);
-      const reused = Boolean(reference);
-      if (!reference) {
-        setStatus("Generating Monte Carlo reference…");
-        reference = await getReference(snapshot.reference, controller.signal, timeout);
-        if (!current()) return;
-        if (bytes(reference) > 16 * 1024 ** 2) throw new Error("Reference exceeds the browser memory budget.");
-        references.current.set(referenceKey, reference);
-      } else { references.current.delete(referenceKey); references.current.set(referenceKey, reference); }
-      while (references.current.size > 2 || [...references.current.values()].reduce((sum, item) => sum + bytes(item), 0) > 16 * 1024 ** 2) references.current.delete(references.current.keys().next().value!);
-      setReferenceInfo({ id: reference.reference_id, ms: reference.timing.reference_ms, reused });
+      setStatus("Generating Monte Carlo reference…");
+      const reference = await getReference(snapshot.reference, controller.signal, timeout);
+      if (!current()) return;
+      if (bytes(reference) > 16 * 1024 ** 2) throw new Error("Reference exceeds the browser memory budget.");
+      setReferenceInfo({ id: reference.reference_id, ms: reference.timing.reference_ms });
       const sharedReference = reference;
       const budgets = [...snapshot.budgets].sort((a, b) => a - b);
       const completed: BudgetPoint[] = [];

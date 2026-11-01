@@ -69,7 +69,7 @@ export function DelphiSurface({ result, method, view, slice, onSlice }: { result
   const maxSE = Math.max(0, ...result.target.standard_errors.flat().filter((value): value is number => value !== null)) * factor;
   return <>
     <section className="delphi-surface-panel" aria-label={title}>
-      <div className="delphi-visualization">
+      <div className={`delphi-visualization${slice ? " is-slice" : ""}`}>
         <div className="delphi-plot" id="delphi-surface-plot" role="tabpanel" aria-label={slice ? "Surface slice" : title}>
           {slice ? <ScientificPlot data={sliceData} layout={sliceLayout} label={`Price or IV slice at ${tau} years; reference and selected surrogate predictions`} /> : field ? <ScientificPlot preserveCamera data={data} layout={layout} label={`${title}, spot versus maturity. ${result.samples.count} training samples; ${invalid} masked reference nodes.`} /> : <div className="delphi-empty">This model has no completed surface. Select a completed method or rerun the experiment.</div>}
         </div>

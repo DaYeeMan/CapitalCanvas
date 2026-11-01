@@ -46,23 +46,22 @@ export function DelphiParameters({ config, capabilities, edit }: Props) {
         <DelphiNumber label="Spot grid nodes" value={r.domain.spot_nodes} min={20} max={81} step={1} onChange={value => domain("spot_nodes", value)} />
         <DelphiNumber label="Maturity grid nodes" value={r.domain.tau_nodes} min={20} max={81} step={1} onChange={value => domain("tau_nodes", value)} />
       </details>
-      <DelphiNumber label="Reference seed" value={r.monte_carlo.seed} min={0} max={2147483647} step={1} onChange={value => mc("seed", value)} />
     </details>
     <details open className="delphi-control-section" aria-labelledby={`${id}-training`}>
       <summary id={`${id}-training`}>Training data<ChevronDown size={15} /></summary>
-      {config.mode === "budget" ? <fieldset className="delphi-checks"><legend>Budgets to compare</legend>{budgets.map(item => <label key={item.count}><input type="checkbox" checked={config.budgets.includes(item.count)} onChange={event => edit(old => ({ ...old, budgets: event.target.checked ? [...old.budgets, item.count] : old.budgets.filter(n => n !== item.count) }))} />{item.count} samples</label>)}<p className="delphi-caption">Choose up to four. Uniform grids are not necessarily nested.</p></fieldset> : <label className="delphi-select"><span>Samples</span><select value={config.budget} onChange={event => edit(old => ({ ...old, budget: Number(event.target.value) }))}>{budgets.map(item => <option key={item.count} value={item.count}>{item.count} · {item.shape.join(" × ")}</option>)}</select></label>}
-      <p className="delphi-caption">Uniform tensor grid · shared across models</p>
+      {config.mode === "budget" ? <fieldset className="delphi-checks"><legend>Budgets to compare</legend>{budgets.map(item => <label key={item.count}><input type="checkbox" checked={config.budgets.includes(item.count)} onChange={event => edit(old => ({ ...old, budgets: event.target.checked ? [...old.budgets, item.count] : old.budgets.filter(n => n !== item.count) }))} />{item.count} samples</label>)}<p className="delphi-caption">Choose up to four. Larger budgets retain every earlier training point.</p></fieldset> : <label className="delphi-select"><span>Samples</span><select value={config.budget} onChange={event => edit(old => ({ ...old, budget: Number(event.target.value) }))}>{budgets.map(item => <option key={item.count} value={item.count}>{item.count} · {item.shape.join(" × ")}</option>)}</select></label>}
+      <p className="delphi-caption">Nested training grids · shared across models</p>
       <fieldset className="delphi-checks"><legend>Models to train</legend>{METHODS.map(method => <label key={method}><input type="checkbox" checked={config.methods.includes(method)} onChange={event => edit(old => ({ ...old, methods: METHODS.filter(item => item === method ? event.target.checked : old.methods.includes(item)) }))} />{labels[method]}</label>)}</fieldset>
       {config.mode === "extrapolation" ? <div className="delphi-training-bounds"><h4>Training region</h4>{([['spot_min', 'Training spot minimum', '$'], ['spot_max', 'Training spot maximum', '$'], ['tau_min', 'Training maturity minimum', 'yr'], ['tau_max', 'Training maturity maximum', 'yr']] as const).map(([key, label, suffix]) => <DelphiNumber key={key} label={label} suffix={suffix} value={config.training_bounds[key]} onChange={value => edit(old => ({ ...old, training_bounds: { ...old.training_bounds, [key as keyof Bounds]: value } }))} />)}<button className="delphi-text-button" onClick={() => edit(old => ({ ...old, training_bounds: centralBounds(old.reference.domain) }))}>Use central 70%</button><p className="delphi-caption">Bounds snap inward to reference nodes. Outside-region errors are reported separately.</p></div> : null}
     </details>
     <details className="delphi-control-section delphi-advanced"><summary>Advanced settings</summary>
       <h4>Reference</h4><label className="delphi-check"><input type="checkbox" checked={r.monte_carlo.antithetic} onChange={event => mc("antithetic", event.target.checked)} />Antithetic paths</label>
       <h4>Gaussian process</h4>
-      <DelphiNumber label="Length scale" value={settings.gp.length_scale} onChange={value => edit(old => ({ ...old, settings: { ...old.settings, gp: { ...old.settings.gp, length_scale: value } } }))} />
-      <DelphiNumber label="Noise floor" value={settings.gp.noise_floor} onChange={value => edit(old => ({ ...old, settings: { ...old.settings, gp: { ...old.settings.gp, noise_floor: value } } }))} />
+      <p className="delphi-caption">RBF scales and regularization are selected by spatial validation within the training data.</p>
+      <DelphiNumber label="Initial length scale" value={settings.gp.length_scale} onChange={value => edit(old => ({ ...old, settings: { ...old.settings, gp: { ...old.settings.gp, length_scale: value } } }))} />
+      <DelphiNumber label="Min regularization" value={settings.gp.noise_floor} onChange={value => edit(old => ({ ...old, settings: { ...old.settings, gp: { ...old.settings.gp, noise_floor: value } } }))} />
       <h4>Both MLP models</h4><p className="delphi-caption">Two tanh layers. Same architecture, seed, and epoch budget.</p>
       {([['width', 'Hidden width'], ['epochs', 'Epochs'], ['learning_rate', 'Learning rate'], ['regularization', 'L2 regularization']] as const).map(([key, label]) => <DelphiNumber key={key} label={label} value={settings.mlp[key]} onChange={value => edit(old => ({ ...old, settings: { ...old.settings, mlp: { ...old.settings.mlp, [key]: value } } }))} />)}
-      <DelphiNumber label="Training seed" value={config.training_seed} onChange={value => edit(old => ({ ...old, training_seed: value }))} />
     </details>
   </>;
 }

@@ -50,7 +50,14 @@ def run_experiment(request: ExperimentRequest) -> ExperimentResult:
                 fitted = fit_spline(samples, transform)
             elif method == "gaussian_process":
                 fitted = fit_gp(samples, transform, request.settings.gp)
-                diagnostics["jitter"] = fitted.jitter
+                diagnostics.update(
+                    jitter=fitted.jitter, gp_length_scales=fitted.length_scale,
+                    gp_regularization=fitted.regularization,
+                    gp_fit_objective="spatial_cross_validation", gp_validation_rmse=fitted.validation_rmse,
+                    gp_initial_validation_rmse=fitted.initial_validation_rmse,
+                    gp_validation_rmse_by_axis=fitted.validation_rmse_by_axis,
+                    gp_fit_evaluations=fitted.fit_evaluations, gp_fit_converged=fitted.fit_converged,
+                )
             else:
                 fitted = mlp.train(transform.coordinates(samples.coordinates), transform.targets(samples.values if values is None else values), request.settings.mlp, request.training_seed)
                 diagnostics.update(epochs=fitted.epochs, initial_loss=fitted.initial_loss, final_loss=fitted.final_loss)
@@ -83,6 +90,8 @@ def run_experiment(request: ExperimentRequest) -> ExperimentResult:
             baseline_metrics = evaluate_predictions(target, samples, baseline_query.reshape(shape)) if residual else None
             evaluation_ms += (perf_counter() - evaluation_started) * 1000
             warnings = []
+            if method == "gaussian_process" and not fitted.fit_converged:
+                warnings.append({"code": "gp_fit_budget", "message": "GP optimization did not converge within its bounded search; the best finite spatial-validation fit is retained."})
             diagnostics["extrapolated_nodes"] = evaluation.outside.count
             if evaluation.outside.count:
                 warnings.append({"code": "extrapolation", "message": f"{evaluation.outside.count} valid nodes lie outside the training region. Extrapolation can be unreliable."})
@@ -113,7 +122,7 @@ def run_experiment(request: ExperimentRequest) -> ExperimentResult:
                 error={"code": getattr(error, "code", "numerical_failure"), "message": str(error) if isinstance(error, NumericalError) else "Numerical fit failed. Check the domain or reduce model settings."}))
     check_execution()
     snapshot = Snapshot(reference=reference.configuration, target=request.target, sampling=request.sampling, methods=request.methods, settings=request.settings, training_seed=request.training_seed)
-    identity = {"version": "delphi-fit-v1", "reference_id": reference.reference_id, "sample_set_id": samples.sample_set_id, "configuration": snapshot.model_dump(mode="json")}
+    identity = {"version": "delphi-fit-v3-rbf-spatial-cv", "reference_id": reference.reference_id, "sample_set_id": samples.sample_set_id, "configuration": snapshot.model_dump(mode="json")}
     return ExperimentResult(experiment_id=content_id(identity), reference_id=reference.reference_id, sample_set_id=samples.sample_set_id,
         configuration_snapshot=snapshot, axes=reference.axes, target=target, samples=samples, methods=results,
         timings={"iv_conversion_ms": target.conversion_ms, "sampling_ms": sampling_ms, "evaluation_ms": evaluation_ms, "request_compute_ms": (perf_counter() - started) * 1000},

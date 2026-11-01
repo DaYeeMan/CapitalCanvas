@@ -16,9 +16,18 @@ function resultFor(request: ExperimentRequest): ExperimentResult {
 function deferred<T>() { let resolve!: (value: T) => void, reject!: (error: Error) => void; const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; }
 async function ready() { const hook = renderHook(useDelphiExperiment); await waitFor(() => expect(hook.result.current.capabilities).toBeTruthy()); return hook; }
 beforeEach(() => { vi.resetAllMocks(); vi.mocked(getCapabilities).mockResolvedValue(capabilities); vi.mocked(getReference).mockResolvedValue(reference); vi.mocked(fitExperiment).mockImplementation(async request => resultFor(request)); });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("Delphi state and request ownership", () => {
+  it("includes GP hyperparameter fitting in the advertised work budget", () => {
+    const config = initialConfig(capabilities);
+    config.budget = 256;
+    config.methods = ["gaussian_process"];
+    const bounded = { ...capabilities, limits: { ...capabilities.limits, gp_fit_evaluations: 96, fit_work: 1e9 } };
+    expect(validateConfig(config, bounded)).toContain("The 256-sample fit exceeds the work budget. Reduce width, epochs, or selected methods.");
+    config.methods = ["cubic_spline"];
+    expect(validateConfig(config, bounded)).toEqual([]);
+  });
   it.each(["comparison", "budget", "extrapolation"] as const)("one run from %s populates all views and reuses the comparison fit in the sweep", async mode => {
     const { result } = await ready();
     act(() => result.current.selectMode(mode));
@@ -68,6 +77,24 @@ describe("Delphi state and request ownership", () => {
     expect(result.current.errors.join(" ")).toContain("Training spot bounds");
     expect(getReference).not.toHaveBeenCalled(); expect(fitExperiment).not.toHaveBeenCalled();
   });
+  it("marks domain edits stale and rebuilds every budget against one new reference", async () => {
+    vi.mocked(getReference).mockImplementation(async configuration => ({ ...reference, reference_id: `reference-${configuration.domain.spot_max}`, configuration }));
+    const { result } = await ready();
+    await act(() => result.current.run());
+    const previous = result.current.result;
+    act(() => result.current.edit(old => ({ ...old, reference: { ...old.reference, domain: { ...old.reference.domain, spot_max: 160, spot_nodes: 41 } } })));
+    expect(result.current.result).toBe(previous);
+    expect(result.current.stale).toBe(true);
+    await act(() => result.current.run());
+    expect(getReference).toHaveBeenCalledTimes(2);
+    const requests = vi.mocked(fitExperiment).mock.calls.slice(5).map(([request]) => request);
+    expect(requests).toHaveLength(5);
+    expect(requests.every(request => request.reference === requests[0].reference)).toBe(true);
+    expect(requests[0].reference.configuration.domain).toMatchObject({ spot_max: 160, spot_nodes: 41 });
+    expect(result.current.result?.reference_id).toBe("reference-160");
+    expect(result.current.points.every(point => point.referenceId === "reference-160")).toBe(true);
+    expect(result.current.stale).toBe(false);
+  });
   it("retains each view's completed results and curves when cancelling before the next sweep starts", async () => {
     const { result } = await ready();
     await act(() => result.current.run());
@@ -86,14 +113,25 @@ describe("Delphi state and request ownership", () => {
     expect(result.current.result).toBe(comparison); expect(result.current.stale).toBe(true);
     expect(result.current.busy).toBe(false);
   });
-  it("does not auto-run; preserves results after edits and reuses references only for matching inputs", async () => {
+  it("does not auto-run and draws fresh reference and training randomness for every run", async () => {
+    vi.spyOn(crypto, "getRandomValues")
+      .mockReturnValueOnce(new Uint32Array([1001]))
+      .mockReturnValueOnce(new Uint32Array([2001]))
+      .mockReturnValueOnce(new Uint32Array([1002]))
+      .mockReturnValueOnce(new Uint32Array([2002]));
     const { result } = await ready(); expect(getReference).not.toHaveBeenCalled();
     await act(() => result.current.run()); const first = result.current.result;
-    act(() => result.current.edit(old => ({ ...old, training_seed: 43 })));
-    expect(result.current.stale).toBe(true); expect(result.current.result).toBe(first);
-    await act(() => result.current.run()); expect(getReference).toHaveBeenCalledTimes(1); expect(result.current.referenceInfo?.reused).toBe(true);
-    act(() => result.current.edit(old => ({ ...old, reference: { ...old.reference, monte_carlo: { ...old.reference.monte_carlo, seed: 44 } } })));
+    expect(vi.mocked(getReference).mock.calls[0][0].monte_carlo.seed).toBe(1001);
+    expect(vi.mocked(fitExperiment).mock.calls.every(([request]) => request.training_seed === 2001)).toBe(true);
+    expect(result.current.stale).toBe(false);
     await act(() => result.current.run()); expect(getReference).toHaveBeenCalledTimes(2);
+    expect(fitExperiment).toHaveBeenCalledTimes(10);
+    expect(result.current.result).not.toBe(first);
+    expect(vi.mocked(getReference).mock.calls[1][0].monte_carlo.seed).toBe(1002);
+    expect(vi.mocked(fitExperiment).mock.calls.slice(5).every(([request]) => request.training_seed === 2002)).toBe(true);
+    expect(result.current.config.reference.monte_carlo.seed).toBe(1002);
+    expect(result.current.config.training_seed).toBe(2002);
+    expect(result.current.stale).toBe(false);
   });
   it.each(["success", "error"])("ignores a late old %s even when transport ignores abort", async outcome => {
     const old = deferred<ExperimentResult>(); vi.mocked(fitExperiment).mockImplementationOnce(() => old.promise);

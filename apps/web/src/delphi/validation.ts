@@ -24,13 +24,14 @@ export function validateConfig(config: Config, capabilities: Capabilities | null
   const { mlp, gp } = config.settings;
   check("Network width", mlp.width, l.width_min, l.width_max, true); check("Epochs", mlp.epochs, l.epochs_min, l.epochs_max, true);
   check("Learning rate", mlp.learning_rate, l.learning_rate_min, l.learning_rate_max); check("Regularization", mlp.regularization, 0, l.regularization_max);
-  check("GP length scale", gp.length_scale, l.length_scale_min, l.length_scale_max); check("GP noise floor", gp.noise_floor, l.noise_floor_min, l.noise_floor_max);
+  check("GP initial length scale", gp.length_scale, l.length_scale_min, l.length_scale_max); check("GP minimum regularization", gp.noise_floor, l.noise_floor_min, l.noise_floor_max);
   for (const n of budgets) {
     const shape = capabilities.budgets.find(budget => budget.count === n)?.shape;
     if (!shape) { errors.push(`Unsupported training budget: ${n}.`); continue; }
     const grid = d.spot_nodes * d.tau_nodes, weights = mlp.width ** 2 + 3 * mlp.width;
     const neural = config.methods.filter(method => method === "mlp" || method === "residual_mlp").length;
-    const work = (config.methods.includes("gaussian_process") ? n ** 3 + grid * n ** 2 : 0) + neural * (6 * mlp.epochs * n * weights + 2 * grid * weights);
+    const gpWork = config.methods.includes("gaussian_process") ? (3 * (l.gp_fit_evaluations ?? 96) + 1) * n ** 3 + grid * n ** 2 : 0;
+    const work = gpWork + neural * (6 * mlp.epochs * n * weights + 2 * grid * weights);
     if (work > l.fit_work) errors.push(`The ${n}-sample fit exceeds the work budget. Reduce width, epochs, or selected methods.`);
     if (config.mode === "extrapolation") {
       const b = config.training_bounds;

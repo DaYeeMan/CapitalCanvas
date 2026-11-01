@@ -4,7 +4,7 @@ from typing import TypeVar
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ValidationError
 
-from app.delphi.contracts import ExperimentRequest, ExperimentResult, MAX_FIT_WORK, METHODS, Settings
+from app.delphi.contracts import ExperimentRequest, ExperimentResult, GP_MAX_FIT_EVALUATIONS, MAX_FIT_WORK, METHODS, Settings
 from app.delphi.experiment import run_experiment
 from app.delphi.models import ALGORITHM_VERSION, BUDGET_SHAPES, MAX_OPERATIONS, NumericalError, PriceReference, ReferenceRequest, default_reference_request
 from app.delphi.reference import generate_reference
@@ -41,6 +41,7 @@ def capabilities(request: Request):
                    "rate_min": -.25, "rate_max": .25, "width_min": 4, "width_max": 64, "epochs_min": 10, "epochs_max": 1000,
                    "learning_rate_min": 1e-5, "learning_rate_max": .05, "regularization_max": .1,
                    "length_scale_min": .05, "length_scale_max": 2, "noise_floor_min": 1e-8, "noise_floor_max": .5,
+                   "gp_fit_evaluations": GP_MAX_FIT_EVALUATIONS,
                    "seed_max": 2147483647, "sweep_max": 4},
         "execution": {"timeout_seconds": request.app.state.request_timeout_seconds, "progress": "stage-level", "cancellation": "disconnect and cooperative deadline"},
     }

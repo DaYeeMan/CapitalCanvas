@@ -12,10 +12,13 @@ from app.delphi.models import (
 Method = Literal["cubic_spline", "gaussian_process", "mlp", "residual_mlp"]
 METHODS = ("cubic_spline", "gaussian_process", "mlp", "residual_mlp")
 MAX_FIT_WORK = 9_000_000_000
+GP_MAX_FIT_EVALUATIONS = 96
 
 
 class GPSettings(Contract):
+    # Starting scale for both normalized axes; the fit learns them separately.
     length_scale: Finite = Field(default=.35, ge=.05, le=2)
+    # Lower bound on fitted additional model discrepancy, in normalized units.
     noise_floor: Finite = Field(default=1e-5, ge=1e-8, le=.5)
 
 
@@ -48,7 +51,8 @@ class ExperimentRequest(Contract):
         width = self.settings.mlp.width
         weights = width * width + 3 * width
         neural = sum(method in self.methods for method in ("mlp", "residual_mlp"))
-        return (n**3 + grid * n**2 if "gaussian_process" in self.methods else 0) + neural * (6 * self.settings.mlp.epochs * n * weights + 2 * grid * weights)
+        gp = (3 * GP_MAX_FIT_EVALUATIONS + 1) * n**3 + grid * n**2 if "gaussian_process" in self.methods else 0
+        return gp + neural * (6 * self.settings.mlp.epochs * n * weights + 2 * grid * weights)
 
     @model_validator(mode="after")
     def bounded(self) -> "ExperimentRequest":
@@ -80,6 +84,14 @@ class Diagnostics(Contract):
     extrapolated_nodes: int = 0
     bounds_violations: int = 0
     jitter: Nonnegative | None = None
+    gp_length_scales: tuple[Nonnegative, Nonnegative] | None = None
+    gp_regularization: Nonnegative | None = None
+    gp_fit_objective: Literal["spatial_cross_validation"] | None = None
+    gp_validation_rmse: Nonnegative | None = None
+    gp_initial_validation_rmse: Nonnegative | None = None
+    gp_validation_rmse_by_axis: tuple[Nonnegative, Nonnegative] | None = None
+    gp_fit_evaluations: int | None = None
+    gp_fit_converged: bool | None = None
     epochs: int | None = None
     initial_loss: Nonnegative | None = None
     final_loss: Nonnegative | None = None

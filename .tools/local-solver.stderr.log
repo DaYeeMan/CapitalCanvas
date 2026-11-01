@@ -1,0 +1,30 @@
+INFO:     Started server process [21324]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+{"event": "request_complete", "request_id": "f271f18993b54bf2b97820ad6803b4ff", "method": "GET", "path": "/v1/delphi/capabilities", "status": 200, "duration_ms": 3.66}
+{"event": "request_complete", "request_id": "51c9f3da37f14b3b8b09a8de6369668f", "method": "POST", "path": "/v1/delphi/reference", "status": 200, "duration_ms": 573.71}
+{"event": "request_complete", "request_id": "77285426994641dd84d67785333eb6fd", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 168.12}
+{"event": "request_complete", "request_id": "5b90ec3c67ad49e785d87f1d2194911d", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 130.91}
+{"event": "request_complete", "request_id": "46eeee2266c44751bfc2a9a4ee4f4647", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 200.17}
+{"event": "request_complete", "request_id": "ef8cd72b399440a9987b2bdcd4efaef7", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 391.93}
+{"event": "request_complete", "request_id": "8c4a3294f76f4a46b4f69f357832b9cd", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 169.13}
+{"event": "request_complete", "request_id": "561e13c0f2b94806b28132b60c5bb777", "method": "GET", "path": "/v1/delphi/capabilities", "status": 200, "duration_ms": 0.89}
+{"event": "request_complete", "request_id": "59770fd141d74799b0b01d484cdfebfa", "method": "POST", "path": "/v1/delphi/reference", "status": 200, "duration_ms": 604.3}
+{"event": "request_complete", "request_id": "fd19536394a24d1e99ecb38c303c8b34", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 198.21}
+{"event": "request_complete", "request_id": "66afe71bacdf4575b9934236f256654c", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 162.43}
+{"event": "request_complete", "request_id": "cc73a37746fb48b380a9f57c570ffc69", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 166.59}
+{"event": "request_complete", "request_id": "85e6db4489bb44bcb65115de99855263", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 388.5}
+{"event": "request_complete", "request_id": "3216daedf2314d9b9b66fb23d9af1534", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 201.63}
+{"event": "request_complete", "request_id": "75432b4d6df44540bb347e98ef1b1eb8", "method": "POST", "path": "/v1/delphi/reference", "status": 200, "duration_ms": 581.2}
+{"event": "request_complete", "request_id": "9cb4167403f145e3a2f2e38a3aa08564", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 186.33}
+{"event": "request_complete", "request_id": "51fa4f23833c4dc6833b9b965391e75a", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 138.64}
+{"event": "request_complete", "request_id": "abc384174211410599f60f7fc02f4388", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 161.92}
+{"event": "request_complete", "request_id": "0178a2b93a2241d09d5fb7b0986e37a9", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 356.73}
+{"event": "request_complete", "request_id": "8528ced61b734f759d2a0834074c87d9", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 189.71}
+{"event": "request_complete", "request_id": "8c51a6251be348cea973d6869fa56764", "method": "POST", "path": "/v1/delphi/reference", "status": 200, "duration_ms": 581.41}
+{"event": "request_complete", "request_id": "dad47b2dd9964a0096e9fe05fcbbf4c7", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 194.4}
+{"event": "request_complete", "request_id": "ed46cb3194e64e26bbd44f3961793ce3", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 132.7}
+{"event": "request_complete", "request_id": "037e6cd40a3a41a5926b5dea556b9400", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 163.42}
+{"event": "request_complete", "request_id": "9666b5a7dca94dd499c8f52f9f539e24", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 354.41}
+{"event": "request_complete", "request_id": "2907ebc345c14478bfd05658be168836", "method": "POST", "path": "/v1/delphi/experiment", "status": 200, "duration_ms": 223.35}

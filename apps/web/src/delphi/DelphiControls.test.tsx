@@ -4,8 +4,17 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { DelphiTabs } from "./DelphiControls";
 import { DelphiComparison } from "./DelphiComparison";
+import { DelphiMethodDetails } from "./DelphiMethodDetails";
 import type { ExperimentResult } from "./types";
 afterEach(cleanup);
+it("labels the training spatial-validation score separately and converts IV units", () => {
+  const result = { target: { kind: "implied_volatility" }, methods: [{ method: "gaussian_process", status: "complete", diagnostics: {
+    gp_fit_objective: "spatial_cross_validation", gp_validation_rmse: .003, gp_length_scales: [.4, .8], gp_regularization: .01, gp_fit_evaluations: 30, gp_fit_converged: true,
+  } }] } as unknown as ExperimentResult;
+  render(<DelphiMethodDetails result={result} method="gaussian_process" />);
+  expect(screen.getByText(/Spatial validation RMSE: 0.3 vol pts/)).toBeInTheDocument();
+  expect(screen.getByText(/Training holdouts only; final-grid error is reported in the comparison table/)).toBeInTheDocument();
+});
 it("supports arrow keys and skips disabled uncertainty", () => {
   const change = vi.fn();
   render(<DelphiTabs label="Views" panelId="plot" value="reference" onChange={change} options={[{ value: "reference", label: "Reference" }, { value: "uncertainty", label: "GP uncertainty", disabled: true, reason: "Fit GP first" }, { value: "error", label: "Error" }]} />);
