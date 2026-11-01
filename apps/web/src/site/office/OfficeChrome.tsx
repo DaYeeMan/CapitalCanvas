@@ -20,7 +20,7 @@ export function OfficeHeader({ active, onNavigate }: { active?: PreviewPage; onN
 export function OfficeFooter({ hidden = false, inert = false }: { hidden?: boolean; inert?: boolean }) {
   return <footer className="office-about-footer" aria-hidden={hidden} inert={inert}><div className="office-about-footer-content">
     <div className="office-about-footer-contact"><p>Emmanuel Zhang</p><a href={contactHref}>{contactEmail}</a></div>
-    <nav aria-label="Legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/disclaimer">Disclaimer</a><a href="/notices">Attributions</a></nav>
+    <nav aria-label="Legal"><a href="/privacy">Privacy</a><a href="/notices">Attributions</a></nav>
     <p className="office-about-copyright">© {new Date().getFullYear()} CapitalCanvas. Third-party works remain with their respective owners.</p>
   </div></footer>;
 }

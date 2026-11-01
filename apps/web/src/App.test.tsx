@@ -40,10 +40,10 @@ describe("CapitalCanvas route boundaries", () => {
     expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "index,follow");
   });
 
-  it.each(["/privacy", "/terms", "/disclaimer", "/notices"])("renders %s with the shared office header and About footer", async path => {
+  it.each(["/privacy", "/notices"])("renders %s with the shared office header and About footer", async path => {
     window.history.replaceState(null, "", path);
     const { container } = render(<App />);
-    expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: path === "/privacy" ? "Privacy" : "Attributions" })).toBeInTheDocument();
     expect(container.querySelector(".office-theme.information-site")).toBeInTheDocument();
     const header = screen.getByRole("banner");
     expect(within(header).getByRole("link", { name: "Capital Canvas city" })).toHaveAttribute("href", "/");
@@ -51,12 +51,13 @@ describe("CapitalCanvas route boundaries", () => {
     const footer = screen.getByRole("contentinfo");
     expect(within(footer).getByText("Emmanuel Zhang")).toBeInTheDocument();
     expect(within(footer).getByRole("navigation", { name: "Legal" })).toBeInTheDocument();
+    expect(within(footer).queryByRole("link", { name: /Terms|Disclaimer/ })).not.toBeInTheDocument();
     expect(within(footer).getByRole("link", { name: "dymteam23@gmail.com" })).toHaveAttribute("href", "mailto:dymteam23@gmail.com");
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("keeps unknown paths in the office-styled 404 with working home links", async () => {
-    window.history.replaceState(null, "", "/not-a-page");
+  it.each(["/not-a-page", "/terms", "/disclaimer"])("keeps unavailable path %s in the office-styled 404 with working home links", async path => {
+    window.history.replaceState(null, "", path);
     render(<App />);
     expect(await screen.findByRole("heading", { name: "Page not found" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Return home" })).toHaveAttribute("href", "/#home");

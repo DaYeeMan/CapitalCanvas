@@ -13,8 +13,6 @@ const titles: Record<string, string> = {
   "/tools/delphi": "Delphi — CapitalCanvas",
   "/notices": "Attributions — CapitalCanvas",
   "/privacy": "Privacy — CapitalCanvas",
-  "/terms": "Terms of use — CapitalCanvas",
-  "/disclaimer": "Disclaimer — CapitalCanvas",
 };
 
 class WorkbenchBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {

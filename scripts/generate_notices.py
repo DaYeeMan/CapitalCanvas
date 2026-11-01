@@ -5,6 +5,8 @@ modules=root/'apps/web/node_modules'
 entries=[]
 packages={}
 def add_package(name, parent=modules, recursive=True):
+ # Type declarations are development inputs, not distributed runtime code.
+ if name.startswith('@types/'):return
  # Resolve nested dependencies before the root installation, like Node does.
  candidates=[parent/name]+[ancestor/'node_modules'/name for ancestor in parent.parents]
  p=next((candidate for candidate in candidates if (candidate/'package.json').is_file()),None)
@@ -29,7 +31,8 @@ for (name,version),(p,meta) in packages.items():
  if not files:raise ValueError('Missing license: '+name)
  entries.append({'name':name,'version':version,'text':'\n\n'.join(f.read_text(encoding='utf-8') for f in files)})
 entries.append({'name':'Plotly bundled components','version':'2.35.3','text':(root/'docs/licenses/plotly-2.35.3-bundled.txt').read_text(encoding='utf-8')})
-font_notices=[]
+entries.append({'name':'MapLibre bundled with Plotly','version':'4.5.2','text':(root/'docs/licenses/maplibre-gl-js-4.5.2.txt').read_text(encoding='utf-8')})
+font_groups={}
 for p in sorted((modules/'katex/dist/fonts').glob('*.ttf')):
  data=p.read_bytes();n=struct.unpack_from('>H',data,4)[0];notices=set()
  for i in range(n):
@@ -40,9 +43,10 @@ for p in sorted((modules/'katex/dist/fonts').glob('*.ttf')):
    platform,_,_,nid,length,pos=struct.unpack_from('>HHHHHH',data,off+6+j*12)
    if nid in (0,13,14):notices.add(data[off+start+pos:off+start+pos+length].decode('utf-16-be' if platform in (0,3) else 'latin1'))
  if not notices:raise ValueError('Missing font notice: '+str(p))
- font_notices.append(p.name+'\n'+'\n'.join(sorted(notices)))
-entries.append({'name':'KaTeX mathematical fonts','version':'0.16.22','text':'\n\n'.join(font_notices)+'\n\n'+(root/'docs/licenses/OFL-1.1.txt').read_text(encoding='utf-8')})
-entries.append({'name':'Office characters by Quaternius','version':'CC0 1.0 / CC BY 3.0','text':(root/'apps/web/public/office/people/CREDITS.md').read_text(encoding='utf-8')+'\n\n'+(root/'docs/licenses/CC0-1.0.txt').read_text(encoding='utf-8')+'\n\n'+(root/'docs/licenses/CC-BY-3.0.txt').read_text(encoding='utf-8')})
+ font_groups.setdefault(tuple(sorted(notices)),[]).append(p.name)
+font_notices=['Fonts: '+', '.join(names)+'\n'+'\n'.join(notices) for notices,names in font_groups.items()]
+entries.append({'name':'KaTeX mathematical fonts','version':next(version for name,version in packages if name=='katex'),'text':'\n\n'.join(font_notices)+'\n\n'+(root/'docs/licenses/OFL-1.1.txt').read_text(encoding='utf-8')})
+# Character credits and license links are displayed directly on /notices.
 entries.append({'name':'Geist variable font','version':'SIL Open Font License 1.1','text':(root/'apps/web/public/office/fonts/OFL.txt').read_text(encoding='utf-8')})
 (root/'apps/web/src/site/notices.json').write_text(json.dumps(entries,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 print('Generated',len(entries),'license entries')

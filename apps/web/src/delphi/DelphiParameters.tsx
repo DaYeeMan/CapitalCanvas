@@ -3,8 +3,8 @@ import { ChevronDown } from "lucide-react";
 import { DelphiNumber } from "./DelphiControls";
 import { centralBounds, defaultReference, labels, METHODS, type Bounds, type Capabilities, type Config, type Target } from "./types";
 
-interface Props { config: Config; capabilities: Capabilities | null; edit: (update: (previous: Config) => Config) => void; referenceStatus: string }
-export function DelphiParameters({ config, capabilities, edit, referenceStatus }: Props) {
+interface Props { config: Config; capabilities: Capabilities | null; edit: (update: (previous: Config) => Config) => void }
+export function DelphiParameters({ config, capabilities, edit }: Props) {
   const [presetNotice, setPresetNotice] = useState("");
   const id = useId();
   const { reference: r, settings } = config;
@@ -47,8 +47,6 @@ export function DelphiParameters({ config, capabilities, edit, referenceStatus }
         <DelphiNumber label="Maturity grid nodes" value={r.domain.tau_nodes} min={20} max={81} step={1} onChange={value => domain("tau_nodes", value)} />
       </details>
       <DelphiNumber label="Reference seed" value={r.monte_carlo.seed} min={0} max={2147483647} step={1} onChange={value => mc("seed", value)} />
-      <p className="delphi-reference-status"><span className={referenceStatus === "Reused" || referenceStatus === "Ready" ? "ready" : ""} aria-hidden="true" />{referenceStatus}</p>
-      <p className="delphi-caption">Paths simulate prices. Training samples are surface points given to each model.</p>
     </details>
     <details open className="delphi-control-section" aria-labelledby={`${id}-training`}>
       <summary id={`${id}-training`}>Training data<ChevronDown size={15} /></summary>

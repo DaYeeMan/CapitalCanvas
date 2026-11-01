@@ -15,7 +15,7 @@ The current product has no accounts, database, saved results, live market data, 
 - `/` starts at the city. `/#home` and `/#resources` open the office floors; `/#about` shows the introduction over the city.
 - `/preview/office` and its trailing-slash variant replace their current history entry with `/`, preserving query parameters and the destination hash.
 - `/tools/ithaca`, `/tools/troy`, and `/tools/delphi` open independent workbenches with a return link to `/#home`.
-- `/privacy`, `/terms`, `/disclaimer`, and `/notices` retain their content in an office-styled reading layout. These pages and the 404 share the office header and About footer.
+- `/privacy` and `/notices` use an office-styled reading layout with the shared office header and About footer. Retired `/terms` and `/disclaimer` paths show the not-found view. Attributions show character credits and expandable software/font licenses.
 - Unknown paths show the not-found view. Unknown office hashes normalize to `#city`.
 
 City entry says “A Different Perspective” and “Visual tools for understanding financial models.” Enter Capital Canvas or the main tower opens Home. Three desk markers launch the tools. Resources uses the same desks to open centered research libraries containing all 10 Ithaca, 7 Troy, and 6 Delphi references and implementation notes.

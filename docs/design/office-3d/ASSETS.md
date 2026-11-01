@@ -22,7 +22,7 @@ These dependencies are isolated in the lazy office scene. No remote HDR, texture
 
 The local models live in `apps/web/public/office/people/`. `manifest.json` records source and shipped SHA-256 hashes, sizes, scales, triangle/bone counts, clips, and preparation parameters. The preparation script also writes identical metadata to `apps/web/src/site/office/characterManifest.json` for JavaScript imports; the public manifest remains available at `/office/people/manifest.json`. Both rigs have 62 bones and retain local Idle, Walk, and DeskIdle clips. The project preparation applies office colors and documented proportions, and authors DeskIdle. Measured standing heights are about 1.84m.
 
-`CREDITS.md` contains attribution and modifications. Full license texts remain in [docs/licenses](../../licenses/README.md), and `scripts/generate_notices.py` includes character and dependency notices in the application's attribution page.
+`CREDITS.md` contains attribution and modifications and is linked from the application's attribution page, alongside the character source and license links. Full license texts remain in [docs/licenses](../../licenses/README.md); `scripts/generate_notices.py` maintains the software and font notices.
 
 After obtaining the two linked source GLBs, reproduce the bundled files from the repository root:
 

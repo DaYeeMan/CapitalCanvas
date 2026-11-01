@@ -7,7 +7,7 @@ import { DelphiComparison } from "./DelphiComparison";
 import { DelphiBudget } from "./DelphiBudget";
 import { DelphiTabs } from "./DelphiControls";
 import { useDelphiExperiment } from "./useDelphiExperiment";
-import { labels, numberText, referenceKey, type Method, type Mode, type Region, type View } from "./types";
+import { labels, numberText, type Method, type Mode, type Region, type View } from "./types";
 import "./delphi.css";
 import "../workbench-after-hours.css";
 
@@ -26,9 +26,7 @@ export default function DelphiWorkbench() {
   function changeMode(mode: Mode) { setInspectBudget(false); experiment.selectMode(mode); }
   function closeSheet() { sheet.current?.close(); controlsButton.current?.focus(); }
   const matchingInfo = referenceInfo && result?.reference_id === referenceInfo.id ? referenceInfo : null;
-  const referenceMatches = result && referenceKey(config.reference) === referenceKey(result.configuration_snapshot.reference);
-  const referenceStatus = busy && experiment.status.startsWith("Generating") ? "Generating…" : referenceMatches ? (matchingInfo?.reused ? "Reused" : "Ready") : referenceInfo ? "Out of date" : "Not generated";
-  const parameters = <DelphiParameters config={config} capabilities={experiment.capabilities} edit={experiment.edit} referenceStatus={referenceStatus} />;
+  const parameters = <DelphiParameters config={config} capabilities={experiment.capabilities} edit={experiment.edit} />;
   const showingBudget = config.mode === "budget" && !inspectBudget;
   const warnings = [...(result?.warnings ?? []), ...(result?.methods.find(item => item.method === activeMethod)?.warnings ?? [])];
   return <div className="delphi-workbench tool-workbench after-hours">
@@ -38,7 +36,7 @@ export default function DelphiWorkbench() {
     <dialog className="delphi-sheet" aria-label="Experiment setup" ref={sheet} onClose={() => controlsButton.current?.focus()}><div className="delphi-sheet-top"><span>Experiment controls</span><button aria-label="Close experiment controls" onClick={closeSheet}><X size={20} /></button></div>{parameters}<button className="delphi-primary delphi-sheet-done" onClick={closeSheet}>Apply and close</button></dialog>
     <main id="delphi-main" className="delphi-main" tabIndex={-1}>
       <DelphiTabs label="Experiment type" value={config.mode} panelId="delphi-experiment-panel" onChange={changeMode} options={[{ value: "comparison", label: "Model comparison" }, { value: "budget", label: "Data budget" }, { value: "extrapolation", label: "Extrapolation" }]} />
-      <div className="delphi-status-line"><span role="status" aria-live="polite">{experiment.status}</span>{experiment.stale ? <strong>Previous experiment — inputs changed</strong> : null}</div>
+      {experiment.status !== "Experiment complete · all 3 views" || experiment.stale ? <div className="delphi-status-line">{experiment.status !== "Experiment complete · all 3 views" ? <span role="status" aria-live="polite">{experiment.status}</span> : null}{experiment.stale ? <strong>Previous experiment — inputs changed</strong> : null}</div> : null}
       {experiment.serviceError ? <div className="delphi-alert" role="alert">{experiment.serviceError} <button onClick={experiment.retryService}>Retry connection</button></div> : null}
       {experiment.errors.length ? <div ref={errorSummary} className="delphi-alert" role="alert" tabIndex={-1}><strong>Experiment needs attention</strong><ul>{experiment.errors.map(error => <li key={error}>{error}</li>)}</ul></div> : null}
       <div id="delphi-experiment-panel" role="tabpanel" aria-label={config.mode === "comparison" ? "Model comparison" : config.mode === "budget" ? "Data budget" : "Extrapolation"}>

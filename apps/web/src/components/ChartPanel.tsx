@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Plotly from "plotly.js-dist-min";
 import type { Data, Layout } from "plotly.js";
 import type { MethodResult, OptionFamily, SolveResponse, SolverMethod } from "../types";
@@ -136,6 +136,7 @@ export function ChartPanel({
   family,
   averageState,
   onAverageStateChange,
+  notice,
 }: {
   response: SolveResponse | null;
   activeMethod: SolverMethod;
@@ -144,6 +145,7 @@ export function ChartPanel({
   family: OptionFamily;
   averageState: number;
   onAverageStateChange: (value: number) => void;
+  notice?: ReactNode;
 }) {
   const [tab, setTab] = useState<ChartTab>("surface");
   const [sliceIndex, setSliceIndex] = useState<number | null>(null);
@@ -533,6 +535,7 @@ export function ChartPanel({
         )}
       </div>
 
+      {notice}
       {activeResult && (visibleTab === "surface" || visibleTab === "slice") ? (
         <>
           <label className="slice-control">

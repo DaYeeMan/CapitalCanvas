@@ -33,17 +33,18 @@ export function DelphiSurface({ result, method, view, slice, onSlice }: { result
   }, [result, view, factor, field]);
   const data = useMemo<Data[]>(() => {
     if (!field) return [];
-    const traces: Data[] = [{ type: "surface", x: result.axes.spots, y: result.axes.times_to_maturity, z: field.map(values => values.map(value => value === null ? null : value * factor)), cmin: commonScale[0], cmax: commonScale[1], colorscale: view === "error" || view === "uncertainty" ? errorColors : surfaceColors, lighting: { ambient: .85, diffuse: .6, specular: .08, roughness: .95, fresnel: .1 }, showscale: true, colorbar: { title: { text: zLabel, side: "right" }, thickness: 12, len: .78, tickfont: { size: 10 } }, hovertemplate: `Spot %{x:.2f}<br>Maturity %{y:.3f} yr<br>${zLabel}: %{z:.5g}<extra></extra>`, contours: { x: { show: true, color: "#648195", width: 1 }, y: { show: true, color: "#648195", width: 1 } } } as Data];
+    const traces: Data[] = [{ type: "surface", x: result.axes.spots, y: result.axes.times_to_maturity, z: field.map(values => values.map(value => value === null ? null : value * factor)), cmin: commonScale[0], cmax: commonScale[1], colorscale: view === "error" || view === "uncertainty" ? errorColors : surfaceColors, lighting: { ambient: .85, diffuse: .6, specular: .08, roughness: .95, fresnel: .1 }, showscale: true, colorbar: { title: { text: zLabel, side: "right" }, x: compact ? .84 : .88, xanchor: "left", y: .5, thickness: 12, len: .78, bgcolor: "rgba(0,0,0,0)", tickfont: { size: 10 } }, hovertemplate: `Spot %{x:.2f}<br>Maturity %{y:.3f} yr<br>${zLabel}: %{z:.5g}<extra></extra>`, contours: { x: { show: true, color: "#648195", width: 1 }, y: { show: true, color: "#648195", width: 1 } } } as Data];
     if (overlay) traces.push({ type: "scatter3d", mode: "markers", name: "Training points", x: result.samples.coordinates.map(point => point[0]), y: result.samples.coordinates.map(point => point[1]), z: result.samples.flat_indices.map((index, sample) => {
       if (view === "reference" || view === "prediction") return result.samples.values[sample] * factor;
       const value = field[Math.floor(index / result.axes.spots.length)][index % result.axes.spots.length];
       return value === null ? null : value * factor;
     }), customdata: result.samples.values.map(value => value * factor), marker: { color: "#f2eadb", size: 2.5, line: { color: "#18262e", width: .5 } }, hovertemplate: "Training point<br>Spot %{x:.2f}<br>Maturity %{y:.3f} yr<br>Reference target: %{customdata:.5g}<extra></extra>" } as Data);
     return traces;
-  }, [field, result, factor, commonScale, view, zLabel, title, overlay]);
+  }, [field, result, factor, commonScale, view, zLabel, overlay, compact]);
   const layout = useMemo<Partial<Layout>>(() => {
     const axis = { gridcolor: "#405560", zerolinecolor: "#7d8d97", showbackground: false, tickfont: { size: 10 } };
-    return { ...chartBase, showlegend: false, uirevision: JSON.stringify([result.axes, compact]), scene: {
+    return { ...chartBase, margin: { ...chartBase.margin, autoexpand: false }, showlegend: false, uirevision: JSON.stringify([result.axes, compact]), scene: {
+      bgcolor: "rgba(0,0,0,0)", domain: { x: [0, 1], y: [0, 1] },
       uirevision: JSON.stringify([result.axes, compact]), camera: { eye: compact ? { x: -1.9, y: -1.9, z: 1.2 } : { x: -1.4, y: -1.45, z: .85 } }, aspectmode: "manual", aspectratio: { x: 1.3, y: 1, z: .85 },
       xaxis: { ...axis, title: { text: "Spot S ($)", font: { size: 12 } }, range: [result.axes.spots[0], result.axes.spots.at(-1)!] },
       yaxis: { ...axis, title: { text: "Maturity (yr)", font: { size: 12 } }, range: [result.axes.times_to_maturity[0], result.axes.times_to_maturity.at(-1)!] },

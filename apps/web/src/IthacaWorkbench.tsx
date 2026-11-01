@@ -220,11 +220,13 @@ export default function IthacaWorkbench() {
         <ProblemPanel parameters={parameters} onChange={changeParameter} onFamilyChange={changeFamily} onAsianAverageTypeChange={changeAsianAverageType} />
       </aside>
 
-      <section id="visualization" tabIndex={-1} className={`chart-panel${message ? " has-message" : ""}`}>
+      <section id="visualization" tabIndex={-1} className="chart-panel">
         <Suspense fallback={<div className="chart-loading"><span className="status-spinner" />Loading visualization…</div>}>
-          <ChartPanel response={response} activeMethod={activeMethod} onActiveMethodChange={setActiveMethod} loading={status === "solving"} family={parameters.optionFamily} averageState={parameters.asianAverageState} onAverageStateChange={(value) => changeParameter("asianAverageState", value)} />
+          <ChartPanel response={response} activeMethod={activeMethod} onActiveMethodChange={setActiveMethod} loading={status === "solving"} family={parameters.optionFamily} averageState={parameters.asianAverageState} onAverageStateChange={(value) => changeParameter("asianAverageState", value)} notice={message ? <div className="app-message" role="alert">
+            {message}
+            <button type="button" className="app-message-close" aria-label="Dismiss message" onClick={() => setMessage(null)}><X size={16} aria-hidden="true" /></button>
+          </div> : null} />
         </Suspense>
-        {message ? <div className="app-message" role="alert">{message}</div> : null}
       </section>
 
       <aside className="equation-panel desktop-rail">

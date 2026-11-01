@@ -80,7 +80,7 @@ export default function TroyWorkbench() {
             <p>{result.pricingLabel}. Contract values and P&L use one underlying unit per option. Option inventory is marked to the maker’s model; a misspecified model can misstate wealth before settlement. Total P&L equals realized option P&L plus unrealized option P&L plus hedge P&L, minus transaction costs. Average spread captured is execution edge against the maker’s fair value when the quote was posted, not round-trip profit.</p>
             {result.warnings.map(w => <p key={w}>{w}</p>)}
             <p>All rates and horizons use years. The effective horizon is the smaller of simulation horizon and maturity. Returns pool all paths at the selected step size; finite samples need not display textbook tail shapes.</p>
-            <p>Heston uses a discretized nonnegative variance process. <a href="https://www.macs.hw.ac.uk/~simonm/psdesarxiv.pdf" target="_blank" rel="noreferrer">Numerical variance schemes</a> explain the approximation. See <a href="/disclaimer">model limitations</a>.</p>
+            <p>Heston uses a discretized nonnegative variance process. <a href="https://www.macs.hw.ac.uk/~simonm/psdesarxiv.pdf" target="_blank" rel="noreferrer">Numerical variance schemes</a> explain the approximation.</p>
           </details>
         </> : !error && <div className="troy-empty">Generating market paths, quotes, and inventory…</div>}
       </div>
