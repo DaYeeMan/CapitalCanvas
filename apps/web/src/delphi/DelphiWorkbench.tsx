@@ -48,7 +48,7 @@ export default function DelphiWorkbench() {
       </div>
       {warnings.length ? <details className="delphi-diagnostics"><summary>Assumptions and diagnostics · {warnings.length}</summary>{warnings.map((notice, index) => <p key={`${notice.code}-${index}`}>{notice.message}</p>)}</details> : null}
       {result ? <details className="delphi-provenance-details"><summary>Experiment provenance · seed {result.configuration_snapshot.reference.monte_carlo.seed} · {numberText(matchingInfo?.ms, 1)} ms reference</summary><dl><dt>Reference</dt><dd>{result.reference_id}</dd><dt>Sample set</dt><dd>{result.sample_set_id}</dd><dt>Experiment</dt><dd>{result.experiment_id}</dd></dl><p className="delphi-caption">{result.configuration_snapshot.reference.option_side} · K {result.configuration_snapshot.reference.market.strike} · σ {result.configuration_snapshot.reference.market.volatility * 100}% · r {result.configuration_snapshot.reference.market.rate * 100}% · q {result.configuration_snapshot.reference.market.dividend * 100}% · {result.configuration_snapshot.reference.monte_carlo.paths.toLocaleString()} paths<br />Fit and inference exclude network, plotting, and evaluation. Reference node errors are correlated.</p></details> : null}
-      <footer className="delphi-footer">Monte Carlo is a high-fidelity reference, not exact truth. {(result?.target.kind ?? config.target) === "implied_volatility" ? "Constant-volatility GBM has flat theoretical IV." : "Randomized runs · Shared training data"}</footer>
+      <footer className="delphi-footer">Monte Carlo is a high-fidelity reference, not exact truth.{(result?.target.kind ?? config.target) === "implied_volatility" ? " Constant-volatility GBM has flat theoretical IV." : ""}</footer>
     </main>
   </div>;
 }

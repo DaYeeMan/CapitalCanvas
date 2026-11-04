@@ -65,13 +65,17 @@
 .delphi-model-select select { min-width: 160px; }
 .delphi-surface-panel { display: grid; grid-template-columns: minmax(0, 1fr) 220px; border: 1px solid var(--line-soft); border-radius: 4px; background: var(--surface); }
 .delphi-visualization { min-width: 0; }
-.delphi-visualization:not(.is-slice) { position: relative; align-self: start; }
+.delphi-visualization:not(.is-slice) { position: relative; min-height: clamp(330px, 40vh, 470px); }
+.delphi-visualization:not(.is-slice) .delphi-plot { position: absolute; inset: 0; height: 100%; }
 .delphi-visualization:not(.is-slice) .delphi-plot-controls { position: absolute; inset: auto 0 0; z-index: 2; background: transparent; pointer-events: none; }
 .delphi-visualization:not(.is-slice) .delphi-plot-controls > * { pointer-events: auto; }
 .delphi-plot { height: clamp(330px, 40vh, 470px); min-width: 0; overflow: hidden; }
 .delphi-plot-controls { display: flex; justify-content: flex-end; gap: 20px; align-items: center; padding: 8px 20px 14px; }
 .delphi-plot-controls button { font-size: 11px; }
-.delphi-method-details { padding: 18px; border-left: 1px solid var(--line-soft); min-width: 0; }
+.delphi-method-stack { display: grid; min-width: 0; }
+.delphi-method-slot { grid-area: 1 / 1; min-width: 0; visibility: hidden; }
+.delphi-method-slot.is-active { visibility: visible; }
+.delphi-method-details { box-sizing: border-box; height: 100%; padding: 18px; border-left: 1px solid var(--line-soft); min-width: 0; }
 .delphi-method-details h3 { font-size: 18px; border-bottom: 1px solid var(--line-soft); padding-bottom: 12px; }
 .delphi-method-details > p:not(.delphi-caption):not(.delphi-notice) { font: 15px/1.55 var(--serif); color: var(--muted); }
 .delphi-equation { overflow-x: auto; font-size: 11px; margin-block: 18px; scrollbar-width: thin; }
@@ -125,3 +129,4 @@
 @media (max-width: 900px) { .delphi-main { padding-inline: 12px; } .delphi-tabs { gap: 10px; } .delphi-section-heading h2 span { display: none; } .delphi-provenance { padding: 3px 7px; } .delphi-title-line h2 { font-size: 26px; } }
 @media (max-width: 700px) { .delphi-workbench { display: block; height: auto; min-height: 100svh; overflow: visible; } .delphi-topbar { min-height: 68px; padding: 10px; gap: 10px; flex-wrap: wrap; } .delphi-topbar h1 { font-size: 32px; } .delphi-back { width: 30px; height: 36px; border: 0; } .delphi-actions { gap: 7px; } .delphi-actions button { min-width: 0; min-height: 36px; padding-inline: 10px; font-size: 11px; } .delphi-actions .delphi-mobile-controls { display: flex; } .delphi-actions .delphi-primary { min-width: 122px; } .delphi-rail { display: none; } .delphi-main { margin: 8px; padding: 0 10px 18px; overflow: visible; } .delphi-tabs { gap: 4px; justify-content: space-between; } .delphi-tabs button { font-size: 11px; padding-inline: 5px; } .delphi-status-line { flex-wrap: wrap; margin-bottom: 12px; } .delphi-provenance { font-size: 10px; } .delphi-segments { width: 100%; } .delphi-segments button { flex: 1; padding-inline: 6px; font-size: 10px; min-height: 36px; } .delphi-model-select { width: 100%; justify-content: space-between; } .delphi-plot { height: 340px; } .delphi-plot-controls { justify-content: space-between; padding-inline: 12px; } .delphi-empty-surface { min-height: 360px; padding: 20px; } .delphi-budget-plot { height: 360px; } .delphi-domain-summary { flex-direction: column; align-items: flex-start; gap: 0; } .delphi-footer { text-align: left; } }
 @media (prefers-reduced-motion: reduce) { .delphi-workbench * { scroll-behavior: auto !important; } }
+@media (max-width: 700px) { .delphi-visualization:not(.is-slice) { min-height: 340px; } }
