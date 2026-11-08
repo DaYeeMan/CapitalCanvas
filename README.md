@@ -1,6 +1,6 @@
 # CapitalCanvas
 
-CapitalCanvas is a personal, noncommercial project for learning quantitative finance through interactive models, transparent assumptions, and visual results.
+CapitalCanvas is a personal project for learning quantitative finance through interactive models, transparent assumptions, and visual results.
 
 The tools are **Ithaca**, an option-pricing workbench; **Troy**, an options market-making simulator; and **Delphi**, a surrogate-model comparison laboratory for price and implied-volatility surfaces.
 
