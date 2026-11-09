@@ -2,7 +2,7 @@ import { ChevronDown, Info } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 import { NumberField } from '../components/NumberField';
 import type { Config, Dynamics, Pricing } from './types';
-import { dynamicsLabels, pricingLabels } from './labels';
+import { dynamicsLabels, pricingLabels, quoteTiming } from './labels';
 
 function Hint({ text, label }: { text: string; label: string }) {
   const id = useId();
@@ -21,7 +21,7 @@ export function TroyParameters({ config, onChange }: { config: Config; onChange:
   </div>;
   const percent = (key: NumberKey, label: string, min = 0, max = 200, help?: string) => field(key, label, min, max, .5, '%', help, 100);
   const heston = (pricing: boolean) => <>
-    {field(pricing ? 'pricingInitialVariance' : 'initialVariance', 'Initial variance v₀', .0001, 4, .01, undefined, 'Starting instantaneous variance. A variance of 0.04 corresponds to 20% volatility.')}
+    {(!pricing || config.hestonVarianceSource === 'fixed') && field(pricing ? 'pricingInitialVariance' : 'initialVariance', 'Initial variance v₀', .0001, 4, .01, undefined, 'Starting instantaneous variance. A variance of 0.04 corresponds to 20% volatility.')}
     {field(pricing ? 'pricingMeanReversion' : 'meanReversion', 'Mean reversion κ', 0, 20, .1, undefined, 'Speed at which variance moves toward its long-run level, per year.')}
     {field(pricing ? 'pricingLongRunVariance' : 'longRunVariance', 'Long-run variance θ', .0001, 4, .01, undefined, 'Long-run target variance. This is variance, not volatility.')}
     {field(pricing ? 'pricingVolOfVol' : 'volOfVol', 'Vol of volatility ξ', 0, 3, .05, undefined, 'Controls the randomness of variance. Larger values create more variable volatility.')}
@@ -47,17 +47,29 @@ export function TroyParameters({ config, onChange }: { config: Config; onChange:
         {field('jumpIntensity', 'Jump intensity λ', 0, 50, .1, '/yr', 'Expected jumps per year. Jump times follow a Poisson process.')}
         {field('jumpMean', 'Mean log jump', -1, 1, .01)}
         {percent('jumpVolatility', 'Jump volatility', 0, 100)}
+        <h3 className="troy-subheading">Reference risk-neutral assumptions</h3>
+        {field('referenceJumpIntensityMultiplier', 'Q jump intensity multiplier', 0, 4, .1, undefined, 'Risk-neutral intensity equals physical jump intensity times this factor. One retains the physical intensity.')}
+        {field('referenceJumpMeanShift', 'Q log-jump mean shift', -.5, .5, .01, undefined, 'Added to the physical mean log jump for reference valuation. Zero retains the physical jump-size law.')}
       </>}
+      {config.dynamics === 'heston' && field('varianceRiskPremium', 'Variance risk premium', 0, 10, .1, undefined, 'Reference κQ = κ + premium and κQθQ = κθ. Zero retains the physical variance law; spot drift becomes r − q.')}
       <p className="troy-equation">{config.dynamics === 'gbm' ? 'dS = μS dt + σS dW' : config.dynamics === 'heston' ? 'dS = μS dt + √v S dWₛ\ndv = κ(θ − v) dt + ξ√v dWᵥ' : 'dS/S = (μ − λE[J−1]) dt + σ dW + (J−1) dN'}</p>
     </Group>
     <Group title="03 · Market Maker">
       <h3 className="troy-subheading">Pricing</h3>
       <label className="troy-select">Pricing model<select value={config.pricing} onChange={e => set('pricing', e.target.value as Pricing)}>{Object.entries(pricingLabels).map(([key, label]) => <option key={key} value={key}>{label}{key === 'crr' ? ' Binomial' : ''}</option>)}</select></label>
+      {config.pricing === 'heston' && <label className="troy-select">Variance access<select value={config.hestonVarianceSource} onChange={e => set('hestonVarianceSource', e.target.value as Config['hestonVarianceSource'])}><option value="observed">Current variance · full information</option><option value="fixed">Fixed variance assumption</option></select></label>}
       {config.pricing === 'heston' ? heston(true) : percent('pricingVolatility', 'Assumed volatility', .1, 200, 'Volatility used by the maker, independent of true market volatility.')}
+      {config.pricing === 'merton' && <>
+        {field('pricingJumpIntensity', 'Assumed jump intensity', 0, 100, .1, '/yr')}
+        {field('pricingJumpMean', 'Assumed mean log jump', -1.5, 1.5, .01)}
+        {percent('pricingJumpVolatility', 'Assumed jump volatility', 0, 100)}
+      </>}
       {config.pricing === 'crr' && field('treeSteps', 'Binomial steps', 10, 200, 10)}
-      {(config.pricing === 'mc' || config.pricing === 'heston') && field('pricingPaths', 'Pricing paths', 64, 2048, 64)}
-      {config.pricing === 'heston' && <>{field('pricingSteps', 'Pricing time steps', 8, 64, 8)}<p className="troy-caption">Risk-neutral Heston simulation; common random numbers stabilize prices and delta.</p></>}
+      {config.pricing === 'mc' && field('pricingPaths', 'Pricing paths', 64, 2048, 64)}
+      {config.pricing === 'heston' && <p className="troy-caption">Deterministic Heston Fourier pricing. Current variance access reveals the simulated state; fixed access retains the configured variance assumption.</p>}
       <h3 className="troy-subheading divided">Quoting / Risk</h3>
+      {field('quoteLatencySteps', 'Quote latency', 0, 100, 1, 'steps', 'Zero refreshes quotes before orders arrive. One lets orders trade against the previous step’s quotes. Larger values delay each update by that many market steps.')}
+      <p className="troy-caption">{quoteTiming(config.quoteLatencySteps, Math.min(config.horizon, config.maturity) / config.steps)}{config.quoteLatencySteps > 0 ? ' of simulated delay' : ''}</p>
       {field('halfSpread', 'Base spread', .01, 20, .05, '$', 'Full bid–ask width before the nonnegative bid floor. Wider quotes receive fewer fills.', 2)}
       {field('quoteSize', 'Quote size', 1, 100, 1, undefined, 'Option units filled per arrival, clipped at the inventory limit.')}
       {field('inventorySkew', 'Inventory skew', 0, 2, .005, undefined, 'Quote shift in dollars per option held. Long inventory shifts both quotes downward.')}
@@ -65,15 +77,18 @@ export function TroyParameters({ config, onChange }: { config: Config; onChange:
       <label className="toggle-field">Hedging enabled<input type="checkbox" checked={config.hedgeEnabled} onChange={e => set('hedgeEnabled', e.target.checked)} /></label>
       {config.hedgeEnabled && <>{field('hedgeEvery', 'Hedge frequency', 1, 100, 1, 'steps')}{field('hedgeCostBps', 'Hedge transaction cost', 0, 100, .5, 'bps')}</>}
       {field('optionCost', 'Transaction cost', 0, 10, .005, '$', 'Cost per option unit traded. Hedge costs are charged separately on underlying notional.')}
+      {percent('borrowingSpread', 'Cash borrowing spread', 0, 30, 'Positive cash earns r; negative cash pays r plus this spread.')}
+      {field('stockBorrowBps', 'Stock borrow fee', 0, 1000, 5, 'bps/yr', 'Annual fee on short underlying notional, in addition to dividends owed.')}
     </Group>
     <Group title="04 · Simulation">
       {field('horizon', 'Simulation horizon', .01, 5, .05, 'yr', 'Effective horizon is capped at contract maturity.')}
       {field('steps', 'Time steps', 20, 1000, 20)}
       {field('seed', 'Random seed', 0, 2147483647, 1)}
-      <p className="troy-caption">New market draws a fresh seed. Reuse a seed to replay the same experiment.</p>
+      <p className="troy-caption">Model changes retain this seed. New market draws a fresh experiment.</p>
       {field('samplePaths', 'Sample paths', 2, 50, 1)}
       {field('fillIntensity', 'Order arrival intensity', 0, 2000, 20, '/yr', 'Base total customer arrivals per year, before quote competitiveness reduces fills.')}
       {percent('buyFlowBalance', 'Buy flow balance', 0, 100, 'Share of customer buy orders, which hit the maker’s ask. 50% gives balanced flow.')}
+      {percent('informedFlowShare', 'Informed flow share', 0, 100, 'Informed customers compare executable quotes with the current independent market reference. Uninformed customers respond only to the posted spread.')}
       {field('fillSensitivity', 'Quote sensitivity', .01, 20, .1, undefined, 'Exponential decline in arrivals per dollar away from the reference. Larger values penalize less competitive quotes more.')}
     </Group>
   </div>;

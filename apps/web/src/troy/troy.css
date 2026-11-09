@@ -34,7 +34,7 @@
 .troy-tabs { display: flex; gap: 26px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
 .troy-tabs button { border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); padding: 0 0 13px; cursor: pointer; font-size: 13px; }
 .troy-tabs button[aria-selected=true] { color: var(--cyan-soft); border-color: var(--cyan); }
-.troy-output { display: grid; gap: 18px; }
+.troy-output { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .troy-output.updating { opacity: .55; }
 .troy-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border: 1px solid var(--line-soft); border-radius: 5px; background: var(--surface); }
 .troy-metric { padding: 15px 13px; display: grid; gap: 10px; min-width: 0; }
@@ -45,12 +45,33 @@
 .troy-metric.positive strong { color: var(--green); }
 .troy-metric.negative strong { color: var(--danger); }
 .troy-return-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.troy-trading-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.troy-trading-metrics .troy-metric:nth-child(3n+1) { border-left: 0; }
+.troy-trading-metrics .troy-metric:nth-child(n+4) { border-top: 1px solid var(--line-soft); }
+.troy-comparison { min-width: 0; border: 1px solid var(--line-soft); border-radius: 5px; padding: 17px 18px; background: var(--surface); }
+.troy-comparison .troy-chart-heading { padding-left: 0; }
+.troy-comparison-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 8px 0; }
+.troy-comparison-controls .number-field { margin: 0; gap: 8px; }
+.troy-comparison-controls .secondary-button { display: inline-flex; margin: 0; }
+.troy-comparison-controls [role=status] { color: var(--muted); font-size: 11px; }
+.troy-compare-timing { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.troy-comparison-horizon { max-width: 230px; margin-top: 16px; }
+.troy-comparison-table { max-width: 100%; overflow: auto; }
+.troy-comparison-table table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.troy-comparison-table caption { color: var(--muted); text-align: left; padding: 7px 0; }
+.troy-comparison-table th, .troy-comparison-table td { padding: 10px 8px; border-bottom: 1px solid var(--line-soft); text-align: right; }
+.troy-comparison-table th { color: var(--text); font-weight: 500; }
+.troy-comparison-table td { white-space: nowrap; }
+.troy-comparison-table th:first-child { text-align: left; min-width: 115px; }
+.troy-pnl-breakdown { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 8px 0 0; }
+.troy-pnl-breakdown > div { padding: 8px 0; border-top: 1px solid var(--line-soft); }
+.troy-pnl-breakdown dt { color: var(--muted); font-size: 11px; }
+.troy-pnl-breakdown dd { margin: 6px 0 0; font-size: 14px; font-variant-numeric: tabular-nums; }
 .troy-chart-card { min-width: 0; border: 1px solid var(--line-soft); border-radius: 5px; padding: 17px 10px 3px; background: var(--surface); overflow: hidden; }
 .troy-chart-heading { padding: 0 9px 8px; }
 /* Plotly adds a solid backing stroke that turns white on transparent plots. */
 .troy-chart-card .hoverlayer line.spikeline:not([stroke-dasharray]) { display: none; }
 .troy-workbench .troy-chart-heading h2 { font-size: 21px; }
-.troy-chart-heading p { color: var(--muted); font-size: 10px; line-height: 1.6; margin: 7px 0 0; }
 .troy-methods { color: var(--muted); font-size: 12px; line-height: 1.8; }
 .troy-methods summary { color: var(--cyan-soft); cursor: pointer; }
 .troy-methods a { color: var(--cyan-soft); }

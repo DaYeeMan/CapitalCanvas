@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { advance, arrivalCounts, quotePolicy, blackScholes, defaultConfig, optionDelta, priceOption, randomSource, returnStatistics, simulate } from './engine'
-import type { Config } from './types'
+import { advance, arrivalCounts, quotePolicy, blackScholes, defaultConfig, defaultPricing, optionDelta, priceOption, randomSource, referencePricing, returnStatistics, simulate } from './engine'
+import { compareModels } from './comparison'
+import type { Config, PricingModel } from './types'
 const config = (patch: Partial<Config> = {}): Config => ({ ...defaultConfig, steps: 40, samplePaths: 3, ...patch })
 
 describe('European pricing', () => {
@@ -21,11 +22,11 @@ describe('European pricing', () => {
       expect(Math.abs(priceOption({ ...c, pricing: 'crr' }) - priceOption(c))).toBeLessThan(0.02)
     }
   })
-  it('risk-neutral simulations agree with BS within sampling error', () => {
-    const c = config({ pricingPaths: 4096, pricingVolOfVol: 0, pricingSteps: 32 })
+  it('GBM Monte Carlo agrees with BS within sampling error and constant-variance Heston reduces to BS', () => {
+    const c = config({ pricingPaths: 4096, pricingVolOfVol: 0 })
     const analytic = priceOption(c)
     expect(Math.abs(priceOption({ ...c, pricing: 'mc' }) - analytic)).toBeLessThan(0.5)
-    expect(Math.abs(priceOption({ ...c, pricing: 'heston' }) - analytic)).toBeLessThan(0.5)
+    expect(priceOption({ ...c, pricing: 'heston' })).toBeCloseTo(analytic, 10)
     expect(optionDelta({ ...c, pricing: 'mc' })).toBeGreaterThan(0.4)
     expect(optionDelta({ ...c, pricing: 'mc' })).toBeLessThan(0.7)
   })
@@ -33,6 +34,25 @@ describe('European pricing', () => {
     const c = config({ pricing: 'heston' })
     expect(priceOption(c)).toBe(priceOption({ ...c, initialVariance: 0.9, drift: 0.9, volOfVol: 2, dynamics: 'merton' }))
     expect(priceOption({ ...c, pricingInitialVariance: 0.2 })).not.toBe(priceOption(c))
+  })
+  it('conditions Heston prices on current variance when enabled and matches a Fourier benchmark', () => {
+    const c = config({ dynamics: 'heston', pricing: 'heston', rate: .05, volOfVol: .3, pricingVolOfVol: .3 })
+    const low = { spot: 100, time: 0, variance: .04, history: [100] }, high = { ...low, variance: .25 }
+    expect(referencePricing(c, low).value).toBeCloseTo(10.394218565, 3)
+    expect(defaultPricing(c, low).delta).toBeCloseTo(optionDelta(c), 5)
+    expect(defaultPricing(c, low)).toEqual(referencePricing(c, low))
+    expect(defaultPricing(c, high).value).toBeGreaterThan(defaultPricing(c, low).value)
+    expect(defaultPricing({ ...c, hestonVarianceSource: 'fixed' }, high)).toEqual(defaultPricing(c, low))
+    expect(referencePricing({ ...c, varianceRiskPremium: 2 }, low).value).toBeLessThan(referencePricing(c, low).value)
+  })
+  it('prices the Merton benchmark and isolates reference assumptions from the maker', () => {
+    const c = config({ dynamics: 'merton', pricing: 'merton' })
+    const context = { spot: 100, time: 0, variance: .04, history: [100] }
+    expect(priceOption(c)).toBeCloseTo(12.096846, 5)
+    expect(priceOption({ ...c, pricingJumpIntensity: 0 })).toBe(priceOption({ ...c, pricing: 'bs' }))
+    expect(referencePricing({ ...c, pricing: 'bs', pricingVolatility: .5 }, context)).toEqual(referencePricing(c, context))
+    expect(referencePricing({ ...c, referenceJumpIntensityMultiplier: 0 }, context).value).toBe(priceOption({ ...c, pricing: 'bs' }))
+    expect(priceOption(c) - priceOption({ ...c, optionType: 'put' })).toBeCloseTo(c.spot - c.strike * Math.exp(-c.rate * c.maturity), 10)
   })
 })
 
@@ -62,7 +82,7 @@ describe('seeded dynamics and bounded compute', () => {
     expect(() => simulate(config({ steps: 0 }))).toThrow()
     expect(() => simulate(config({ spot: NaN }))).toThrow()
     expect(() => simulate(config({ horizon: -1 }))).toThrow()
-    expect(() => simulate(config({ pricing: 'heston', steps: 1000, pricingPaths: 4096, pricingSteps: 128 }))).toThrow(/budget/)
+    expect(() => simulate(config({ pricing: 'crr', steps: 1000, treeSteps: 250 }))).toThrow(/budget/)
   })
   it('pools every sample path once and caps horizon without mutating input', () => {
     const c = config({ horizon: 2, maturity: 0.5, samplePaths: 7 })
@@ -92,7 +112,6 @@ describe('seeded dynamics and bounded compute', () => {
   })
   it('rejects invalid pricing paths and nonfinite prices while permitting zero payoff', () => {
     expect(() => priceOption(config({ pricing: 'mc', pricingVolatility: 10000 }))).toThrow(/Numerical overflow\/underflow/)
-    expect(() => priceOption(config({ pricing: 'heston', pricingInitialVariance: 1e10 }))).toThrow(/Numerical overflow\/underflow/)
     expect(() => priceOption(config({ rate: -10000 }))).toThrow(/Numerical overflow\/underflow.*option price/)
     expect(priceOption(config({ spot: 90 }), 90, 0)).toBe(0)
     expect(priceOption(config({ pricingVolatility: 0, spot: 90, rate: 0 }))).toBe(0)
@@ -109,12 +128,49 @@ describe('market making and accounting', () => {
     const lambdas: number[] = []
     const rng = { uniform: () => 0.5, normal: () => 0, poisson: (lambda: number) => { lambdas.push(lambda); return 0 } }
     const c = config({ fillIntensity: 100, buyFlowBalance: 0.7, halfSpread: 0 })
-    arrivalCounts(c, quotePolicy(c, 10, 0), 0.1, rng)
+    arrivalCounts(c, quotePolicy(c, 10, 0), 0.1, rng, 10)
     expect(lambdas[0]).toBeCloseTo(3, 12)
     expect(lambdas[1]).toBeCloseTo(7, 12)
-    lambdas.length = 0
-    arrivalCounts(c, quotePolicy({ ...c, halfSpread: 0.5 }, 10, 0), 0.1, rng)
-    expect(lambdas[0] + lambdas[1]).toBeCloseTo(10 * Math.exp(-c.fillSensitivity * 0.5), 12)
+    const candidates = { ...rng, poisson: () => 1 }
+    expect(arrivalCounts(c, quotePolicy(c, 10, 0), .1, candidates, 10)).toEqual({ buyCount: 1, sellCount: 1 })
+    expect(arrivalCounts(c, quotePolicy({ ...c, halfSpread: .5 }, 10, 0), .1, candidates, 10)).toEqual({ buyCount: 0, sellCount: 0 })
+  })
+  it('separates stale quote losses from current model mispricing', () => {
+    const c = config({ steps: 1, informedFlowShare: 1, hedgeEnabled: false, optionCost: 0 })
+    const make = (quoteLatencySteps: number, mispriced = false) => simulate({ ...c, quoteLatencySteps }, {
+      dynamics: (_c, x) => [x.spot + 10, x.variance],
+      reference: (_c, x) => ({ value: x.spot - 90, delta: 1 }),
+      pricing: (_c, x) => ({ value: mispriced ? 10 : x.spot - 90, delta: 1 }),
+      arrivals: (c, quote, dt, _rng, reference) => arrivalCounts(c, quote, dt, { uniform: () => .5, normal: () => 0, poisson: () => 1 }, reference),
+    })
+    const fresh = make(defaultConfig.quoteLatencySteps), stale = make(1), wrong = make(0, true)
+    expect(stale.samplePaths).toEqual(fresh.samplePaths)
+    expect(fresh.fills).toHaveLength(2)
+    expect(fresh.fills.every(fill => fill.quoteAge === 0 && fill.postingReference === 20)).toBe(true)
+    expect(fresh.summary.totalPnl).toBeCloseTo(.30, 10)
+    expect(fresh.summary.pricingRmse).toBe(0)
+    expect(stale.fills).toHaveLength(1)
+    expect(stale.fills[0]).toMatchObject({ side: 'sell', price: 10.15, referenceValue: 20, postingReference: 10, quoteAge: .25 })
+    expect(stale.summary.totalPnl).toBeCloseTo(-9.85, 10)
+    expect(stale.summary.modelPnl).toBe(stale.summary.totalPnl)
+    expect(stale.summary.pricingRmse).toBe(0)
+    expect(stale.observations.at(-1)!.postingEdge).toBeCloseTo(.15, 10)
+    expect(stale.observations.at(-1)!.preFillMove).toBe(-10)
+    expect(wrong.fills).toHaveLength(1)
+    expect(wrong.fills[0]).toMatchObject({ side: 'sell', price: 10.15, referenceValue: 20, postingReference: 20, quoteAge: 0 })
+    expect(wrong.observations.at(-1)!.postingEdge).toBeCloseTo(-9.85, 10)
+    expect(wrong.observations.at(-1)!.preFillMove).toBe(0)
+    expect(wrong.summary.valuationError).toBe(10)
+  })
+  it('activates each delayed quote on schedule after the initial quote', () => {
+    const mark: PricingModel = (_c, x) => ({ value: x.spot - 90, delta: 1 })
+    const result = simulate(config({ steps: 4, horizon: .5, quoteLatencySteps: 2, inventorySkew: 0 }), {
+      dynamics: (_c, x) => [x.spot + 1, x.variance], pricing: mark, reference: mark,
+      arrivals: () => ({ buyCount: 1, sellCount: 0 }),
+    })
+    expect(result.fills.map(fill => fill.postingReference)).toEqual([10, 10, 11, 12])
+    expect(result.fills.map(fill => fill.quoteAge)).toEqual([.125, .25, .25, .25])
+    expect(result.fills.map(fill => fill.price)).toEqual(result.observations.slice(1).map(o => o.bid))
   })
   it('counts executed arrivals, including partial lots, independently from units', () => {
     const result = simulate(config({ fillIntensity: 10000, buyFlowBalance: 0, quoteSize: 3, inventoryLimit: 5, halfSpread: 0 }))
@@ -124,7 +180,7 @@ describe('market making and accounting', () => {
     expect(result.fills.every(f => f.count === Math.ceil(f.quantity / 3))).toBe(true)
   })
   it('reuses the ledger with injected dynamics, pricing, quotes and history payoff', () => {
-    const result = simulate(config({ steps: 2, horizon: 1, maturity: 1, hedgeEnabled: false, optionCost: 0, quoteSize: 1 }), {
+    const result = simulate(config({ steps: 2, horizon: 1, maturity: 1, rate: 0, borrowingSpread: 0, hedgeEnabled: false, optionCost: 0, quoteSize: 1 }), {
       dynamics: (_c, context) => [context.spot + 2, context.variance],
       pricing: () => ({ value: 7, delta: 0 }),
       quote: (_c, fairValue) => ({ fairValue, bid: 3, ask: 9 }),
@@ -149,13 +205,15 @@ describe('market making and accounting', () => {
     expect(result.summary.totalFills).toBe(0)
     expect(result.summary.transactionCosts).toBe(0)
   })
-  it('reconciles cash ledger, P&L components, drawdown and inventory limits', () => {
-    const result = simulate(config({ fillIntensity: 2000, inventoryLimit: 5, quoteSize: 3, dividendYield: 0.02 }))
+  it.each([0, 1, 3])('reconciles the cash ledger and both P&L decompositions with %i steps of latency', quoteLatencySteps => {
+    const result = simulate(config({ dynamics: 'merton', horizon: 1, quoteLatencySteps, fillIntensity: 2000, inventoryLimit: 5, quoteSize: 3, dividendYield: 0.02 }))
     let peak = 0
     for (const o of result.observations) {
       expect(Math.abs(o.inventory)).toBeLessThanOrEqual(5)
-      expect(o.totalPnl).toBeCloseTo(o.cash + o.inventory * o.fairValue + o.hedgePosition * o.spot, 8)
-      expect(o.totalPnl).toBeCloseTo(o.realizedPnl + o.unrealizedPnl + o.hedgePnl - o.transactionCosts, 10)
+      expect(o.totalPnl).toBeCloseTo(o.cash + o.inventory * o.referenceValue + o.hedgePosition * o.spot, 8)
+      expect(o.totalPnl).toBeCloseTo(o.realizedPnl + o.unrealizedPnl + o.hedgePnl + o.financingPnl - o.transactionCosts, 10)
+      expect(o.totalPnl).toBeCloseTo(o.postingEdge + o.preFillMove + o.heldOptionPnl + o.hedgePnl + o.financingPnl - o.transactionCosts, 10)
+      expect(o.modelPnl).toBeCloseTo(o.cash + o.inventory * o.fairValue + o.hedgePosition * o.spot, 8)
       peak = Math.max(peak, o.totalPnl)
       expect(o.drawdown).toBeCloseTo(peak - o.totalPnl, 10)
     }
@@ -171,22 +229,53 @@ describe('market making and accounting', () => {
       expect(last.unrealizedPnl).toBe(0)
       expect(last.totalPnl).toBeCloseTo(last.cash, 8)
       expect(last.fairValue).toBe(optionType === 'call' ? Math.max(last.spot - 100, 0) : Math.max(100 - last.spot, 0))
+      expect(last.referenceValue).toBe(last.fairValue)
+      expect(last.modelPnl).toBe(last.totalPnl)
     }
   })
   it('hedges delta on cadence and subtracts explicit costs', () => {
-    const c = config({ hedgeEvery: 1 })
+    const c = config({ hedgeEvery: 1, rate: 0, borrowingSpread: 0 })
     const result = simulate(c)
     expect(result.observations.every(o => Math.abs(o.netDelta) < 1e-9)).toBe(true)
     const free = simulate({ ...c, optionCost: 0, hedgeCostBps: 0 })
     expect(free.summary.totalPnl - result.summary.totalPnl).toBeCloseTo(result.summary.transactionCosts, 9)
   })
+  it('charges interval-start cash borrowing and short-stock fees on the ledger', () => {
+    const c = config({ steps: 2, rate: .04, borrowingSpread: .02, stockBorrowBps: 100, hedgeEvery: 1, optionCost: 0, hedgeCostBps: 0 })
+    const run = (delta: number) => simulate(c, {
+      dynamics: (_c, x) => [x.spot, x.variance],
+      pricing: () => ({ value: 3, delta }),
+      quote: (_c, fairValue) => ({ fairValue, bid: 3, ask: 4 }),
+      arrivals: () => ({ buyCount: 1, sellCount: 0 }),
+    })
+    expect(run(0).summary.financingPnl).toBeCloseTo(-3 * Math.expm1(.06 * .125), 12)
+    expect(run(.5).summary.financingPnl).toBeCloseTo(47 * Math.expm1(.04 * .125) - 50 * .01 * .125, 12)
+  })
   it('wider quotes reduce flow and skew lowers quotes for long inventory', () => {
     const tight = simulate(config({ halfSpread: 0.01, buyFlowBalance: 0, inventoryLimit: 1000 }))
     const wide = simulate(config({ halfSpread: 2, buyFlowBalance: 0, inventoryLimit: 1000 }))
     expect(tight.summary.totalFills).toBeGreaterThan(wide.summary.totalFills)
-    const long = tight.observations.find(o => o.inventory > 0)!
-    expect((long.bid + long.ask) / 2).toBeCloseTo(long.fairValue - defaultConfig.inventorySkew * long.inventory, 8)
+    const long = tight.observations.findIndex(o => o.inventory > 0)
+    const next = tight.observations[long + 1]
+    expect((next.bid + next.ask) / 2).toBeCloseTo(next.fairValue - defaultConfig.inventorySkew * tight.observations[long].inventory, 8)
     expect(tight.fills.every(f => f.side === 'buy')).toBe(true)
   })
+})
+
+it('compares refreshed and delayed quotes on the same seeds at interim and expiry', () => {
+  const c = config({ dynamics: 'merton', seed: 23, steps: 4, samplePaths: 1 })
+  const comparison = compareModels(c, 3, undefined, true)
+  expect(comparison.seeds).toEqual([23, 7942, 15861])
+  expect(comparison.rows).toHaveLength(10)
+  expect(comparison.interimTime).toBe(.25)
+  for (const quoteLatencySteps of [0, 1]) {
+    const row = comparison.rows.find(r => r.pricing === 'bs' && r.quoteLatencySteps === quoteLatencySteps)!
+    const direct = comparison.seeds.map(seed => simulate({ ...c, seed, quoteLatencySteps, horizon: 1, steps: 16 }))
+    expect(row.interim.mean).toBeCloseTo(direct.reduce((sum, r) => sum + r.observations[4].totalPnl, 0) / 3, 10)
+    expect(row.settled.mean).toBeCloseTo(direct.reduce((sum, r) => sum + r.summary.totalPnl, 0) / 3, 10)
+    const a = row.attribution.interim
+    expect(row.interim.mean).toBeCloseTo(a.postingEdge + a.preFillMove + a.heldOptionPnl + a.hedgePnl + a.financingPnl - a.transactionCosts, 10)
+    expect(comparison.rows.find(r => r.pricing === 'merton' && r.quoteLatencySteps === quoteLatencySteps)?.pricingRmse).toBe(0)
+  }
 })
 

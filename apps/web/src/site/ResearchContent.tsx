@@ -9,6 +9,6 @@ export function AsianLatticeContent({ headingId, sourceTarget }: { headingId?: s
 
 export function TroyMarketMakingContent({ headingId }: { headingId?: string }) {
   return <><h3 id={headingId}>Quoting, order flow, and inventory</h3>
-    <p>Troy separates the simulated market from the maker’s pricing assumptions. The selected pricing model computes fair value and delta; its name does not indicate whether it matches the true dynamics.</p>
+    <p>Troy separates the simulated market from the maker’s pricing assumptions. The maker computes a value and delta for quoting and hedging. A separate risk-neutral market reference values inventory and informs customer flow. Quote latency determines which posted prices customers can trade at after a market move.</p>
   </>;
 }

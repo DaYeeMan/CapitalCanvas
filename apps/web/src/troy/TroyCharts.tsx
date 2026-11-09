@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Data, Layout } from 'plotly.js';
 import { ScientificPlot } from '../components/ChartPanel';
 import type { Observation, SimulationResult } from './types';
+import { hoursPerYear } from './labels';
 
 const colors = { cyan: '#dfbf89', green: '#8fbcc6', amber: '#f2eadb', red: '#e89989', muted: '#9aadb9' };
 const axis = {
@@ -17,10 +18,10 @@ const base: Partial<Layout> = {
   legend: { orientation: 'h', x: 0, y: 1.12 },
   xaxis: { ...timeAxis, title: { text: 'Time (years)' } }, yaxis: axis,
 };
-function PlotCard({ title, detail, data, layout, height = 280 }: { title: string; detail: string; data: Data[]; layout?: Partial<Layout>; height?: number }) {
+function PlotCard({ title, data, layout, height = 280 }: { title: string; data: Data[]; layout?: Partial<Layout>; height?: number }) {
   return <section className="troy-chart-card" aria-label={title}>
-    <div className="troy-chart-heading"><h2>{title}</h2><p>{detail}</p></div>
-    <div style={{ height }}><ScientificPlot data={data} layout={{ ...base, ...layout }} label={`${title}. ${detail}`} /></div>
+    <div className="troy-chart-heading"><h2>{title}</h2></div>
+    <div style={{ height }}><ScientificPlot data={data} layout={{ ...base, ...layout }} label={title} /></div>
   </section>;
 }
 
@@ -29,26 +30,29 @@ export function TradingCharts({ result }: { result: SimulationResult }) {
     const rows = result.observations;
     const x = rows.map(r => r.time);
     const customdata = rows.map(r => [r.spot, r.fairValue, r.bid, r.ask, r.inventory,
-      [r.bidFills ? `Maker bought ${r.bidFills}` : '', r.askFills ? `Maker sold ${r.askFills}` : ''].filter(Boolean).join(' · ') || 'No trade']);
-    const underlyingHovertemplate = 'Spot %{customdata[0]:.2f}<br>Fair %{customdata[1]:.3f}<br>Bid %{customdata[2]:.3f}<br>Ask %{customdata[3]:.3f}<br>Inventory %{customdata[4]}<br>%{customdata[5]}<extra></extra>';
+      [r.bidFills ? `Maker bought ${r.bidFills}` : '', r.askFills ? `Maker sold ${r.askFills}` : ''].filter(Boolean).join(' · ') || 'No trade', r.quoteAge * hoursPerYear]);
+    const underlyingHovertemplate = 'Spot %{customdata[0]:.2f}<br>Maker %{customdata[1]:.3f}<br>Bid %{customdata[2]:.3f}<br>Ask %{customdata[3]:.3f}<br>Quote age %{customdata[6]:.2f} h<br>Inventory %{customdata[4]}<br>%{customdata[5]}<extra></extra>';
     const line = (name: string, key: keyof Observation, color: string, extra = {}): Data => ({
       type: 'scatter', mode: 'lines', x, y: rows.map(r => r[key]), name, line: { color, width: 1.6 }, ...extra,
     } as Data);
     const market: Data[] = [
       line('Underlying', 'spot', colors.cyan, { customdata, hovertemplate: underlyingHovertemplate }),
-      line('Fair value', 'fairValue', colors.cyan, { xaxis: 'x2', yaxis: 'y2', hovertemplate: 'Fair $%{y:.3f}<extra></extra>' }),
+      line('Maker value', 'fairValue', colors.cyan, { xaxis: 'x2', yaxis: 'y2', hovertemplate: 'Maker $%{y:.3f}<extra></extra>' }),
+      line('Market reference', 'referenceValue', colors.red, { xaxis: 'x2', yaxis: 'y2', hovertemplate: 'Reference $%{y:.3f}<extra></extra>' }),
       line('Bid', 'bid', colors.green, { xaxis: 'x2', yaxis: 'y2', hovertemplate: 'Bid $%{y:.3f}<extra></extra>' }),
       line('Ask', 'ask', colors.amber, { xaxis: 'x2', yaxis: 'y2', hovertemplate: 'Ask $%{y:.3f}<extra></extra>' }),
       ...(['buy', 'sell'] as const).map(side => {
         const fills = result.fills.filter(f => f.side === side);
         return { type: 'scatter', mode: 'markers', x: fills.map(f => f.time), y: fills.map(f => f.price),
-          name: `Maker ${side}`, xaxis: 'x2', yaxis: 'y2', customdata: fills.map(f => f.quantity), hovertemplate: `Maker ${side} %{customdata} @ $%{y:.3f}<extra></extra>`,
+          name: `Maker ${side}`, xaxis: 'x2', yaxis: 'y2', customdata: fills.map(f => [f.quantity, f.quoteAge * hoursPerYear]),
+          hovertemplate: `Maker ${side} %{customdata[0]} @ $%{y:.3f}<br>Quote age %{customdata[1]:.2f} h<extra></extra>`,
           marker: { size: 8, color: side === 'buy' ? colors.green : colors.amber, symbol: side === 'buy' ? 'triangle-up' : 'triangle-down', line: { color: '#18262e', width: 1 } },
         } as Data;
       }),
     ];
-    const pnl = [line('Total P&L', 'totalPnl', colors.green), line('Realized', 'realizedPnl', colors.cyan),
+    const pnl = [line('Reference P&L', 'totalPnl', colors.green), line('Maker-marked P&L', 'modelPnl', colors.cyan, { line: { color: colors.cyan, dash: 'dash' } }), line('Valuation error', 'valuationError', colors.red), line('Realized options', 'realizedPnl', colors.cyan),
       line('Unrealized', 'unrealizedPnl', colors.amber), line('Hedge P&L', 'hedgePnl', colors.muted),
+      line('Financing', 'financingPnl', colors.amber),
       { type: 'scatter', mode: 'lines', x, y: rows.map(r => -r.transactionCosts), name: '− Costs', line: { color: colors.red, width: 1, dash: 'dot' } } as Data];
     const limits = rows.filter(r => Math.abs(r.inventory) >= result.config.inventoryLimit);
     const inventory = [line('Inventory', 'inventory', colors.cyan, { line: { color: colors.cyan, shape: 'hv' }, fill: 'tozeroy', fillcolor: 'rgba(223,191,137,.08)' }),
@@ -61,7 +65,7 @@ export function TradingCharts({ result }: { result: SimulationResult }) {
     return { market, pnl, inventory, marketHoverLabels };
   }, [result]);
   return <>
-    <PlotCard title="Market & Quotes" detail="One traded path · separate price scales · click legend to toggle" data={charts.market} height={430} layout={{
+    <PlotCard title="Market & Quotes" data={charts.market} height={430} layout={{
       hovermode: 'x unified',
       uirevision: `market-${result.config.seed}-${result.config.horizon}`, margin: { l: 62, r: 22, t: 38, b: 45 },
       xaxis: { ...timeAxis, domain: [0, 1], anchor: 'y', matches: 'x2', showticklabels: false, hoverformat: '.6f', labelalias: charts.marketHoverLabels },
@@ -69,8 +73,8 @@ export function TradingCharts({ result }: { result: SimulationResult }) {
       yaxis: { ...axis, domain: [.63, 1], title: { text: 'Underlying ($)' } },
       yaxis2: { ...axis, domain: [0, .49], title: { text: 'Option ($)' } },
     }} />
-    <PlotCard title="P&L" detail="Model-marked equity · zero starting capital · one-unit contracts" data={charts.pnl} layout={{ uirevision: 'pnl', yaxis: { ...axis, title: { text: 'P&L ($)' } }, margin: { l: 62, r: 22, t: 38, b: 45 } }} />
-    <PlotCard title="Inventory" detail="Options held · red marks indicate inventory limit" data={charts.inventory} height={210} layout={{
+    <PlotCard title="P&L" data={charts.pnl} height={340} layout={{ uirevision: 'pnl', yaxis: { ...axis, title: { text: 'P&L ($)' } }, margin: { l: 62, r: 22, t: 70, b: 45 } }} />
+    <PlotCard title="Inventory" data={charts.inventory} height={210} layout={{
       uirevision: 'inventory', yaxis: { ...axis, title: { text: 'Contracts' } },
       shapes: [-1, 1].map(sign => ({ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: sign * result.config.inventoryLimit, y1: sign * result.config.inventoryLimit, line: { color: '#e8998955', dash: 'dot', width: 1 } })),
     }} />
@@ -98,10 +102,10 @@ export function DynamicsCharts({ result }: { result: SimulationResult }) {
   }, [result]);
   const s = result.statistics;
   return <>
-    <PlotCard title="Sample Paths" detail={`${result.samplePaths.length} realizations of the true market · gold is the path traded by the maker`} data={charts.paths} height={390} layout={{ yaxis: { ...axis, title: { text: 'Underlying ($)' } } }} />
+    <PlotCard title="Sample Paths" data={charts.paths} height={390} layout={{ yaxis: { ...axis, title: { text: 'Underlying ($)' } } }} />
     <div className="troy-metrics troy-return-metrics">
       {[['Mean Return', `${(s.mean * 100).toFixed(3)}%`, 'per step'], ['Volatility', `${(s.annualizedVolatility * 100).toFixed(2)}%`, 'annualized'], ['Skewness', s.skewness.toFixed(3), 'zero for normal'], ['Excess Kurtosis', s.excessKurtosis.toFixed(3), 'zero for normal']].map(([label, value, note]) => <div className="troy-metric" key={label}><span>{label}</span><strong>{value}</strong><small>{note}</small></div>)}
     </div>
-    <PlotCard title="Return Distribution" detail={`${s.count.toLocaleString()} pooled one-step log returns · normal reference matches sample mean and variance`} data={charts.distribution} height={330} layout={{ hovermode: 'closest', xaxis: { ...timeAxis, title: { text: 'One-step log return' }, tickformat: '.1%' }, yaxis: { ...axis, title: { text: 'Density' } }, bargap: .08 }} />
+    <PlotCard title="Return Distribution" data={charts.distribution} height={330} layout={{ hovermode: 'closest', xaxis: { ...timeAxis, title: { text: 'One-step log return' }, tickformat: '.1%' }, yaxis: { ...axis, title: { text: 'Density' } }, bargap: .08 }} />
   </>;
 }
